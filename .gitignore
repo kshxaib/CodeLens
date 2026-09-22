@@ -1,0 +1,77 @@
+# Screenshots & Assets
+screens/
+screenshots/
+
+# Project Documentation & Architecture Specs
+APP_FLOW.md
+BACKEND_SCHEMA.md
+IMPLEMENTATION_PLAN.md
+PRD.md
+SCREEN_MAPPING.md
+TRD.md
+UI_UX.md
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+backend/.env
+frontend/.env
+codelens-backend/.env
+codelens-frontend/.env
+
+# Node.js / Frontend
+node_modules/
+codelens-frontend/node_modules/
+frontend/node_modules/
+dist/
+build/
+codelens-frontend/dist/
+frontend/dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store
+
+# Python / Backend
+venv/
+.venv/
+env/
+ENV/
+codelens-backend/venv/
+backend/venv/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Databases & Vector DB storage (Local / Docker volumes)
+qdrant_storage/
+postgres_data/
+*.sqlite3
+*.db
+
+# Temporary & Local Clones
+cloned_repos/
+temp/
+tmp/
+scratch/
+*.log
+
+# Operating System & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
