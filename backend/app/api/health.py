@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 import httpx
-from app.core.config import settings
+from app.core.config import PROJECT_NAME, ENVIRONMENT, QDRANT_URL
 from app.db.session import check_db_connection
 
 router = APIRouter(prefix="/health", tags=["Health Checks"])
@@ -12,8 +12,8 @@ async def health_check():
     """Returns basic service health status."""
     return {
         "status": "healthy",
-        "service": settings.PROJECT_NAME,
-        "environment": settings.ENVIRONMENT,
+        "service": PROJECT_NAME,
+        "environment": ENVIRONMENT,
         "version": "1.0.0",
     }
 
@@ -35,7 +35,7 @@ async def qdrant_health_check():
     """Checks connection to Qdrant vector database."""
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
-            resp = await client.get(f"{settings.QDRANT_URL}/healthz")
+            resp = await client.get(f"{QDRANT_URL}/healthz")
             if resp.status_code == 200:
                 return {"status": "healthy", "vector_db": "Qdrant", "connected": True}
     except Exception:

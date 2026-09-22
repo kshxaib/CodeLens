@@ -3,12 +3,17 @@ from typing import Any, Dict, Optional, Union
 import bcrypt
 from cryptography.fernet import Fernet, InvalidToken
 from jose import JWTError, jwt
-from app.core.config import settings
+from app.core.config import (
+    get_encryption_key,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    JWT_SECRET_KEY,
+    JWT_ALGORITHM,
+)
 
 
 def _get_fernet() -> Fernet:
     """Initializes Fernet cipher using configured key."""
-    key = settings.get_encryption_key()
+    key = get_encryption_key()
     return Fernet(key)
 
 
@@ -77,16 +82,16 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     """Decodes and validates a signed JWT access token."""
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         return payload
     except JWTError:
         return None

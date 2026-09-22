@@ -1,11 +1,11 @@
 from typing import Generator
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from app.core.config import settings
+from app.core.config import DATABASE_URL
 
 # Engine configuration with connection pooling and ping verification
 engine = create_engine(
-    settings.DATABASE_URL,
+    DATABASE_URL,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
