@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       localStorage.removeItem('codelens_token');
       set({ user: null });
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   },
 

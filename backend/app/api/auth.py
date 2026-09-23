@@ -95,7 +95,7 @@ async def get_github_oauth_url(redirect_uri: Optional[str] = None, redirect: boo
     If redirect=True is passed, automatically performs an HTTP 307 Redirect.
     """
     state = secrets.token_urlsafe(16)
-    callback_target = redirect_uri or f"{FRONTEND_URL}/login"
+    callback_target = redirect_uri or f"{FRONTEND_URL}/"
     
     oauth_url = (
         f"https://github.com/login/oauth/authorize"
