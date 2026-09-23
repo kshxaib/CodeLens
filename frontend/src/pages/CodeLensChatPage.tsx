@@ -11,7 +11,7 @@ import {
   Bot,
   User as UserIcon,
 } from 'lucide-react';
-import { api } from '../api/client';
+import { api, API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 import type { ConversationItem, ConversationDetail, MessageItem, Citation } from '../types';
@@ -156,7 +156,7 @@ export const CodeLensChatPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/repositories/${activeRepoId}/chats/${targetChatId}/stream`,
+        `${API_BASE_URL}/repositories/${activeRepoId}/chats/${targetChatId}/stream`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

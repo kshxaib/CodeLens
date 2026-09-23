@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios';
 import type {
   UserProfile,
   RepositoryItem,
@@ -9,9 +10,17 @@ import type {
   BlastRadiusResponse,
 } from '../types';
 
-const API_BASE = '/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-class ApiError extends Error {
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true, // Send session_token cookies across origins
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export class ApiError extends Error {
   status: number;
   data: any;
 
@@ -23,84 +32,91 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include', // Ensures session_token cookie is sent
-  });
-
-  if (!response.ok) {
-    let errorData: any = {};
-    try {
-      errorData = await response.json();
-    } catch {
-      // Ignored if non-json
-    }
-    const message = errorData?.detail || errorData?.message || `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, errorData);
+// Global response interceptor for formatted errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<any>) => {
+    const status = error.response?.status || 500;
+    const data = error.response?.data;
+    const message = data?.detail || data?.message || error.message || 'Request failed';
+    return Promise.reject(new ApiError(message, status, data));
   }
-
-  return response.json() as Promise<T>;
-}
+);
 
 export const api = {
   // Auth & User Profile
-  getMe: () => request<UserProfile>('/auth/me'),
-  logout: () => request<{ detail: string }>('/auth/logout', { method: 'POST' }),
-  getUserProfile: () => request<UserProfile>('/user/profile'),
-  updateGeminiKey: (apiKey: string) =>
-    request<UserProfile>('/user/gemini-key', {
-      method: 'PUT',
-      body: JSON.stringify({ api_key: apiKey }),
-    }),
+  getMe: async () => {
+    const res = await apiClient.get<UserProfile>('/auth/me');
+    return res.data;
+  },
+  logout: async () => {
+    const res = await apiClient.post<{ detail: string }>('/auth/logout');
+    return res.data;
+  },
+  getUserProfile: async () => {
+    const res = await apiClient.get<UserProfile>('/user/profile');
+    return res.data;
+  },
+  updateGeminiKey: async (apiKey: string) => {
+    const res = await apiClient.put<UserProfile>('/user/gemini-key', { api_key: apiKey });
+    return res.data;
+  },
 
   // Repositories
-  getRepositories: () =>
-    request<{ repositories: RepositoryItem[]; total: number }>('/repositories'),
-  addRepository: (url: string) =>
-    request<RepositoryItem>('/repositories', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    }),
-  getRepository: (repoId: number) =>
-    request<RepositoryItem>(`/repositories/${repoId}`),
-  indexRepository: (repoId: number) =>
-    request<{ status: string; task_id?: string; message?: string }>(`/repositories/${repoId}/index`, {
-      method: 'POST',
-    }),
-  getFiles: (repoId: number) =>
-    request<FileItem[]>(`/repositories/${repoId}/files`),
-  getFileContent: (repoId: number, fileId: number) =>
-    request<FileContentResponse>(`/repositories/${repoId}/files/${fileId}`),
-  getArchitecture: (repoId: number) =>
-    request<ArchitectureGraphData>(`/repositories/${repoId}/architecture`),
-  getBlastRadius: (repoId: number, symbol: string) =>
-    request<BlastRadiusResponse>(`/repositories/${repoId}/blast-radius?symbol=${encodeURIComponent(symbol)}`),
+  getRepositories: async () => {
+    const res = await apiClient.get<{ repositories: RepositoryItem[]; total: number }>('/repositories');
+    return res.data;
+  },
+  addRepository: async (url: string) => {
+    const res = await apiClient.post<RepositoryItem>('/repositories', { url });
+    return res.data;
+  },
+  getRepository: async (repoId: number) => {
+    const res = await apiClient.get<RepositoryItem>(`/repositories/${repoId}`);
+    return res.data;
+  },
+  indexRepository: async (repoId: number) => {
+    const res = await apiClient.post<{ status: string; task_id?: string; message?: string }>(
+      `/repositories/${repoId}/index`
+    );
+    return res.data;
+  },
+  getFiles: async (repoId: number) => {
+    const res = await apiClient.get<FileItem[]>(`/repositories/${repoId}/files`);
+    return res.data;
+  },
+  getFileContent: async (repoId: number, fileId: number) => {
+    const res = await apiClient.get<FileContentResponse>(`/repositories/${repoId}/files/${fileId}`);
+    return res.data;
+  },
+  getArchitecture: async (repoId: number) => {
+    const res = await apiClient.get<ArchitectureGraphData>(`/repositories/${repoId}/architecture`);
+    return res.data;
+  },
+  getBlastRadius: async (repoId: number, symbol: string) => {
+    const res = await apiClient.get<BlastRadiusResponse>(
+      `/repositories/${repoId}/blast-radius?symbol=${encodeURIComponent(symbol)}`
+    );
+    return res.data;
+  },
 
   // Chat & Copilot
-  getConversations: (repoId: number) =>
-    request<{ conversations: ConversationItem[]; total: number }>(`/repositories/${repoId}/chats`),
-  createConversation: (repoId: number, title?: string) =>
-    request<ConversationItem>(`/repositories/${repoId}/chats`, {
-      method: 'POST',
-      body: JSON.stringify({ title }),
-    }),
-  getConversation: (repoId: number, chatId: number) =>
-    request<ConversationDetail>(`/repositories/${repoId}/chats/${chatId}`),
-  deleteConversation: (repoId: number, chatId: number) =>
-    request<{ detail: string }>(`/repositories/${repoId}/chats/${chatId}`, {
-      method: 'DELETE',
-    }),
+  getConversations: async (repoId: number) => {
+    const res = await apiClient.get<{ conversations: ConversationItem[]; total: number }>(
+      `/repositories/${repoId}/chats`
+    );
+    return res.data;
+  },
+  createConversation: async (repoId: number, title?: string) => {
+    const res = await apiClient.post<ConversationItem>(`/repositories/${repoId}/chats`, { title });
+    return res.data;
+  },
+  getConversation: async (repoId: number, chatId: number) => {
+    const res = await apiClient.get<ConversationDetail>(`/repositories/${repoId}/chats/${chatId}`);
+    return res.data;
+  },
+  deleteConversation: async (repoId: number, chatId: number) => {
+    const res = await apiClient.delete<{ detail: string }>(`/repositories/${repoId}/chats/${chatId}`);
+    return res.data;
+  },
 };
-
-export { ApiError };
