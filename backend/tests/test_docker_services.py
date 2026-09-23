@@ -12,11 +12,23 @@ def test_live_postgres_container():
 
     response = client.get("/api/health/db")
     assert response.status_code == 200
-    assert response.json()["connected"] is True
+    assert response.json()["status"] == "connected"
+    assert "latency_ms" in response.json()
 
 
 def test_live_qdrant_container():
     """Verify live connection to Qdrant in Docker container."""
     response = client.get("/api/health/qdrant")
     assert response.status_code == 200
-    assert response.json()["connected"] is True
+    assert response.json()["status"] == "connected"
+    assert "latency_ms" in response.json()
+
+
+def test_live_unified_health_keepalive():
+    """Verify live /api/health endpoint pings both PostgreSQL and Qdrant in a single call."""
+    response = client.get("/api/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["database"]["status"] == "connected"
+    assert data["vector_db"]["status"] == "connected"
