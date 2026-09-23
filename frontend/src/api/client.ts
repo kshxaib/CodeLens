@@ -32,6 +32,15 @@ export class ApiError extends Error {
   }
 }
 
+// Global request interceptor to attach Bearer token from localStorage
+apiClient.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('codelens_token') : null;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Global response interceptor for formatted errors
 apiClient.interceptors.response.use(
   (response) => response,
@@ -45,6 +54,14 @@ apiClient.interceptors.response.use(
 
 export const api = {
   // Auth & User Profile
+  getGitHubOAuthUrl: async () => {
+    const res = await apiClient.get<{ url: string; state: string }>('/auth/github');
+    return res.data;
+  },
+  handleGitHubCallback: async (code: string) => {
+    const res = await apiClient.get<{ access_token: string; user: UserProfile }>(`/auth/callback?code=${code}`);
+    return res.data;
+  },
   getMe: async () => {
     const res = await apiClient.get<UserProfile>('/auth/me');
     return res.data;

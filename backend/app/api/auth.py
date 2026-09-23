@@ -88,10 +88,11 @@ def serialize_user_profile(user: User) -> UserProfileResponse:
     )
 
 
-@router.get("/github", response_model=GitHubOAuthURLResponse, summary="Get GitHub OAuth Redirect URL")
-async def get_github_oauth_url(redirect_uri: Optional[str] = None):
+@router.get("/github", summary="Get GitHub OAuth Redirect URL")
+async def get_github_oauth_url(redirect_uri: Optional[str] = None, redirect: bool = False):
     """
     Generates GitHub OAuth authorization URL with required scopes (`read:user repo`).
+    If redirect=True is passed, automatically performs an HTTP 307 Redirect.
     """
     state = secrets.token_urlsafe(16)
     callback_target = redirect_uri or f"{FRONTEND_URL}/login"
@@ -103,6 +104,8 @@ async def get_github_oauth_url(redirect_uri: Optional[str] = None):
         f"&scope=read:user%20repo"
         f"&state={state}"
     )
+    if redirect:
+        return RedirectResponse(url=oauth_url)
     return {"url": oauth_url, "state": state}
 
 
