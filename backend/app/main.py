@@ -10,6 +10,7 @@ from app.core.config import (
 from app.db.session import engine, Base
 import app.db.models  # Import all models to register with Base.metadata
 from app.api.health import router as health_router
+from app.api.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -46,6 +47,7 @@ app.add_middleware(
 
 # Register API Routers
 app.include_router(health_router, prefix=API_V1_STR)
+app.include_router(auth_router, prefix=API_V1_STR)
 
 
 @app.get("/", summary="Root Welcome Endpoint")
