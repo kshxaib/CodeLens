@@ -1,25 +1,32 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    --bg-primary: #0a0c10;
-    --bg-secondary: #12161f;
-    --bg-tertiary: #1a202c;
-    --card-bg: #151923;
-    --card-border: rgba(255, 255, 255, 0.08);
-    --card-border-hover: rgba(139, 92, 246, 0.4);
-    --accent-purple: #8b5cf6;
-    --accent-cyan: #06b6d4;
-    --accent-blue: #3b82f6;
-    --accent-emerald: #10b981;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+  :root, [data-appearance="dark"] {
+    --background: #0d1017;
+    --foreground: #f0f3f6;
+    --card: #131722;
+    --card-foreground: #f0f3f6;
+    --popover: #131722;
+    --popover-foreground: #f0f3f6;
+    --primary: #f59e0b;
+    --primary-foreground: #0d1017;
+    --secondary: #1a202c;
+    --secondary-foreground: #f0f3f6;
+    --muted: #1c2130;
+    --muted-foreground: #8b949e;
+    --accent: #202637;
+    --accent-foreground: #f0f3f6;
+    --destructive: #ef4444;
+    --destructive-foreground: #f0f3f6;
+    --border: #22283a;
+    --input: #22283a;
+    --ring: #f59e0b;
+    --sidebar: #0e111a;
   }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
@@ -46,42 +53,58 @@
   }
 }
 
+/* Custom Tailwind Helper Classes */
+.bg-background { background-color: var(--background); }
+.text-foreground { color: var(--foreground); }
+.bg-sidebar { background-color: var(--sidebar); }
+.bg-card { background-color: var(--card); }
+.text-card-foreground { color: var(--card-foreground); }
+.bg-muted { background-color: var(--muted); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.bg-accent { background-color: var(--accent); }
+.text-accent-foreground { color: var(--accent-foreground); }
+.bg-primary { background-color: var(--primary); }
+.text-primary { color: var(--primary); }
+.text-primary-foreground { color: var(--primary-foreground); }
+.border-border { border-color: var(--border); }
+.border-t-border { border-top-color: var(--border); }
+.border-r-border { border-right-color: var(--border); }
+.border-b-border { border-bottom-color: var(--border); }
+.border-l-border { border-left-color: var(--border); }
+.border-y-border { border-top-color: var(--border); border-bottom-color: var(--border); }
+
 /* Glassmorphism & Glow Utilities */
 .glass-panel {
   background: rgba(18, 22, 31, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
 }
 
 .glass-card {
-  background: rgba(21, 25, 35, 0.8);
+  background: var(--card);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.08);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.08);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #a855f7 50%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .gradient-purple-blue {
-  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
 }
 
 .glow-purple {
-  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.35);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25);
 }
 
 /* React Flow Custom Styles */
