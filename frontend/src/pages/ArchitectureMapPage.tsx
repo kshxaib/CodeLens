@@ -111,29 +111,55 @@ export const ArchitectureMapPage: React.FC = () => {
       const data = await api.getArchitecture(repoId);
       setGraphData(data);
 
-      // Auto Layout Nodes across Layer Bands
-      const layerPositions: Record<string, { x: number; y: number; count: number }> = {
-        presentation: { x: 50, y: 50, count: 0 },
-        frontend: { x: 50, y: 50, count: 0 },
-        api_gateway: { x: 50, y: 220, count: 0 },
-        application: { x: 50, y: 220, count: 0 },
-        service: { x: 50, y: 390, count: 0 },
-        domain: { x: 50, y: 390, count: 0 },
-        data: { x: 50, y: 560, count: 0 },
-        infrastructure: { x: 50, y: 560, count: 0 },
-        unknown: { x: 50, y: 730, count: 0 },
-      };
+      // Auto Layout Nodes across Layer Bands (grid within each layer)
+      const COLS_PER_LAYER = 20;
+      const COL_GAP = 240;
+      const ROW_GAP = 170;
+      const LAYER_Y_GAP = 200;
+
+      const layerOrder = [
+        'presentation',
+        'frontend',
+        'api_gateway',
+        'application',
+        'service',
+        'domain',
+        'data',
+        'infrastructure',
+        'unknown',
+      ];
+
+      // Count nodes per layer to determine y-offset dynamically
+      const layerRowCount: Record<string, number> = {};
+      const layerBaseY: Record<string, number> = {};
+      let cumulativeY = 50;
+      for (const layer of layerOrder) {
+        const count = (data?.nodes || []).filter((n: any) => {
+          const l = n.layer || n.data?.layer || 'unknown';
+          return l === layer;
+        }).length;
+        layerRowCount[layer] = Math.ceil(count / COLS_PER_LAYER) || 0;
+        layerBaseY[layer] = cumulativeY;
+        cumulativeY += (layerRowCount[layer] || 1) * ROW_GAP + LAYER_Y_GAP;
+      }
+
+      const layerCounters: Record<string, number> = {};
 
       const rawNodes = data?.nodes || [];
       const rawEdges = data?.edges || [];
 
       const flowNodes: Node[] = rawNodes.map((n: any) => {
         const nodeData = n.data || {};
-        const layer = n.layer || nodeData.layer || 'service';
-        const posMeta = layerPositions[layer] || layerPositions.unknown;
-        const xPos = posMeta.x + posMeta.count * 250;
-        const yPos = posMeta.y;
-        posMeta.count += 1;
+        const layer = n.layer || nodeData.layer || 'unknown';
+        const normalizedLayer = layerOrder.includes(layer) ? layer : 'unknown';
+
+        if (!(normalizedLayer in layerCounters)) layerCounters[normalizedLayer] = 0;
+        const idx = layerCounters[normalizedLayer]++;
+        const col = idx % COLS_PER_LAYER;
+        const row = Math.floor(idx / COLS_PER_LAYER);
+        const baseY = layerBaseY[normalizedLayer] ?? 50;
+        const xPos = 50 + col * COL_GAP;
+        const yPos = baseY + row * ROW_GAP;
 
         const filePath = nodeData.filePath || nodeData.file_path || n.file_path || '';
         const rawLabel = nodeData.label || n.label || (filePath ? filePath.split(/[/\\]/).pop() : n.id || 'Module');
@@ -147,7 +173,7 @@ export const ArchitectureMapPage: React.FC = () => {
             ...n,
             label: rawLabel,
             file_path: filePath,
-            layer: layer,
+            layer: normalizedLayer,
             symbols: nodeData.topSymbols || n.symbols || [],
           },
         };
@@ -281,25 +307,46 @@ export const ArchitectureMapPage: React.FC = () => {
             onNodeClick={handleNodeClick}
             nodeTypes={nodeTypes}
             fitView
+            fitViewOptions={{ padding: 0.15 }}
+            panOnDrag={true}
+            panOnScroll={false}
+            zoomOnScroll={true}
+            zoomOnPinch={true}
+            zoomOnDoubleClick={false}
+            nodesDraggable={true}
+            nodesConnectable={false}
+            elementsSelectable={true}
+            minZoom={0.05}
+            maxZoom={2}
             className="bg-[#000000]"
+            style={{ width: '100%', height: '100%' }}
           >
-            <Background color="rgba(255, 255, 255, 0.05)" gap={20} size={1} />
-            <Controls className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-slate-300" />
+            <Background color="rgba(255, 255, 255, 0.04)" gap={24} size={1} />
+            <Controls
+              showInteractive={false}
+              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-slate-300"
+            />
             <MiniMap
               nodeColor={(n) => {
                 switch ((n.data as any)?.layer) {
                   case 'presentation':
+                  case 'frontend':
                     return '#f59e0b';
+                  case 'api_gateway':
                   case 'application':
                     return '#3b82f6';
+                  case 'service':
                   case 'domain':
                     return '#10b981';
+                  case 'data':
                   case 'infrastructure':
                     return '#a855f7';
                   default:
                     return '#64748b';
                 }
               }}
+              zoomable
+              pannable
               className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden"
             />
           </ReactFlow>
