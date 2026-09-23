@@ -14,6 +14,14 @@ TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @pytest.fixture
 def auth_context():
     session = TestSession()
+    # Pre-clean any leftover test entities
+    session.query(RepositoryAccess).filter(RepositoryAccess.user_id.in_(
+        session.query(User.id).filter(User.username.like("shoaib_repo_tester%"))
+    )).delete(synchronize_session=False)
+    session.query(Repository).filter(Repository.name.in_(["CodeLens-Demo", "testservice"])).delete(synchronize_session=False)
+    session.query(User).filter(User.username.like("shoaib_repo_tester%")).delete(synchronize_session=False)
+    session.commit()
+
     encrypted_key = encrypt_api_key("AIzaSy_MOCK_TEST_KEY_SecretRepo123")
     user = User(
         github_id=555501,
@@ -32,6 +40,7 @@ def auth_context():
 
     # Cleanup
     session.query(RepositoryAccess).filter_by(user_id=user.id).delete()
+    session.query(Repository).filter(Repository.name.in_(["CodeLens-Demo", "testservice"])).delete()
     session.delete(user)
     session.commit()
     session.close()
