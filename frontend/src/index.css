@@ -2,26 +2,26 @@
 
 @layer base {
   :root, [data-appearance="dark"] {
-    --background: #0d1017;
-    --foreground: #f0f3f6;
-    --card: #131722;
-    --card-foreground: #f0f3f6;
-    --popover: #131722;
-    --popover-foreground: #f0f3f6;
+    --background: #000000;
+    --foreground: #f4f4f5;
+    --card: #09090b;
+    --card-foreground: #f4f4f5;
+    --popover: #09090b;
+    --popover-foreground: #f4f4f5;
     --primary: #f59e0b;
-    --primary-foreground: #0d1017;
-    --secondary: #1a202c;
-    --secondary-foreground: #f0f3f6;
-    --muted: #1c2130;
-    --muted-foreground: #8b949e;
-    --accent: #202637;
-    --accent-foreground: #f0f3f6;
+    --primary-foreground: #000000;
+    --secondary: #141416;
+    --secondary-foreground: #f4f4f5;
+    --muted: #121214;
+    --muted-foreground: #a1a1aa;
+    --accent: #18181b;
+    --accent-foreground: #f4f4f5;
     --destructive: #ef4444;
-    --destructive-foreground: #f0f3f6;
-    --border: #22283a;
-    --input: #22283a;
+    --destructive-foreground: #f4f4f5;
+    --border: #1f1f23;
+    --input: #1f1f23;
     --ring: #f59e0b;
-    --sidebar: #0e111a;
+    --sidebar: #050505;
   }
 
   body {
@@ -93,25 +93,11 @@
   box-shadow: 0 8px 30px rgba(245, 158, 11, 0.08);
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #f59e0b 0%, #a855f7 50%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.gradient-purple-blue {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-}
-
-.glow-purple {
-  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25);
-}
-
 /* React Flow Custom Styles */
 .react-flow__attribution {
   display: none !important;
 }
 
 .react-flow__background {
-  background: #0a0c10 !important;
+  background: #000000 !important;
 }

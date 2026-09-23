@@ -78,11 +78,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   updateGeminiKey: async (apiKey: string) => {
-    const updated = await api.updateGeminiKey(apiKey);
-    set({ user: updated });
-    return updated;
+    const res = await api.updateGeminiKey(apiKey);
+    try {
+      const profile = await api.getUserProfile();
+      set({ user: profile });
+      return profile;
+    } catch {
+      set((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              has_gemini_key: (res as any).has_key ?? (apiKey.trim().length > 0),
+              masked_gemini_key: (res as any).masked_key ?? '',
+            }
+          : null,
+      }));
+      return stateUser(res);
+    }
   },
 }));
+
+function stateUser(res: any): any {
+  return res;
+}
 
 // Compatibility Hook export
 export const useAuth = useAuthStore;

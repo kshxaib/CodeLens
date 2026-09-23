@@ -55,18 +55,18 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   const displayMsg = message || config.message;
 
   return (
-    <div className="glass-card rounded-2xl p-8 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 border border-white/[0.08]">
-      <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mb-5 ${config.iconColor}`}>
-        <Icon className="w-7 h-7" />
+    <div className="rounded-2xl p-8 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 bg-[#09090b] border border-[#1f1f23]">
+      <div className={`w-12 h-12 rounded-xl border flex items-center justify-center mb-4 ${config.iconColor}`}>
+        <Icon className="w-6 h-6" />
       </div>
-      <h4 className="text-lg font-semibold text-white mb-2">{displayTitle}</h4>
-      <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">{displayMsg}</p>
+      <h4 className="text-base font-semibold text-white mb-1.5">{displayTitle}</h4>
+      <p className="text-xs text-slate-400 mb-5 leading-relaxed">{displayMsg}</p>
 
       <div className="flex items-center gap-3">
         {onRetry && (
           <button
             onClick={onRetry}
-            className="inline-flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl transition"
+            className="inline-flex items-center gap-2 bg-[#141416] hover:bg-[#1f1f23] border border-[#27272a] text-white text-xs font-medium px-4 py-2.5 rounded-xl transition cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Try Again
@@ -74,7 +74,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         )}
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg glow-purple transition"
+          className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
         >
           Return to Dashboard
         </Link>

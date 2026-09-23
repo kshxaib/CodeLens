@@ -36,7 +36,7 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div data-appearance="dark" className="min-h-screen bg-[#0d1017] text-[#f0f3f6]">
+    <div data-appearance="dark" className="min-h-screen bg-[#000000] text-[#f4f4f5]">
       <style>{`
         @keyframes clFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes clFadeUpSm { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -77,13 +77,13 @@ export const LandingPage: React.FC = () => {
 
       {/* Main Top Navigation */}
       <nav
-        className="backdrop-blur-md bg-[#0d1017]/90 sticky z-50 top-0 h-16"
+        className="backdrop-blur-md bg-[#000000]/90 sticky z-50 top-0 h-16"
         aria-label="Main navigation"
       >
         <div className="flex mr-auto ml-auto pr-6 pl-6 justify-between items-center h-full max-w-7xl">
           <Link
             to="/"
-            className="transition-colors text-[#f0f3f6] flex items-center shrink-0 gap-2.5"
+            className="transition-colors text-[#f4f4f5] flex items-center shrink-0 gap-2.5"
             aria-label="CodeLens home"
           >
             <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
@@ -98,7 +98,7 @@ export const LandingPage: React.FC = () => {
             {user ? (
               <Link
                 to="/dashboard"
-                className="cl-cta-btn font-medium rounded-lg bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-sm inline-flex px-4 py-2 items-center gap-2 h-9 font-semibold transition"
+                className="cl-cta-btn font-medium rounded-lg bg-amber-500 hover:bg-amber-400 text-[#000000] text-sm inline-flex px-4 py-2 items-center gap-2 h-9 font-semibold transition"
               >
                 <span>Dashboard</span>
                 <ArrowRight className="size-4" />
@@ -106,7 +106,7 @@ export const LandingPage: React.FC = () => {
             ) : (
               <button
                 onClick={handleAuthAction}
-                className="cl-cta-btn font-medium rounded-lg bg-[#131722] hover:bg-[#1a202c] text-[#f0f3f6] text-sm border border-[#22283a] hover:border-amber-500/40 inline-flex px-4 py-2 items-center gap-2 h-9 cursor-pointer transition shadow-sm"
+                className="cl-cta-btn font-medium rounded-lg bg-[#09090b] hover:bg-[#18181b] text-[#f4f4f5] text-sm border border-[#1f1f23] hover:border-amber-500/40 inline-flex px-4 py-2 items-center gap-2 h-9 cursor-pointer transition shadow-sm"
               >
                 <GithubIcon className="size-4 text-white" aria-hidden="true" />
                 <span>Continue with GitHub</span>
@@ -119,7 +119,7 @@ export const LandingPage: React.FC = () => {
       {/* Main Content Area */}
       <main>
         {/* Hero Section */}
-        <section className="bg-[#0b0e14] border-b border-[#22283a] pt-20 pr-6 pb-24 pl-6 relative overflow-hidden">
+        <section className="bg-[#000000] border-b border-[#1f1f23] pt-20 pr-6 pb-24 pl-6 relative overflow-hidden">
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/5 blur-3xl pointer-events-none -z-10" />
 

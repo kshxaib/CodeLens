@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Loader2, Code2 } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
@@ -21,19 +21,30 @@ function AppContent() {
   const navigate = useNavigate();
   const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const processedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');
 
-    if (code && !user) {
+    if (code && !user && processedCodeRef.current !== code) {
+      processedCodeRef.current = code;
       setIsProcessingOAuth(true);
       setOauthError(null);
+
+      // Clean the URL query params so history doesn't retain the used code
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       handleCallback(code)
         .then(() => {
           navigate('/dashboard', { replace: true });
         })
         .catch((err: any) => {
+          // If token was already received in localStorage, don't show error
+          if (localStorage.getItem('codelens_token')) {
+            navigate('/dashboard', { replace: true });
+            return;
+          }
           console.error('OAuth callback failed', err);
           setOauthError(err.message || 'GitHub login failed. Please try again.');
         })
@@ -41,11 +52,11 @@ function AppContent() {
           setIsProcessingOAuth(false);
         });
     }
-  }, [location, user, handleCallback, navigate]);
+  }, [location.search, user, handleCallback, navigate]);
 
   if (isProcessingOAuth) {
     return (
-      <div className="min-h-screen bg-[#0d1017] text-[#f0f3f6] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] mb-6 animate-pulse">
           <Code2 className="w-7 h-7" />
         </div>
@@ -53,7 +64,7 @@ function AppContent() {
         <p className="text-xs text-slate-400 max-w-sm mb-6">
           Verifying session credentials and synchronizing your repositories...
         </p>
-        <div className="flex items-center gap-2 text-amber-400 text-xs font-mono bg-[#131722] px-4 py-2 rounded-lg border border-[#22283a]">
+        <div className="flex items-center gap-2 text-amber-400 text-xs font-mono bg-[#09090b] px-4 py-2 rounded-lg border border-[#1f1f23]">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>Authenticating...</span>
         </div>
@@ -62,7 +73,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1017] text-[#f0f3f6] flex flex-col font-sans" data-appearance="dark">
+    <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col font-sans" data-appearance="dark">
       {oauthError && (
         <div className="bg-rose-500/10 border-b border-rose-500/30 text-rose-300 text-xs py-2.5 px-4 text-center font-mono">
           ⚠ {oauthError}

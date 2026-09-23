@@ -71,10 +71,10 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="w-full max-w-5xl h-[85vh] glass-card rounded-2xl border border-white/[0.12] shadow-2xl flex flex-col overflow-hidden relative">
         {/* Top Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08] bg-[#111420]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1f1f23] bg-[#09090b]">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg gradient-purple-blue flex items-center justify-center text-white shrink-0">
-              <FileCode2 className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-200 shrink-0">
+              <FileCode2 className="w-4 h-4 text-amber-400" />
             </div>
             <div className="min-w-0">
               <div className="text-xs sm:text-sm font-bold text-white truncate font-mono">
@@ -83,7 +83,7 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
               <div className="text-[11px] text-slate-400 font-mono">
                 {fileData ? `${fileData.line_count} lines • ${fileData.language || 'text'}` : 'Loading metadata...'}
                 {highlightLines && (
-                  <span className="ml-2 text-purple-300 bg-purple-500/20 px-1.5 py-0.2 rounded border border-purple-500/30">
+                  <span className="ml-2 text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
                     Lines {highlightLines.start}-{highlightLines.end}
                   </span>
                 )}

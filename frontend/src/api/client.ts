@@ -84,6 +84,22 @@ export const api = {
     const res = await apiClient.get<{ repositories: RepositoryItem[]; total: number }>('/repositories');
     return res.data;
   },
+  getGitHubUserRepos: async () => {
+    const res = await apiClient.get<{
+      repositories: Array<{
+        id: number;
+        name: string;
+        full_name: string;
+        private: boolean;
+        html_url: string;
+        description?: string;
+        default_branch: string;
+        owner: string;
+        is_fork?: boolean;
+      }>;
+    }>('/repositories/github/user-repos');
+    return res.data;
+  },
   addRepository: async (url: string) => {
     const res = await apiClient.post<RepositoryItem>('/repositories', { url });
     return res.data;

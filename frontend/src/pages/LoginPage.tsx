@@ -36,16 +36,13 @@ export const LoginPage: React.FC = () => {
   }, [user, authLoading, navigate, location, handleCallback]);
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-[#0d1017]">
-      {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 blur-3xl pointer-events-none -z-10" />
-
+    <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 bg-[#000000]">
       <div className="w-full max-w-md">
         {/* Login Card */}
-        <div className="glass-card rounded-3xl p-8 sm:p-10 border border-[#22283a] bg-[#131722] shadow-2xl text-center">
+        <div className="rounded-3xl p-8 sm:p-10 border border-[#1f1f23] bg-[#09090b] shadow-2xl text-center">
           {/* Brand Icon */}
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] mx-auto mb-6">
-            <Code2 className="w-8 h-8" />
+          <div className="w-14 h-14 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-200 mx-auto mb-6">
+            <Code2 className="w-7 h-7" />
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
@@ -65,14 +62,14 @@ export const LoginPage: React.FC = () => {
 
           {/* GitHub Connect Button / Loading State */}
           {callbackProcessing ? (
-            <div className="w-full inline-flex items-center justify-center gap-3 bg-[#1c2130] text-amber-400 font-semibold py-3.5 px-6 rounded-xl border border-amber-500/30 text-sm">
+            <div className="w-full inline-flex items-center justify-center gap-3 bg-[#121214] text-amber-400 font-semibold py-3.5 px-6 rounded-xl border border-[#1f1f23] text-sm">
               <Loader2 className="w-5 h-5 animate-spin" />
               <span>Authenticating with GitHub...</span>
             </div>
           ) : (
             <button
               onClick={() => loginWithGitHub()}
-              className="w-full inline-flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-[#0d1017] font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-amber-500/20 text-sm sm:text-base transition transform hover:-translate-y-0.5 cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-3 bg-amber-500 hover:bg-amber-400 text-[#0d1017] font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-amber-500/10 text-sm sm:text-base transition cursor-pointer"
             >
               <GithubIcon className="w-5 h-5 text-[#0d1017]" />
               <span>Continue with GitHub</span>
@@ -80,21 +77,21 @@ export const LoginPage: React.FC = () => {
           )}
 
           {/* Trust & Security Badges */}
-          <div className="mt-8 pt-6 border-t border-[#22283a] grid grid-cols-1 gap-3 text-left">
+          <div className="mt-8 pt-6 border-t border-[#1f1f23] grid grid-cols-1 gap-3 text-left">
             <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="p-1 rounded bg-amber-500/10 text-amber-400">
+              <span className="p-1 rounded bg-[#141416] border border-[#27272a] text-slate-300">
                 <ShieldCheck className="w-4 h-4" />
               </span>
               <span>Encrypted BYOK Key storage (AES-Fernet)</span>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="p-1 rounded bg-cyan-500/10 text-cyan-400">
+              <span className="p-1 rounded bg-[#141416] border border-[#27272a] text-slate-300">
                 <Zap className="w-4 h-4" />
               </span>
               <span>Works with free Google AI Studio keys</span>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="p-1 rounded bg-purple-500/10 text-purple-400">
+              <span className="p-1 rounded bg-[#141416] border border-[#27272a] text-slate-300">
                 <Layers className="w-4 h-4" />
               </span>
               <span>Ephemeral shallow clone &amp; instant vector indexing</span>

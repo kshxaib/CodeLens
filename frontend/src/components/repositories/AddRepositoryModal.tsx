@@ -1,7 +1,22 @@
-import React, { useState } from 'react';
-import { X, FolderGit2, Loader2, Plus, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  FolderGit2,
+  Loader2,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+  Layers,
+  Cpu,
+  ArrowRight,
+  RefreshCw,
+  GitBranch,
+} from 'lucide-react';
 import { GithubIcon } from '../common/Icons';
-import { useWorkspace } from '../../context/WorkspaceContext';
+import { useWorkspaceStore } from '../../store/useWorkspaceStore';
+import { api } from '../../api/client';
+import type { RepositoryItem } from '../../types';
 
 interface AddRepositoryModalProps {
   isOpen: boolean;
@@ -9,15 +24,82 @@ interface AddRepositoryModalProps {
   onSuccess?: (repoId: number) => void;
 }
 
+type ModalStage = 'input' | 'indexing' | 'completed' | 'error';
+
+interface IndexingStep {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+}
+
+const INDEXING_STEPS: IndexingStep[] = [
+  {
+    id: 'verify',
+    label: 'Connecting & Authorizing',
+    description: 'Validating GitHub repository access and clone URL',
+    icon: FolderGit2,
+  },
+  {
+    id: 'clone',
+    label: 'Ephemeral Git Clone',
+    description: 'Executing shallow clone (--depth 1) into isolated sandbox',
+    icon: GitBranch,
+  },
+  {
+    id: 'ast',
+    label: 'AST Parsing & Symbol Extraction',
+    description: 'Inspecting code hierarchy, classes, functions, and imports',
+    icon: Cpu,
+  },
+  {
+    id: 'embeddings',
+    label: 'Vector Embeddings & RAG Index',
+    description: 'Generating semantic vector embeddings for intelligent code search',
+    icon: Layers,
+  },
+];
+
 export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
 }) => {
-  const { addRepository } = useWorkspace();
+  const { addRepository, triggerIndexing, fetchRepositories } = useWorkspaceStore();
+  const [stage, setStage] = useState<ModalStage>('input');
   const [repoUrl, setRepoUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [activeRepo, setActiveRepo] = useState<RepositoryItem | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timers on unmount or close
+  const cleanupTimers = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      cleanupTimers();
+      setStage('input');
+      setRepoUrl('');
+      setActiveRepo(null);
+      setCurrentStepIndex(0);
+      setElapsedSeconds(0);
+      setError(null);
+    }
+    return () => cleanupTimers();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -30,104 +112,335 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
     }
 
     try {
-      setLoading(true);
       setError(null);
+      setStage('indexing');
+      setCurrentStepIndex(0);
+      setElapsedSeconds(0);
+
+      // Start elapsed timer
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+
+      // Step 1: Add repository to database
+      setCurrentStepIndex(0);
       const newRepo = await addRepository(cleanUrl);
-      setRepoUrl('');
-      onClose();
-      if (onSuccess) {
-        onSuccess(newRepo.id);
-      }
+      setActiveRepo(newRepo);
+
+      // Step 2: Trigger backend indexing
+      setCurrentStepIndex(1);
+      await triggerIndexing(newRepo.id);
+
+      // Simulate step progression visually while waiting for backend
+      const stepProgression = setTimeout(() => {
+        setCurrentStepIndex(2);
+      }, 3000);
+
+      const stepProgression2 = setTimeout(() => {
+        setCurrentStepIndex(3);
+      }, 6000);
+
+      // Start polling repository index status from backend
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const updated = await api.getRepository(newRepo.id);
+          setActiveRepo(updated);
+
+          if (updated.index_status === 'indexed') {
+            cleanupTimers();
+            clearTimeout(stepProgression);
+            clearTimeout(stepProgression2);
+            setCurrentStepIndex(INDEXING_STEPS.length);
+            setStage('completed');
+            await fetchRepositories();
+          } else if (updated.index_status === 'failed') {
+            cleanupTimers();
+            clearTimeout(stepProgression);
+            clearTimeout(stepProgression2);
+            setStage('error');
+            setError('Repository indexing failed. Please ensure the repository is valid and your Gemini API key is configured.');
+          }
+        } catch (pollErr: any) {
+          console.warn('Status poll warning:', pollErr);
+        }
+      }, 1500);
+
     } catch (err: any) {
-      setError(err.message || 'Failed to add repository. Please check URL and permissions.');
-    } finally {
-      setLoading(false);
+      cleanupTimers();
+      setStage('error');
+      setError(err.message || 'Failed to connect repository. Please verify the URL and your access permissions.');
     }
   };
 
+  const handleOpenRepository = () => {
+    if (activeRepo && onSuccess) {
+      onSuccess(activeRepo.id);
+    }
+    onClose();
+  };
+
+  const handleReset = () => {
+    cleanupTimers();
+    setStage('input');
+    setError(null);
+    setCurrentStepIndex(0);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 border border-white/[0.12] shadow-2xl relative glow-purple">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-lg bg-[#09090b] rounded-2xl p-6 sm:p-7 border border-[#1f1f23] shadow-2xl relative flex flex-col transition-all">
         {/* Close Button */}
         <button
           onClick={onClose}
-          disabled={loading}
-          className="absolute right-5 top-5 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition cursor-pointer"
+          className="absolute right-5 top-5 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#18181b] transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-2xl gradient-purple-blue flex items-center justify-center text-white shadow-lg">
-            <FolderGit2 className="w-5 h-5" />
+        {/* Header */}
+        <div className="flex items-center gap-3.5 mb-5">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors ${
+            stage === 'completed'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              : stage === 'error'
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              : 'bg-[#141416] border-[#27272a] text-slate-300'
+          }`}>
+            {stage === 'completed' ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            ) : stage === 'error' ? (
+              <AlertCircle className="w-5 h-5 text-rose-400" />
+            ) : (
+              <FolderGit2 className="w-5 h-5 text-amber-400" />
+            )}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Add GitHub Repository</h3>
-            <p className="text-xs text-slate-400">Clone, parse AST symbols, and generate architecture map</p>
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              {stage === 'input' && 'Add GitHub Repository'}
+              {stage === 'indexing' && 'Indexing Repository...'}
+              {stage === 'completed' && 'Repository Ready!'}
+              {stage === 'error' && 'Indexing Failed'}
+            </h3>
+            <p className="text-xs text-slate-400">
+              {stage === 'input' && 'Clone, parse AST symbols, and generate architecture map'}
+              {stage === 'indexing' && (activeRepo ? activeRepo.full_name : 'Processing code intelligence...')}
+              {stage === 'completed' && 'Codebase analysis and vector index created successfully'}
+              {stage === 'error' && 'An issue occurred during repository indexing'}
+            </p>
           </div>
         </div>
 
-        {/* Error Notification */}
-        {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs sm:text-sm flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-            <span>{error}</span>
+        {/* STAGE 1: INPUT FORM */}
+        {stage === 'input' && (
+          <>
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="repoUrl" className="block text-xs font-medium text-slate-300 mb-1.5">
+                  GitHub Repository URL
+                </label>
+                <div className="relative">
+                  <input
+                    id="repoUrl"
+                    type="text"
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
+                    placeholder="https://github.com/owner/repository"
+                    autoFocus
+                    className="w-full bg-[#121214] border border-[#1f1f23] focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/60 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white placeholder-slate-600 font-mono outline-none transition"
+                  />
+                  <GithubIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Supports any public repository or private repositories you have access to.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!repoUrl.trim()}
+                  className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition disabled:opacity-50 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Connect & Index</span>
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {/* STAGE 2: LIVE INDEXING PROGRESS */}
+        {stage === 'indexing' && (
+          <div className="space-y-5 py-2">
+            {/* Live Timer & Progress Bar */}
+            <div className="p-3.5 rounded-xl bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                <span className="text-xs font-medium text-slate-200">
+                  Indexing pipeline running in background
+                </span>
+              </div>
+              <span className="text-xs font-mono text-amber-400/90 font-semibold">
+                {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, '0')}s
+              </span>
+            </div>
+
+            {/* Step Progression List */}
+            <div className="space-y-3">
+              {INDEXING_STEPS.map((step, idx) => {
+                const isDone = idx < currentStepIndex;
+                const isCurrent = idx === currentStepIndex;
+                const StepIcon = step.icon;
+
+                return (
+                  <div
+                    key={step.id}
+                    className={`flex items-start gap-3.5 p-3 rounded-xl border transition-all ${
+                      isDone
+                        ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-300'
+                        : isCurrent
+                        ? 'bg-amber-500/5 border-amber-500/30 text-white shadow-sm'
+                        : 'bg-[#121214]/50 border-transparent text-slate-500'
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {isDone ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : isCurrent ? (
+                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                      ) : (
+                        <StepIcon className="w-4 h-4 text-slate-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-semibold ${isCurrent ? 'text-amber-400' : isDone ? 'text-slate-200' : 'text-slate-500'}`}>
+                          {step.label}
+                        </p>
+                        {isCurrent && (
+                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer with Background dismissal option */}
+            <div className="flex items-center justify-between pt-3 border-t border-[#1f1f23]">
+              <span className="text-[11px] text-slate-500">
+                You can close this modal; indexing will continue.
+              </span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+              >
+                Hide & Run in Background
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="repoUrl" className="block text-xs font-medium text-slate-300 mb-1.5">
-              GitHub Repository URL
-            </label>
-            <div className="relative">
-              <input
-                id="repoUrl"
-                type="text"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="https://github.com/owner/repository"
-                disabled={loading}
-                autoFocus
-                className="w-full bg-[#0d1017] border border-white/[0.1] focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/60 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 font-mono outline-none transition"
-              />
-              <GithubIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            </div>
-            <p className="text-[11px] text-slate-400 mt-1.5">
-              Supports public and private GitHub repositories.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !repoUrl.trim()}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg glow-purple transition disabled:opacity-50 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Connecting Repo...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  <span>Connect & Index</span>
-                </>
+        {/* STAGE 3: COMPLETED SUCCESS */}
+        {stage === 'completed' && (
+          <div className="space-y-5 py-2 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
+              <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>Codebase intelligence ready!</span>
+              </div>
+              <p className="text-xs text-slate-300">
+                AST symbol tables, import hierarchy, and semantic vector embeddings have been generated and indexed.
+              </p>
+              {activeRepo && (
+                <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
+                    📂 {activeRepo.file_count || 0} Files
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
+                    🧬 {activeRepo.symbol_count || 0} Symbols
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
+                    🌿 {activeRepo.default_branch || 'main'}
+                  </span>
+                </div>
               )}
-            </button>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+              >
+                Done
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenRepository}
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/10 transition cursor-pointer"
+              >
+                <span>Explore Repository</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </form>
+        )}
+
+        {/* STAGE 4: ERROR / FAILED */}
+        {stage === 'error' && (
+          <div className="space-y-4 py-2 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-rose-200">Indexing Interrupted</p>
+                <p className="text-slate-300">{error || 'An unexpected error occurred during repository indexing.'}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Try Again</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

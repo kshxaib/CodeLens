@@ -120,18 +120,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
                     : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] text-slate-300'
                 }`}
               >
-                {user.avatar_url ? (
+                {user?.avatar_url ? (
                   <img
                     src={user.avatar_url}
-                    alt={user.username}
+                    alt={user?.username || 'User'}
                     className="w-7 h-7 rounded-full border border-white/20 object-cover"
                   />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-purple-600/30 flex items-center justify-center text-xs font-semibold text-purple-300">
-                    {user.username.charAt(0).toUpperCase()}
+                  <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-semibold text-amber-400">
+                    {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="hidden sm:inline text-xs font-medium">{user.username}</span>
+                <span className="hidden sm:inline text-xs font-medium">{user?.username || 'Developer'}</span>
                 <Settings className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
               </Link>
 

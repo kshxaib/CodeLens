@@ -141,9 +141,10 @@ def clone_and_scan_repository(
 
     try:
         # Inject token if private repository authentication is needed
-        auth_clone_url = clone_url
-        if github_token and "github.com" in clone_url:
-            auth_clone_url = clone_url.replace(
+        clean_clone_url = clone_url.rstrip("/")
+        auth_clone_url = clean_clone_url
+        if github_token and "github.com" in clean_clone_url:
+            auth_clone_url = clean_clone_url.replace(
                 "https://github.com",
                 f"https://x-access-token:{github_token}@github.com",
             )

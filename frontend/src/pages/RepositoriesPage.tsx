@@ -109,7 +109,7 @@ export const RepositoriesPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search repositories by name..."
-            className="w-full bg-[#131722] border border-[#22283a] focus:border-amber-500/60 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition font-mono"
+            className="w-full bg-[#121214] border border-[#1f1f23] focus:border-amber-500/60 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition font-mono"
           />
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
         </div>
@@ -137,12 +137,12 @@ export const RepositoriesPage: React.FC = () => {
                   setSelectedRepo(repo);
                   navigate(`/repository/${repo.id}`);
                 }}
-                className="rounded-2xl p-5 border border-[#22283a] bg-[#131722] hover:border-amber-500/40 cursor-pointer flex flex-col justify-between group transition-all"
+                className="rounded-2xl p-5 border border-[#1f1f23] bg-[#09090b] hover:border-amber-500/40 cursor-pointer flex flex-col justify-between group transition-all"
               >
                 <div>
                   {/* Top Row: Icon, Title & Status */}
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md">
+                    <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300 group-hover:text-amber-400 group-hover:border-amber-500/40 transition">
                       <FolderGit2 className="w-5 h-5" />
                     </div>
                     {getStatusBadge(repo.index_status, isLocalIndexing)}
@@ -160,7 +160,7 @@ export const RepositoriesPage: React.FC = () => {
                   <div className="flex items-center gap-3 mt-4 text-[11px] text-slate-400 font-mono">
                     <span className="flex items-center gap-1">
                       <GitBranch className="w-3.5 h-3.5 text-amber-400" />
-                      {repo.default_branch}
+                      {repo.default_branch || 'main'}
                     </span>
                     <span>•</span>
                     <span>{repo.file_count || 0} Files</span>
@@ -170,7 +170,7 @@ export const RepositoriesPage: React.FC = () => {
                 </div>
 
                 {/* Bottom Actions Bar */}
-                <div className="mt-5 pt-4 border-t border-[#22283a] flex items-center justify-between">
+                <div className="mt-5 pt-4 border-t border-[#1f1f23] flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Link
                       to={`/repository/${repo.id}/architecture`}
@@ -179,7 +179,7 @@ export const RepositoriesPage: React.FC = () => {
                         setSelectedRepo(repo);
                       }}
                       title="View Architecture Map"
-                      className="p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-[#1c2130] transition cursor-pointer"
+                      className="p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-[#18181b] transition cursor-pointer"
                     >
                       <Network className="w-4 h-4" />
                     </Link>
@@ -190,7 +190,7 @@ export const RepositoriesPage: React.FC = () => {
                         setSelectedRepo(repo);
                       }}
                       title="Open AI Copilot Chat"
-                      className="p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-[#1c2130] transition cursor-pointer"
+                      className="p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-[#18181b] transition cursor-pointer"
                     >
                       <MessageSquare className="w-4 h-4" />
                     </Link>
@@ -198,9 +198,9 @@ export const RepositoriesPage: React.FC = () => {
                       onClick={(e) => handleIndexClick(e, repo.id)}
                       disabled={isLocalIndexing || repo.index_status === 'indexing'}
                       title="Re-Index Repository"
-                      className="p-2 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-[#1c2130] transition disabled:opacity-40 cursor-pointer"
+                      className="p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-[#18181b] transition disabled:opacity-40 cursor-pointer"
                     >
-                      <RefreshCw className={`w-4 h-4 ${isLocalIndexing ? 'animate-spin text-cyan-400' : ''}`} />
+                      <RefreshCw className={`w-4 h-4 ${isLocalIndexing ? 'animate-spin text-amber-400' : ''}`} />
                     </button>
                   </div>
 

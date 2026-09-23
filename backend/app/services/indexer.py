@@ -43,7 +43,7 @@ def index_repository(
         else:
             scanned_files, commit_sha = clone_and_scan_repository(
                 clone_url=repo.clone_url,
-                github_token=github_token or repo.owner,
+                github_token=github_token,
             )
 
         # 3. Clean up previous files in PostgreSQL
@@ -128,4 +128,8 @@ def index_repository(
         print(f"[!] Indexing failed for repository {repository_id}: {e}")
         repo.index_status = "failed"
         db.commit()
-        raise e
+        return {
+            "status": "failed",
+            "repository_id": repository_id,
+            "error": str(e),
+        }

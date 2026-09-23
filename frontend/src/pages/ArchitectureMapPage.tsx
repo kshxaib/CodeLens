@@ -24,7 +24,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { api } from '../api/client';
-import { useWorkspace } from '../context/WorkspaceContext';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
+import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { ArchitectureGraphData, ArchitectureNode, BlastRadiusResponse } from '../types';
 import { LoadingScreen } from '../components/common/LoadingScreen';
 import { ErrorState } from '../components/common/ErrorState';
@@ -34,15 +35,15 @@ const LayerNode = ({ data, selected }: any) => {
   const getLayerColor = (layer: string) => {
     switch (layer) {
       case 'presentation':
-        return 'border-purple-500/50 bg-purple-950/40 text-purple-200 shadow-purple-500/10';
+        return 'border-amber-500/50 bg-[#18181b] text-amber-200 shadow-amber-500/10';
       case 'application':
-        return 'border-blue-500/50 bg-blue-950/40 text-blue-200 shadow-blue-500/10';
+        return 'border-blue-500/50 bg-[#121214] text-blue-200 shadow-blue-500/10';
       case 'domain':
-        return 'border-emerald-500/50 bg-emerald-950/40 text-emerald-200 shadow-emerald-500/10';
+        return 'border-emerald-500/50 bg-[#121214] text-emerald-200 shadow-emerald-500/10';
       case 'infrastructure':
-        return 'border-amber-500/50 bg-amber-950/40 text-amber-200 shadow-amber-500/10';
+        return 'border-purple-500/50 bg-[#121214] text-purple-200 shadow-purple-500/10';
       default:
-        return 'border-slate-500/40 bg-slate-900/40 text-slate-300';
+        return 'border-[#1f1f23] bg-[#09090b] text-slate-300';
     }
   };
 
@@ -86,7 +87,7 @@ const nodeTypes = {
 export const ArchitectureMapPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const repoId = parseInt(id || '0', 10);
-  const { selectedRepo } = useWorkspace();
+  const { selectedRepo } = useWorkspaceStore();
 
   const [graphData, setGraphData] = useState<ArchitectureGraphData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,8 +139,8 @@ export const ArchitectureMapPage: React.FC = () => {
         source: e.source,
         target: e.target,
         animated: true,
-        style: { stroke: 'rgba(168, 85, 247, 0.4)', strokeWidth: 1.5 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' },
+        style: { stroke: 'rgba(245, 158, 11, 0.4)', strokeWidth: 1.5 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' },
       }));
 
       setNodes(flowNodes);
@@ -223,185 +224,187 @@ export const ArchitectureMapPage: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-[calc(100vh-4rem)] flex overflow-hidden bg-[#0a0c10]">
-      {/* Top Floating Control Bar */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-[#121622]/90 backdrop-blur-xl border border-white/[0.1] px-4 py-2 rounded-2xl shadow-2xl">
-        <Link
-          to={`/repository/${repoId}`}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <Network className="w-4 h-4 text-purple-400" />
-          <span className="text-xs font-bold text-white font-mono">
-            {selectedRepo?.name || 'Architecture Map'}
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono">({nodes.length} Nodes)</span>
+    <WorkspaceLayout>
+      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex">
+        {/* Top Floating Control Bar */}
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] px-4 py-2 rounded-2xl shadow-2xl">
+          <Link
+            to={`/repository/${repoId}`}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <Network className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-bold text-white font-mono">
+              {selectedRepo?.name || 'Architecture Map'}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">({nodes.length} Nodes)</span>
+          </div>
+
+          {blastRadius && (
+            <button
+              onClick={clearBlastRadius}
+              className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-300 bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1 rounded-lg border border-rose-500/30 transition cursor-pointer"
+            >
+              <X className="w-3 h-3" /> Clear Blast Focus
+            </button>
+          )}
         </div>
 
-        {blastRadius && (
-          <button
-            onClick={clearBlastRadius}
-            className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-300 bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1 rounded-lg border border-rose-500/30 transition cursor-pointer"
+        {/* React Flow Interactive Canvas */}
+        <div className="flex-1 h-full">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={handleNodeClick}
+            nodeTypes={nodeTypes}
+            fitView
+            className="bg-[#000000]"
           >
-            <X className="w-3 h-3" /> Clear Blast Focus
-          </button>
+            <Background color="rgba(255, 255, 255, 0.05)" gap={20} size={1} />
+            <Controls className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-slate-300" />
+            <MiniMap
+              nodeColor={(n) => {
+                switch ((n.data as any)?.layer) {
+                  case 'presentation':
+                    return '#f59e0b';
+                  case 'application':
+                    return '#3b82f6';
+                  case 'domain':
+                    return '#10b981';
+                  case 'infrastructure':
+                    return '#a855f7';
+                  default:
+                    return '#64748b';
+                }
+              }}
+              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden"
+            />
+          </ReactFlow>
+        </div>
+
+        {/* Right Drawer: Node Inspector & Blast Radius */}
+        {selectedNode && (
+          <div className="w-80 sm:w-96 h-full bg-[#09090b]/95 backdrop-blur-2xl border-l border-[#1f1f23] shadow-2xl p-6 flex flex-col justify-between overflow-y-auto z-30 animate-fadeIn">
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-[#1f1f23] mb-4">
+                <div className="flex items-center gap-2">
+                  <FileCode2 className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-bold text-white truncate font-mono">{selectedNode.label}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedNode(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Node Metadata */}
+              <div className="space-y-4 text-xs font-mono">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase">File Path</span>
+                  <span className="text-slate-200 break-all">{selectedNode.file_path}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase">Architectural Layer</span>
+                  <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase mt-0.5">
+                    {selectedNode.layer}
+                  </span>
+                </div>
+
+                {/* Extracted AST Symbols */}
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase mb-1.5">
+                    AST Symbols ({selectedNode.symbols?.length || 0})
+                  </span>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {selectedNode.symbols && selectedNode.symbols.length > 0 ? (
+                      selectedNode.symbols.map((sym, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-lg bg-[#121214] border border-[#1f1f23]"
+                        >
+                          <div>
+                            <span className="text-amber-300 font-bold">{sym.name}</span>
+                            <span className="text-[10px] text-slate-500 ml-1.5 font-sans">({sym.kind})</span>
+                          </div>
+                          <span className="text-[10px] text-slate-600">L:{sym.line_number}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-slate-500 text-[11px]">No high-level symbols found.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Blast Radius Section */}
+              <div className="mt-6 pt-5 border-t border-[#1f1f23]">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-400" /> Blast Radius Analysis
+                  </span>
+                </div>
+
+                {blastRadius ? (
+                  <div className="space-y-3 p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Target Symbol</span>
+                      <span className="font-bold text-amber-300 font-mono">{blastRadius.target_symbol}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Impact Level</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                        {blastRadius.impact_level}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] pt-2 border-t border-[#1f1f23]">
+                      <span>Upstream Dependents</span>
+                      <span className="font-mono text-amber-300 font-bold">{blastRadius.upstream_count}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span>Downstream Calls</span>
+                      <span className="font-mono text-amber-300 font-bold">{blastRadius.downstream_count}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleComputeBlastRadius()}
+                    disabled={blastLoading}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-amber-500/10 transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {blastLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Computing Blast Radius...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Analyze Impact Radius</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[#1f1f23] text-center">
+              <Link
+                to={`/chat?repository=${repoId}`}
+                className="text-xs text-amber-400 hover:text-amber-300 font-medium inline-flex items-center gap-1 cursor-pointer"
+              >
+                Ask AI Copilot about this module <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
         )}
       </div>
-
-      {/* React Flow Interactive Canvas (Screen 10, 13) */}
-      <div className="flex-1 h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={handleNodeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-[#0a0c10]"
-        >
-          <Background color="rgba(255, 255, 255, 0.05)" gap={20} size={1} />
-          <Controls className="!bg-[#121622] !border-white/[0.1] !rounded-xl !text-slate-300" />
-          <MiniMap
-            nodeColor={(n) => {
-              switch ((n.data as any)?.layer) {
-                case 'presentation':
-                  return '#8b5cf6';
-                case 'application':
-                  return '#3b82f6';
-                case 'domain':
-                  return '#10b981';
-                case 'infrastructure':
-                  return '#f59e0b';
-                default:
-                  return '#64748b';
-              }
-            }}
-            className="!bg-[#121622] !border-white/[0.1] !rounded-xl overflow-hidden"
-          />
-        </ReactFlow>
-      </div>
-
-      {/* Right Drawer: Node Inspector & Blast Radius (Screen 11, 12) */}
-      {selectedNode && (
-        <div className="w-80 sm:w-96 h-full bg-[#111420]/95 backdrop-blur-2xl border-l border-white/[0.1] shadow-2xl p-6 flex flex-col justify-between overflow-y-auto z-30 animate-fadeIn">
-          <div>
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
-              <div className="flex items-center gap-2">
-                <FileCode2 className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm font-bold text-white truncate font-mono">{selectedNode.label}</h3>
-              </div>
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Node Metadata */}
-            <div className="space-y-4 text-xs font-mono">
-              <div>
-                <span className="text-slate-500 block text-[10px] uppercase">File Path</span>
-                <span className="text-slate-200 break-all">{selectedNode.file_path}</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block text-[10px] uppercase">Architectural Layer</span>
-                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase mt-0.5">
-                  {selectedNode.layer}
-                </span>
-              </div>
-
-              {/* Extracted AST Symbols */}
-              <div>
-                <span className="text-slate-500 block text-[10px] uppercase mb-1.5">
-                  AST Symbols ({selectedNode.symbols?.length || 0})
-                </span>
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  {selectedNode.symbols && selectedNode.symbols.length > 0 ? (
-                    selectedNode.symbols.map((sym, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] border border-white/[0.05]"
-                      >
-                        <div>
-                          <span className="text-purple-300 font-bold">{sym.name}</span>
-                          <span className="text-[10px] text-slate-500 ml-1.5 font-sans">({sym.kind})</span>
-                        </div>
-                        <span className="text-[10px] text-slate-600">L:{sym.line_number}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-slate-500 text-[11px]">No high-level symbols found.</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Blast Radius Section (Screen 12) */}
-            <div className="mt-6 pt-5 border-t border-white/[0.08]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-cyan-400" /> Blast Radius Analysis
-                </span>
-              </div>
-
-              {blastRadius ? (
-                <div className="space-y-3 p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-500/30 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Target Symbol</span>
-                    <span className="font-bold text-cyan-300 font-mono">{blastRadius.target_symbol}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Impact Level</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                      {blastRadius.impact_level}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] pt-2 border-t border-white/[0.08]">
-                    <span>Upstream Dependents</span>
-                    <span className="font-mono text-amber-300 font-bold">{blastRadius.upstream_count}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span>Downstream Calls</span>
-                    <span className="font-mono text-cyan-300 font-bold">{blastRadius.downstream_count}</span>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleComputeBlastRadius()}
-                  disabled={blastLoading}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-lg glow-cyan transition disabled:opacity-50 cursor-pointer"
-                >
-                  {blastLoading ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Computing Blast Radius...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Analyze Impact Radius</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/[0.08] text-center">
-            <Link
-              to={`/chat?repository=${repoId}`}
-              className="text-xs text-purple-400 hover:text-purple-300 font-medium inline-flex items-center gap-1 cursor-pointer"
-            >
-              Ask AI Copilot about this module <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
+    </WorkspaceLayout>
   );
 };

@@ -1,5 +1,6 @@
 import re
 from typing import List, Optional
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -16,6 +17,50 @@ from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
+
+
+@router.get("/github/user-repos", summary="Fetch GitHub Repositories for Authenticated User")
+async def get_github_user_repos(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Fetches the authenticated user's repositories (public, personal private, and accessible collaborator/org repos)
+    directly from GitHub REST API.
+    """
+    if not current_user.github_access_token:
+        return {"repositories": []}
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            res = await client.get(
+                "https://api.github.com/user/repos",
+                params={"per_page": 100, "sort": "updated", "affiliation": "owner,collaborator,organization_member"},
+                headers={
+                    "Authorization": f"Bearer {current_user.github_access_token}",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
+            if res.status_code == 200:
+                data = res.json()
+                repos = [
+                    {
+                        "id": r.get("id"),
+                        "name": r.get("name"),
+                        "full_name": r.get("full_name"),
+                        "private": r.get("private", False),
+                        "html_url": r.get("html_url"),
+                        "description": r.get("description"),
+                        "default_branch": r.get("default_branch", "main"),
+                        "owner": r.get("owner", {}).get("login"),
+                        "is_fork": r.get("fork", False),
+                    }
+                    for r in data
+                ]
+                return {"repositories": repos}
+    except Exception as e:
+        print(f"[!] Error fetching user GitHub repos: {e}")
+
+    return {"repositories": []}
 
 
 def get_user_repository_access(
@@ -64,13 +109,13 @@ async def add_repository(
     """
     clean_url = payload.url.strip().rstrip("/")
     if clean_url.endswith(".git"):
-        clean_url = clean_url[:-4]
+        clean_url = clean_url[:-4].rstrip("/")
 
     match = re.match(r"^https?://github\.com/([^/]+)/([^/]+)$", clean_url)
     if not match:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid GitHub URL format.")
 
-    owner, repo_name = match.group(1), match.group(2)
+    owner, repo_name = match.group(1).strip(), match.group(2).strip()
     full_name = f"{owner}/{repo_name}"
 
     # Check if repo already exists in DB

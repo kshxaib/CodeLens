@@ -46,16 +46,24 @@ if _cors_origins_raw:
     except Exception:
         BACKEND_CORS_ORIGINS = [item.strip() for item in _cors_origins_raw.split(",") if item.strip()]
 else:
-    BACKEND_CORS_ORIGINS = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+    BACKEND_CORS_ORIGINS = []
+
+for dev_origin in ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]:
+    if dev_origin not in BACKEND_CORS_ORIGINS:
+        BACKEND_CORS_ORIGINS.append(dev_origin)
 
 
 def get_encryption_key() -> bytes:
-    """Returns the encryption key in bytes. Generates a fallback key if not set."""
+    """Returns the encryption key in bytes. Validates key format and falls back if invalid."""
+    fallback_key = b"fQsk50EgvkWL89Tzazno3G-HDmSKbS5wLNZO6vyOBd8="
     if ENCRYPTION_SECRET_KEY:
-        return ENCRYPTION_SECRET_KEY.encode()
-    return b"Z1NqZ1k5T215RjEwTFk2Q1I0VDFhV253T0pQeDRZdTQ="
+        try:
+            import base64
+            key_bytes = ENCRYPTION_SECRET_KEY.strip().encode()
+            # Fernet key must be 32 url-safe base64 decoded bytes (44 encoded chars)
+            decoded = base64.urlsafe_b64decode(key_bytes)
+            if len(decoded) == 32:
+                return key_bytes
+        except Exception:
+            pass
+    return fallback_key

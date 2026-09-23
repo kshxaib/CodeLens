@@ -10,14 +10,18 @@ import {
   Trash2,
   Loader2,
   Save,
+  LogOut,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../store/useAuthStore';
+import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { LogoutConfirmModal } from '../components/common/LogoutConfirmModal';
 
 export const ProfileSettingsPage: React.FC = () => {
-  const { user, updateGeminiKey, refreshUser } = useAuth();
+  const { user, updateGeminiKey, refreshUser } = useAuthStore();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleSaveKey = async (e: React.FormEvent) => {
@@ -32,6 +36,7 @@ export const ProfileSettingsPage: React.FC = () => {
       setSubmitting(true);
       setFeedback(null);
       await updateGeminiKey(cleanKey);
+      await refreshUser();
       setFeedback({
         type: 'success',
         message: 'Gemini API key successfully verified and securely stored.',
@@ -66,42 +71,45 @@ export const ProfileSettingsPage: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <WorkspaceLayout>
       {/* Header */}
       <div>
+        <div className="text-muted-foreground text-xs font-mono mb-1">
+          Workspace / Profile & Settings
+        </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Account & Security Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
           Manage your GitHub identity and configure your BYOK (Bring Your Own Key) Gemini API credentials.
         </p>
       </div>
 
       {/* Grid: Profile Card & API Key Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: GitHub Profile Info */}
-        <div className="glass-card rounded-2xl p-6 border border-white/[0.08] flex flex-col justify-between">
+        <div className="rounded-xl p-6 bg-[#09090b] border border-[#1f1f23] flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-4 mb-6">
-              {user.avatar_url ? (
+              {user?.avatar_url ? (
                 <img
                   src={user.avatar_url}
-                  alt={user.username}
-                  className="w-16 h-16 rounded-2xl border-2 border-purple-500/40 object-cover shadow-lg"
+                  alt={user?.username || 'User'}
+                  className="w-16 h-16 rounded-2xl border border-[#27272a] object-cover shadow-lg"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-2xl gradient-purple-blue flex items-center justify-center text-white text-xl font-bold">
-                  {user.username.charAt(0).toUpperCase()}
+                <div className="w-16 h-16 rounded-2xl bg-[#141416] flex items-center justify-center text-slate-200 text-xl font-bold border border-[#27272a] font-mono">
+                  {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-semibold text-white">{user.username}</h3>
-                <p className="text-xs text-slate-400">{user.email || 'GitHub OAuth User'}</p>
-                <div className="inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
-                  <CheckCircle2 className="w-3 h-3" /> GitHub Connected
+                <h3 className="text-lg font-semibold text-white">{user?.username || 'Developer'}</h3>
+                <p className="text-xs text-slate-400">{user?.email || 'GitHub OAuth User'}</p>
+                <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-[#141416] border border-[#27272a] text-slate-300 text-[11px] font-medium">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" /> GitHub Connected
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3 text-xs border-t border-white/[0.08] pt-4">
+            <div className="space-y-3 text-xs border-t border-[#1f1f23] pt-4">
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">GitHub ID</span>
                 <span className="font-mono text-slate-200">{user.github_id}</span>
@@ -113,20 +121,30 @@ export const ProfileSettingsPage: React.FC = () => {
                 </span>
               </div>
             </div>
+            <div className="mt-5 pt-4 border-t border-[#1f1f23]">
+              <button
+                type="button"
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#141416] hover:bg-rose-500/10 text-rose-400 border border-[#27272a] hover:border-rose-500/30 text-xs font-semibold transition cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out of CodeLens</span>
+              </button>
+            </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/[0.08] text-[11px] text-slate-500 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-purple-400" />
-            <span>Zero-retention architecture active</span>
+          <div className="mt-6 pt-4 border-t border-[#1f1f23] text-[11px] text-slate-500 flex items-center gap-1.5 font-mono">
+            <Shield className="w-3.5 h-3.5 text-amber-400" />
+            <span>Zero-retention client key architecture</span>
           </div>
         </div>
 
-        {/* Right: BYOK Gemini Key Management (Screens 21-25) */}
-        <div className="glass-card rounded-2xl p-6 sm:p-8 lg:col-span-2 border border-white/[0.08] shadow-xl">
+        {/* Right: BYOK Gemini Key Management */}
+        <div className="rounded-xl p-6 sm:p-8 lg:col-span-2 bg-[#09090b] border border-[#1f1f23] shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                <KeyRound className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300">
+                <KeyRound className="w-5 h-5 text-amber-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Google Gemini API Key (BYOK)</h2>
@@ -138,7 +156,7 @@ export const ProfileSettingsPage: React.FC = () => {
               href="https://aistudio.google.com/app/apikey"
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 font-medium cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-medium cursor-pointer"
             >
               Get Free Key <ExternalLink className="w-3 h-3" />
             </a>
@@ -164,21 +182,21 @@ export const ProfileSettingsPage: React.FC = () => {
 
           {/* Current Key Status */}
           {user.has_gemini_key ? (
-            <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="mb-6 p-4 rounded-xl bg-[#121214] border border-[#1f1f23] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="p-1 rounded bg-purple-500/20 text-purple-400">
+                <span className="p-1 rounded bg-[#18181b] text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" />
                 </span>
                 <div>
                   <div className="text-xs font-semibold text-white">Active Gemini Key Configured</div>
-                  <div className="text-[11px] font-mono text-purple-300">{user.masked_gemini_key}</div>
+                  <div className="text-[11px] font-mono text-slate-400">{user.masked_gemini_key}</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleRevokeKey}
                 disabled={submitting}
-                className="inline-flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg border border-rose-500/20 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 bg-[#141416] hover:bg-rose-500/10 px-3 py-1.5 rounded-lg border border-[#27272a] hover:border-rose-500/30 transition disabled:opacity-50 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Revoke Key
               </button>
@@ -204,7 +222,7 @@ export const ProfileSettingsPage: React.FC = () => {
                   onChange={(e) => setApiKeyInput(e.target.value)}
                   placeholder="AIzaSy..."
                   disabled={submitting}
-                  className="w-full bg-[#0d1017] border border-white/[0.1] focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 font-mono transition outline-none"
+                  className="w-full bg-[#121214] border border-[#1f1f23] focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 font-mono transition outline-none"
                 />
                 <button
                   type="button"
@@ -219,13 +237,13 @@ export const ProfileSettingsPage: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <span className="text-[11px] text-slate-400">
-                Encrypted with AES-Fernet before saving. Handshake tested on submit.
+                Encrypted with AES-Fernet before saving. Handshake verified on submit.
               </span>
 
               <button
                 type="submit"
                 disabled={submitting || !apiKeyInput.trim()}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg glow-purple transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {submitting ? (
                   <>
@@ -243,6 +261,11 @@ export const ProfileSettingsPage: React.FC = () => {
           </form>
         </div>
       </div>
-    </div>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
+    </WorkspaceLayout>
   );
 };

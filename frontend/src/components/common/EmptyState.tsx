@@ -49,16 +49,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const displayAction = actionText || defaults.actionText;
 
   return (
-    <div className="glass-card rounded-2xl p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 border border-white/[0.08]">
-      <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-5">
-        <Icon className="w-7 h-7" />
+    <div className="rounded-2xl p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 bg-[#09090b] border border-[#1f1f23]">
+      <div className="w-12 h-12 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300 mb-4">
+        <Icon className="w-6 h-6" />
       </div>
-      <h4 className="text-lg font-semibold text-white mb-2">{displayTitle}</h4>
-      <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">{displayDesc}</p>
+      <h4 className="text-base font-semibold text-white mb-1.5">{displayTitle}</h4>
+      <p className="text-xs text-slate-400 mb-5 leading-relaxed">{displayDesc}</p>
       {displayAction && onAction && (
         <button
           onClick={onAction}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg glow-purple transition"
+          className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           {displayAction}
