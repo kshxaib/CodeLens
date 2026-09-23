@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+ï»¿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ReactFlow,
@@ -29,8 +29,6 @@ import {
   Code2,
   GitBranch,
   AlertTriangle,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
@@ -282,7 +280,7 @@ export const ArchitectureMapPage: React.FC = () => {
                 {[
                   { icon: <MousePointer2 className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />, text: 'Click any node to inspect details in the right panel.' },
                   { icon: <Zap className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />, text: 'Press "Analyze Impact Radius" to highlight upstream & downstream.' },
-                  { icon: <GitBranch className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />, text: 'Scroll to zoom · Drag to pan · MiniMap to jump.' },
+                  { icon: <GitBranch className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />, text: 'Scroll to zoom Â· Drag to pan Â· MiniMap to jump.' },
                   { icon: <Code2 className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />, text: 'Click a symbol in the drawer to blast on that specific symbol.' },
                 ].map((s, i) => (
                   <li key={i} className="flex items-start gap-1.5">
@@ -294,18 +292,6 @@ export const ArchitectureMapPage: React.FC = () => {
             </div>
 
             {/* Stats */}
-            <div className="mt-auto pt-4 border-t border-[#1f1f23]">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 rounded-xl bg-[#111113] border border-[#1f1f23] text-center">
-                  <div className="text-base font-bold text-amber-400 font-mono">{nodes.length}</div>
-                  <div className="text-[9px] text-slate-500 uppercase tracking-wider">Nodes</div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#111113] border border-[#1f1f23] text-center">
-                  <div className="text-base font-bold text-sky-400 font-mono">{edges.length}</div>
-                  <div className="text-[9px] text-slate-500 uppercase tracking-wider">Edges</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -324,17 +310,13 @@ export const ArchitectureMapPage: React.FC = () => {
           className="arc-topbar absolute top-4 z-30 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] px-3 py-2 rounded-2xl shadow-2xl"
           style={{ left: leftOpen ? '276px' : '16px' }}
         >
-          <button onClick={() => setLeftOpen((v) => !v)} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer">
-            {leftOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
-          </button>
-          <div className="w-px h-4 bg-[#1f1f23]" />
           <Link to={`/repository/${repoId}`} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="flex items-center gap-2">
             <Network className="w-4 h-4 text-amber-400" />
             <span className="text-xs font-bold text-white font-mono">{selectedRepo?.name || 'Architecture Map'}</span>
-            <span className="text-[10px] text-slate-500 font-mono">{nodes.length} nodes · {edges.length} edges</span>
+            <span className="text-[10px] text-slate-500 font-mono">{nodes.length} nodes Â· {edges.length} edges</span>
           </div>
           {blastRadius && (
             <button onClick={clearBlastRadius} className="ml-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-300 bg-rose-500/15 hover:bg-rose-500/25 px-2.5 py-1 rounded-lg border border-rose-500/30 transition cursor-pointer">
