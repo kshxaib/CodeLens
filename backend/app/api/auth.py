@@ -92,18 +92,27 @@ def serialize_user_profile(user: User) -> UserProfileResponse:
 async def get_github_oauth_url(redirect_uri: Optional[str] = None, redirect: bool = False):
     """
     Generates GitHub OAuth authorization URL with required scopes (`read:user repo`).
-    If redirect=True is passed, automatically performs an HTTP 307 Redirect.
+    If redirect_uri is not explicitly provided, omits the parameter so GitHub automatically
+    uses the registered Authorization callback URL configured in the developer OAuth app.
     """
     state = secrets.token_urlsafe(16)
-    callback_target = redirect_uri or f"{FRONTEND_URL}/"
     
-    oauth_url = (
-        f"https://github.com/login/oauth/authorize"
-        f"?client_id={GITHUB_CLIENT_ID}"
-        f"&redirect_uri={callback_target}"
-        f"&scope=read:user%20repo"
-        f"&state={state}"
-    )
+    if redirect_uri:
+        oauth_url = (
+            f"https://github.com/login/oauth/authorize"
+            f"?client_id={GITHUB_CLIENT_ID}"
+            f"&redirect_uri={redirect_uri}"
+            f"&scope=read:user%20repo"
+            f"&state={state}"
+        )
+    else:
+        oauth_url = (
+            f"https://github.com/login/oauth/authorize"
+            f"?client_id={GITHUB_CLIENT_ID}"
+            f"&scope=read:user%20repo"
+            f"&state={state}"
+        )
+
     if redirect:
         return RedirectResponse(url=oauth_url)
     return {"url": oauth_url, "state": state}
