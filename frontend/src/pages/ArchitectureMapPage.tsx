@@ -35,15 +35,19 @@ const LayerNode = ({ data, selected }: any) => {
   const getLayerColor = (layer: string) => {
     switch (layer) {
       case 'presentation':
-        return 'border-amber-500/50 bg-[#18181b] text-amber-200 shadow-amber-500/10';
+      case 'frontend':
+        return 'border-amber-500/40 bg-[#121214] text-slate-200';
+      case 'api_gateway':
       case 'application':
-        return 'border-blue-500/50 bg-[#121214] text-blue-200 shadow-blue-500/10';
+        return 'border-sky-500/40 bg-[#121214] text-slate-200';
+      case 'service':
       case 'domain':
-        return 'border-emerald-500/50 bg-[#121214] text-emerald-200 shadow-emerald-500/10';
+        return 'border-emerald-500/40 bg-[#121214] text-slate-200';
+      case 'data':
       case 'infrastructure':
-        return 'border-purple-500/50 bg-[#121214] text-purple-200 shadow-purple-500/10';
+        return 'border-purple-500/40 bg-[#121214] text-slate-200';
       default:
-        return 'border-[#1f1f23] bg-[#09090b] text-slate-300';
+        return 'border-[#1f1f23] bg-[#121214] text-slate-300';
     }
   };
 
@@ -53,20 +57,20 @@ const LayerNode = ({ data, selected }: any) => {
 
   let highlightClass = '';
   if (isBlastTarget) {
-    highlightClass = 'ring-4 ring-rose-500 bg-rose-950/60 shadow-2xl scale-105';
+    highlightClass = 'ring-2 ring-rose-500 bg-[#181215] shadow-2xl scale-105';
   } else if (isUpstream) {
-    highlightClass = 'ring-2 ring-amber-400 bg-amber-950/40';
+    highlightClass = 'ring-2 ring-amber-400 bg-[#181512]';
   } else if (isDownstream) {
-    highlightClass = 'ring-2 ring-cyan-400 bg-cyan-950/40';
+    highlightClass = 'ring-2 ring-sky-400 bg-[#121618]';
   }
 
   return (
     <div
       className={`px-4 py-3 rounded-2xl border backdrop-blur-md shadow-xl transition-all min-w-[200px] ${getLayerColor(
         data.layer
-      )} ${selected ? 'ring-2 ring-purple-400 scale-105' : ''} ${highlightClass}`}
+      )} ${selected ? 'ring-2 ring-amber-400 scale-105' : ''} ${highlightClass}`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-purple-400 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-slate-400 !w-2 !h-2" />
       <div className="flex items-center justify-between gap-2 mb-1">
         <span className="text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-white/[0.08] font-bold">
           {data.layer}
@@ -75,7 +79,7 @@ const LayerNode = ({ data, selected }: any) => {
       </div>
       <div className="font-mono font-bold text-xs truncate">{data.label}</div>
       <div className="text-[10px] opacity-60 font-mono truncate mt-0.5">{data.file_path}</div>
-      <Handle type="source" position={Position.Bottom} className="!bg-purple-400 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-slate-400 !w-2 !h-2" />
     </div>
   );
 };
@@ -107,34 +111,49 @@ export const ArchitectureMapPage: React.FC = () => {
       const data = await api.getArchitecture(repoId);
       setGraphData(data);
 
-      // Auto Layout Nodes in 4 Layer Bands
+      // Auto Layout Nodes across Layer Bands
       const layerPositions: Record<string, { x: number; y: number; count: number }> = {
         presentation: { x: 50, y: 50, count: 0 },
+        frontend: { x: 50, y: 50, count: 0 },
+        api_gateway: { x: 50, y: 220, count: 0 },
         application: { x: 50, y: 220, count: 0 },
+        service: { x: 50, y: 390, count: 0 },
         domain: { x: 50, y: 390, count: 0 },
+        data: { x: 50, y: 560, count: 0 },
         infrastructure: { x: 50, y: 560, count: 0 },
         unknown: { x: 50, y: 730, count: 0 },
       };
 
-      const flowNodes: Node[] = data.nodes.map((n) => {
-        const layer = n.layer || 'unknown';
+      const rawNodes = data?.nodes || [];
+      const rawEdges = data?.edges || [];
+
+      const flowNodes: Node[] = rawNodes.map((n: any) => {
+        const nodeData = n.data || {};
+        const layer = n.layer || nodeData.layer || 'service';
         const posMeta = layerPositions[layer] || layerPositions.unknown;
         const xPos = posMeta.x + posMeta.count * 250;
         const yPos = posMeta.y;
         posMeta.count += 1;
 
+        const filePath = nodeData.filePath || nodeData.file_path || n.file_path || '';
+        const rawLabel = nodeData.label || n.label || (filePath ? filePath.split(/[/\\]/).pop() : n.id || 'Module');
+
         return {
           id: n.id,
           type: 'layerNode',
-          position: { x: xPos, y: yPos },
+          position: n.position || { x: xPos, y: yPos },
           data: {
+            ...nodeData,
             ...n,
-            label: n.label || n.file_path.split('/').pop(),
+            label: rawLabel,
+            file_path: filePath,
+            layer: layer,
+            symbols: nodeData.topSymbols || n.symbols || [],
           },
         };
       });
 
-      const flowEdges: Edge[] = data.edges.map((e, idx) => ({
+      const flowEdges: Edge[] = rawEdges.map((e: any, idx: number) => ({
         id: e.id || `edge-${idx}`,
         source: e.source,
         target: e.target,
