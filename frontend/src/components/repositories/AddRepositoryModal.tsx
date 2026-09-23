@@ -6,12 +6,11 @@ import {
   Plus,
   AlertCircle,
   CheckCircle2,
-  Sparkles,
-  Layers,
-  Cpu,
   ArrowRight,
   RefreshCw,
   GitBranch,
+  Cpu,
+  Layers,
 } from 'lucide-react';
 import { GithubIcon } from '../common/Icons';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
@@ -76,7 +75,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Clean up timers on unmount or close
   const cleanupTimers = () => {
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
@@ -131,7 +129,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
       setCurrentStepIndex(1);
       await triggerIndexing(newRepo.id);
 
-      // Simulate step progression visually while waiting for backend
+      // Simulated step visuals while background executes
       const stepProgression = setTimeout(() => {
         setCurrentStepIndex(2);
       }, 3000);
@@ -140,7 +138,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         setCurrentStepIndex(3);
       }, 6000);
 
-      // Start polling repository index status from backend
+      // Poll repository index status
       pollIntervalRef.current = setInterval(async () => {
         try {
           const updated = await api.getRepository(newRepo.id);
@@ -158,7 +156,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
             clearTimeout(stepProgression);
             clearTimeout(stepProgression2);
             setStage('error');
-            setError('Repository indexing failed. Please ensure the repository is valid and your Gemini API key is configured.');
+            setError('Repository indexing failed. Please verify the URL or ensure your Gemini API key is configured.');
           }
         } catch (pollErr: any) {
           console.warn('Status poll warning:', pollErr);
@@ -199,32 +197,26 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
 
         {/* Header */}
         <div className="flex items-center gap-3.5 mb-5">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors ${
-            stage === 'completed'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : stage === 'error'
-              ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-              : 'bg-[#141416] border-[#27272a] text-slate-300'
-          }`}>
+          <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300">
             {stage === 'completed' ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <CheckCircle2 className="w-5 h-5 text-white" />
             ) : stage === 'error' ? (
               <AlertCircle className="w-5 h-5 text-rose-400" />
             ) : (
-              <FolderGit2 className="w-5 h-5 text-amber-400" />
+              <FolderGit2 className="w-5 h-5 text-slate-300" />
             )}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">
+            <h3 className="text-base font-bold text-white tracking-tight">
               {stage === 'input' && 'Add GitHub Repository'}
               {stage === 'indexing' && 'Indexing Repository...'}
-              {stage === 'completed' && 'Repository Ready!'}
+              {stage === 'completed' && 'Repository Indexed'}
               {stage === 'error' && 'Indexing Failed'}
             </h3>
             <p className="text-xs text-slate-400">
               {stage === 'input' && 'Clone, parse AST symbols, and generate architecture map'}
-              {stage === 'indexing' && (activeRepo ? activeRepo.full_name : 'Processing code intelligence...')}
-              {stage === 'completed' && 'Codebase analysis and vector index created successfully'}
+              {stage === 'indexing' && (activeRepo ? activeRepo.full_name : 'Processing codebase intelligence...')}
+              {stage === 'completed' && 'Symbol extraction and vector embeddings ready'}
               {stage === 'error' && 'An issue occurred during repository indexing'}
             </p>
           </div>
@@ -234,7 +226,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         {stage === 'input' && (
           <>
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-[#141416] border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
@@ -257,7 +249,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                   />
                   <GithubIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2">
+                <p className="text-[11px] text-slate-500 mt-2">
                   Supports any public repository or private repositories you have access to.
                 </p>
               </div>
@@ -286,22 +278,22 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
 
         {/* STAGE 2: LIVE INDEXING PROGRESS */}
         {stage === 'indexing' && (
-          <div className="space-y-5 py-2">
-            {/* Live Timer & Progress Bar */}
-            <div className="p-3.5 rounded-xl bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
+          <div className="space-y-4 py-1">
+            {/* Timer Bar */}
+            <div className="p-3 rounded-xl bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-                <span className="text-xs font-medium text-slate-200">
+                <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                <span className="text-xs font-medium text-slate-300">
                   Indexing pipeline running in background
                 </span>
               </div>
-              <span className="text-xs font-mono text-amber-400/90 font-semibold">
+              <span className="text-xs font-mono text-slate-400 font-medium">
                 {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, '0')}s
               </span>
             </div>
 
             {/* Step Progression List */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {INDEXING_STEPS.map((step, idx) => {
                 const isDone = idx < currentStepIndex;
                 const isCurrent = idx === currentStepIndex;
@@ -312,28 +304,28 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                     key={step.id}
                     className={`flex items-start gap-3.5 p-3 rounded-xl border transition-all ${
                       isDone
-                        ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-300'
+                        ? 'bg-[#121214] border-[#1f1f23] text-slate-300'
                         : isCurrent
-                        ? 'bg-amber-500/5 border-amber-500/30 text-white shadow-sm'
-                        : 'bg-[#121214]/50 border-transparent text-slate-500'
+                        ? 'bg-[#18181b] border-[#27272a] text-white shadow-sm'
+                        : 'bg-[#0e0e10] border-transparent text-slate-600'
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
                       {isDone ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-slate-300" />
                       ) : isCurrent ? (
-                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                        <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
                       ) : (
                         <StepIcon className="w-4 h-4 text-slate-600" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className={`text-xs font-semibold ${isCurrent ? 'text-amber-400' : isDone ? 'text-slate-200' : 'text-slate-500'}`}>
+                        <p className={`text-xs font-semibold ${isCurrent ? 'text-white' : isDone ? 'text-slate-300' : 'text-slate-500'}`}>
                           {step.label}
                         </p>
                         {isCurrent && (
-                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#27272a] text-slate-300 border border-[#3f3f46]">
                             Active
                           </span>
                         )}
@@ -355,7 +347,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer"
               >
                 Hide & Run in Background
               </button>
@@ -365,25 +357,25 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
 
         {/* STAGE 3: COMPLETED SUCCESS */}
         {stage === 'completed' && (
-          <div className="space-y-5 py-2 animate-fadeIn">
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-              <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>Codebase intelligence ready!</span>
+          <div className="space-y-4 py-1 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-[#121214] border border-[#1f1f23] space-y-3">
+              <div>
+                <h4 className="text-sm font-semibold text-white">Codebase Intelligence Ready</h4>
+                <p className="text-xs text-slate-400 mt-1">
+                  AST symbol tables, import hierarchy, and semantic vector embeddings have been indexed.
+                </p>
               </div>
-              <p className="text-xs text-slate-300">
-                AST symbol tables, import hierarchy, and semantic vector embeddings have been generated and indexed.
-              </p>
+
               {activeRepo && (
                 <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
-                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
-                    📂 {activeRepo.file_count || 0} Files
+                  <span className="px-2.5 py-1 rounded-lg bg-[#18181b] border border-[#27272a] text-slate-300">
+                    {activeRepo.file_count || 0} Files
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
-                    🧬 {activeRepo.symbol_count || 0} Symbols
+                  <span className="px-2.5 py-1 rounded-lg bg-[#18181b] border border-[#27272a] text-slate-300">
+                    {activeRepo.symbol_count || 0} Symbols
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/30 text-emerald-300">
-                    🌿 {activeRepo.default_branch || 'main'}
+                  <span className="px-2.5 py-1 rounded-lg bg-[#18181b] border border-[#27272a] text-slate-300">
+                    {activeRepo.default_branch || 'main'}
                   </span>
                 </div>
               )}
@@ -401,7 +393,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenRepository}
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/10 transition cursor-pointer"
+                className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
               >
                 <span>Explore Repository</span>
                 <ArrowRight className="w-4 h-4" />
@@ -412,12 +404,12 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
 
         {/* STAGE 4: ERROR / FAILED */}
         {stage === 'error' && (
-          <div className="space-y-4 py-2 animate-fadeIn">
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-3">
+          <div className="space-y-4 py-1 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-[#121214] border border-[#1f1f23] text-xs flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="font-semibold text-rose-200">Indexing Interrupted</p>
-                <p className="text-slate-300">{error || 'An unexpected error occurred during repository indexing.'}</p>
+                <p className="font-semibold text-white">Indexing Interrupted</p>
+                <p className="text-slate-400">{error || 'An unexpected error occurred during repository indexing.'}</p>
               </div>
             </div>
 
