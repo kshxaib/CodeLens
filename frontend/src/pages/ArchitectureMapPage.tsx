@@ -141,7 +141,7 @@ export const ArchitectureMapPage: React.FC = () => {
           id: n.id,
           type: 'layerNode',
           position: n.position || { x: xPos, y: yPos },
-          data: { ...nodeData, ...n, label: rawLabel, file_path: filePath, layer: normalizedLayer, symbols: nodeData.topSymbols || n.symbols || [] },
+          data: { ...nodeData, label: rawLabel, file_path: filePath || nodeData.filePath, layer: normalizedLayer, symbols: nodeData.topSymbols || n.symbols || [], symbolCount: nodeData.symbolCount || 0, lineCount: nodeData.lineCount || 0 },
         };
       });
 
@@ -167,8 +167,7 @@ export const ArchitectureMapPage: React.FC = () => {
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      const matched = graphData?.nodes.find((n) => n.id === node.id);
-      setSelectedNode(matched || (node.data as any));
+      setSelectedNode(node.data as any);
       setBlastRadius(null);
     },
     [graphData]
@@ -392,17 +391,29 @@ export const ArchitectureMapPage: React.FC = () => {
               })()}
 
               {/* Meta */}
-              <div className="space-y-3 text-xs font-mono mb-5">
+              <div className="space-y-0 rounded-xl border border-[#1f1f23] overflow-hidden mb-5 text-xs font-mono">
                 {selectedNode.file_path && (
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">File Path</span>
-                    <span className="text-slate-300 break-all text-[11px] leading-relaxed">{selectedNode.file_path}</span>
+                  <div className="px-3 py-2.5 border-b border-[#1f1f23]">
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block mb-0.5">File Path</span>
+                    <span className="text-slate-300 break-all text-[10px] leading-relaxed">{selectedNode.file_path || (selectedNode as any).filePath}</span>
                   </div>
                 )}
-                {selectedNode.id && (
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Node ID</span>
-                    <span className="text-slate-500 text-[10px]">{selectedNode.id}</span>
+                {(selectedNode as any).language && (
+                  <div className="px-3 py-2.5 border-b border-[#1f1f23] flex justify-between items-center">
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Language</span>
+                    <span className="text-amber-300 text-[10px] font-bold uppercase">{(selectedNode as any).language}</span>
+                  </div>
+                )}
+                {(selectedNode as any).lineCount > 0 && (
+                  <div className="px-3 py-2.5 border-b border-[#1f1f23] flex justify-between items-center">
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Lines of Code</span>
+                    <span className="text-slate-300 text-[10px] font-bold">{(selectedNode as any).lineCount}</span>
+                  </div>
+                )}
+                {(selectedNode as any).symbolCount > 0 && (
+                  <div className="px-3 py-2.5 flex justify-between items-center">
+                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Total Symbols</span>
+                    <span className="text-slate-300 text-[10px] font-bold">{(selectedNode as any).symbolCount}</span>
                   </div>
                 )}
               </div>
@@ -411,7 +422,7 @@ export const ArchitectureMapPage: React.FC = () => {
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono font-bold">
-                    AST Symbols ({selectedNode.symbols?.length || 0})
+                    AST Symbols ({selectedNode.symbols?.length || 0} shown{(selectedNode as any).symbolCount > (selectedNode.symbols?.length || 0) ? ` of ${(selectedNode as any).symbolCount}` : ""})
                   </span>
                   {selectedNode.symbols && selectedNode.symbols.length > 0 && (
                     <span className="text-[9px] text-slate-600 font-mono">click to blast</span>
@@ -430,7 +441,7 @@ export const ArchitectureMapPage: React.FC = () => {
                           <span className="text-[9px] text-slate-600 font-sans capitalize">{sym.kind}</span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                          <span className="text-[9px] text-slate-600 font-mono">L:{sym.line_number}</span>
+                          <span className="text-[9px] text-slate-600 font-mono">L:{sym.line ?? sym.line_number}</span>
                           <Zap className="w-2.5 h-2.5 text-slate-700 group-hover:text-amber-400 transition" />
                         </div>
                       </button>
@@ -500,3 +511,5 @@ export const ArchitectureMapPage: React.FC = () => {
     </WorkspaceLayout>
   );
 };
+
+
