@@ -7,6 +7,8 @@ from app.core.config import (
     BACKEND_CORS_ORIGINS,
     API_V1_STR,
 )
+from app.db.session import engine, Base
+import app.db.models  # Import all models to register with Base.metadata
 from app.api.health import router as health_router
 
 
@@ -14,6 +16,12 @@ from app.api.health import router as health_router
 async def lifespan(app: FastAPI):
     """Application startup and shutdown lifecycle event handler."""
     print(f"[*] Starting {PROJECT_NAME} in {ENVIRONMENT} mode...")
+    try:
+        # Automatically create tables in PostgreSQL if not present
+        Base.metadata.create_all(bind=engine)
+        print("[*] Database schema and tables verified successfully.")
+    except Exception as e:
+        print(f"[!] Database table initialization error: {e}")
     yield
     print(f"[*] Shutting down {PROJECT_NAME}...")
 
