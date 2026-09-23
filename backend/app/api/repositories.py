@@ -1,0 +1,268 @@
+import re
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.db.models import User, Repository, RepositoryAccess, File, ArchitectureGraph
+from app.api.auth import get_current_user
+from app.core.security import decrypt_api_key
+from app.schemas.repository import (
+    RepositoryRead,
+    RepositoryListResponse,
+    AddRepositoryRequest,
+    RepositorySummary,
+)
+from app.parser.blast_radius import compute_blast_radius
+from app.services.indexer import index_repository
+
+router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
+
+
+def get_user_repository_access(
+    repo_id: int,
+    user: User,
+    db: Session,
+) -> Repository:
+    """Helper to verify user has access to specified repository."""
+    access = db.query(RepositoryAccess).filter(
+        RepositoryAccess.repository_id == repo_id,
+        RepositoryAccess.user_id == user.id,
+    ).first()
+
+    if not access:
+        # Check if user is owner
+        repo = db.query(Repository).filter(Repository.id == repo_id).first()
+        if not repo:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have access to this repository.")
+
+    return access.repository
+
+
+@router.get("", response_model=RepositoryListResponse, summary="List Accessible Repositories")
+async def list_repositories(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns list of repositories accessible to the current user."""
+    accesses = db.query(RepositoryAccess).filter(RepositoryAccess.user_id == current_user.id).all()
+    repo_ids = [a.repository_id for a in accesses]
+    repos = db.query(Repository).filter(Repository.id.in_(repo_ids)).order_by(Repository.updated_at.desc()).all()
+
+    return {"repositories": repos, "total": len(repos)}
+
+
+@router.post("", response_model=RepositoryRead, summary="Add Repository by GitHub URL")
+async def add_repository(
+    payload: AddRepositoryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Adds a new GitHub repository to CodeLens workspace.
+    Parses owner and name from URL and registers repository in database.
+    """
+    clean_url = payload.url.strip().rstrip("/")
+    if clean_url.endswith(".git"):
+        clean_url = clean_url[:-4]
+
+    match = re.match(r"^https?://github\.com/([^/]+)/([^/]+)$", clean_url)
+    if not match:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid GitHub URL format.")
+
+    owner, repo_name = match.group(1), match.group(2)
+    full_name = f"{owner}/{repo_name}"
+
+    # Check if repo already exists in DB
+    existing_repo = db.query(Repository).filter(Repository.full_name == full_name).first()
+    if not existing_repo:
+        # Create deterministic pseudo github_id if offline/mock
+        pseudo_github_id = abs(hash(full_name)) % (10**9)
+        existing_repo = Repository(
+            github_id=pseudo_github_id,
+            owner=owner,
+            name=repo_name,
+            full_name=full_name,
+            html_url=f"https://github.com/{full_name}",
+            clone_url=f"https://github.com/{full_name}.git",
+            default_branch="main",
+            index_status="not_indexed",
+        )
+        db.add(existing_repo)
+        db.commit()
+        db.refresh(existing_repo)
+
+    # Ensure current user has access record
+    access = db.query(RepositoryAccess).filter(
+        RepositoryAccess.user_id == current_user.id,
+        RepositoryAccess.repository_id == existing_repo.id,
+    ).first()
+
+    if not access:
+        access = RepositoryAccess(
+            user_id=current_user.id,
+            repository_id=existing_repo.id,
+            permission="admin",
+        )
+        db.add(access)
+        db.commit()
+
+    return existing_repo
+
+
+@router.get("/{id}", response_model=RepositoryRead, summary="Get Repository Details")
+async def get_repository(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns metadata, file count, and indexing status for a repository."""
+    return get_user_repository_access(id, current_user, db)
+
+
+@router.post("/{id}/index", summary="Trigger Repository Indexing")
+async def trigger_repository_indexing(
+    id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Triggers code parsing, AST extraction, and vector embedding for repository.
+    Requires user to have configured their Google Gemini API Key in Profile Settings.
+    """
+    repo = get_user_repository_access(id, current_user, db)
+
+    # Verify user has configured their BYOK Gemini key
+    if not current_user.gemini_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google Gemini API key is missing. Please configure your key in Profile & Settings before indexing.",
+        )
+
+    decrypted_key = decrypt_api_key(current_user.gemini_api_key)
+    if not decrypted_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to decrypt Gemini API key. Please re-enter your key in Settings.",
+        )
+
+    # Run indexing in background
+    def run_indexer_task(repo_id: int, gemini_key: str, gh_token: Optional[str]):
+        from app.db.session import SessionLocal
+        task_db = SessionLocal()
+        try:
+            index_repository(
+                repository_id=repo_id,
+                db=task_db,
+                user_gemini_key=gemini_key,
+                github_token=gh_token,
+            )
+        finally:
+            task_db.close()
+
+    background_tasks.add_task(
+        run_indexer_task,
+        repo.id,
+        decrypted_key,
+        current_user.github_access_token,
+    )
+
+    repo.index_status = "indexing"
+    db.commit()
+
+    return {
+        "status": "indexing_started",
+        "repository_id": repo.id,
+        "message": f"Indexing started for {repo.full_name}",
+    }
+
+
+@router.get("/{id}/files", summary="List Indexed Repository Files")
+async def list_repository_files(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns list of indexed source files in the repository."""
+    get_user_repository_access(id, current_user, db)
+    files = db.query(File.id, File.file_path, File.language, File.line_count, File.file_size).filter(
+        File.repository_id == id
+    ).order_by(File.file_path.asc()).all()
+
+    return [
+        {
+            "id": f.id,
+            "file_path": f.file_path,
+            "language": f.language,
+            "line_count": f.line_count,
+            "file_size": f.file_size,
+        }
+        for f in files
+    ]
+
+
+@router.get("/{id}/files/{file_id}", summary="Get File Content for In-App Code Viewer")
+async def get_file_content(
+    id: int,
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Fetches raw source code content for citation highlighting and in-app code viewing.
+    """
+    get_user_repository_access(id, current_user, db)
+    file_record = db.query(File).filter(File.id == file_id, File.repository_id == id).first()
+
+    if not file_record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found in this repository.")
+
+    return {
+        "id": file_record.id,
+        "repository_id": file_record.repository_id,
+        "file_path": file_record.file_path,
+        "language": file_record.language,
+        "line_count": file_record.line_count,
+        "content": file_record.content,
+    }
+
+
+@router.get("/{id}/architecture", summary="Get Architecture Topology Map")
+async def get_repository_architecture(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns cached living architecture topology diagram for visual canvas."""
+    get_user_repository_access(id, current_user, db)
+    arch = db.query(ArchitectureGraph).filter(ArchitectureGraph.repository_id == id).order_by(
+        ArchitectureGraph.created_at.desc()
+    ).first()
+
+    if not arch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Architecture map not available. Please index the repository first.",
+        )
+
+    return arch.graph_data
+
+
+@router.get("/{id}/blast-radius", summary="Compute Symbol Blast Radius")
+async def get_symbol_blast_radius(
+    id: int,
+    symbol: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Computes caller-callee dependency blast radius for a given symbol."""
+    get_user_repository_access(id, current_user, db)
+    files = db.query(File.file_path, File.content, File.language).filter(File.repository_id == id).all()
+
+    file_dicts = [
+        {"file_path": f.file_path, "content": f.content, "language": f.language}
+        for f in files
+    ]
+
+    return compute_blast_radius(symbol, file_dicts)
