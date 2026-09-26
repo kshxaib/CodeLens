@@ -8,7 +8,6 @@ import {
   Trash2,
   FileCode2,
   Loader2,
-  Bot,
   User as UserIcon,
 } from 'lucide-react';
 import { api, API_BASE_URL } from '../api/client';
@@ -20,6 +19,7 @@ import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 import { DeleteChatConfirmModal } from '../components/common/DeleteChatConfirmModal';
 import { CreateChatModal } from '../components/common/CreateChatModal';
+import { ChatMessageMarkdown } from '../components/chat/ChatMessageMarkdown';
 import { Button } from '@/components/ui/button';
 
 export const CodeLensChatPage: React.FC = () => {
@@ -269,9 +269,9 @@ export const CodeLensChatPage: React.FC = () => {
                 setCurrentConversation((prev) =>
                   prev
                     ? {
-                        ...prev,
-                        messages: [...prev.messages, assistantMsg],
-                      }
+                      ...prev,
+                      messages: [...prev.messages, assistantMsg],
+                    }
                     : null
                 );
               } else if (eventType === 'error') {
@@ -287,9 +287,9 @@ export const CodeLensChatPage: React.FC = () => {
                 setCurrentConversation((prev) =>
                   prev
                     ? {
-                        ...prev,
-                        messages: [...prev.messages, errorMsg],
-                      }
+                      ...prev,
+                      messages: [...prev.messages, errorMsg],
+                    }
                     : null
                 );
               }
@@ -320,9 +320,9 @@ export const CodeLensChatPage: React.FC = () => {
       setCurrentConversation((prev) =>
         prev
           ? {
-              ...prev,
-              messages: [...prev.messages, errorMsg],
-            }
+            ...prev,
+            messages: [...prev.messages, errorMsg],
+          }
           : null
       );
     } finally {
@@ -401,14 +401,17 @@ export const CodeLensChatPage: React.FC = () => {
                     <div
                       key={c.id}
                       onClick={() => loadChatDetail(activeRepoId, c.id)}
-                      className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs group transition ${
-                        isActive
-                          ? 'bg-[#18181b] text-amber-400 border border-amber-500/30'
-                          : 'text-slate-400 hover:text-white hover:bg-[#121214]'
-                      }`}
+                      className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs group transition ${isActive
+                          ? 'bg-[#18181b] text-zinc-100 font-medium border border-[#27272a]'
+                          : 'text-slate-400 hover:text-white hover:bg-[#121214] border border-transparent'
+                        }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                        {isActive ? (
+                          <span className="size-1.5 rounded-full bg-amber-400 shrink-0" />
+                        ) : (
+                          <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+                        )}
                         <span className="truncate font-medium">{c.title}</span>
                       </div>
                       <button
@@ -438,8 +441,8 @@ export const CodeLensChatPage: React.FC = () => {
             {(!currentConversation || currentConversation.messages.length === 0) && !isStreaming ? (
               /* Empty Chat State */
               <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center py-10">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-2xl mb-5">
-                  <Bot className="w-8 h-8" />
+                <div className="w-12 h-12 flex items-center justify-center text-amber-400 mb-4">
+                  <Sparkles className="w-8 h-8 text-amber-400" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">CodeLens Codebase Intelligence Copilot</h3>
                 <p className="text-xs sm:text-sm text-slate-400 mb-8 max-w-md">
@@ -470,25 +473,30 @@ export const CodeLensChatPage: React.FC = () => {
                     key={msg.id}
                     className={`flex gap-3 max-w-3xl ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
                   >
-                    {/* Avatar */}
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-md ${
-                        msg.role === 'user' ? 'bg-[#18181b] border border-[#1f1f23] text-amber-400' : 'bg-amber-500 text-[#0d1017]'
-                      }`}
-                    >
-                      {msg.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                    </div>
+                    {/* Avatar - No background, clean modern icons */}
+                    {msg.role === 'user' ? (
+                      <div className="size-6 flex items-center justify-center shrink-0 mt-1 text-zinc-400">
+                        <UserIcon className="size-4" />
+                      </div>
+                    ) : (
+                      <div className="size-6 flex items-center justify-center shrink-0 mt-1 text-amber-400">
+                        <Sparkles className="size-5 text-amber-400" />
+                      </div>
+                    )}
 
                     {/* Message Bubble */}
-                    <div className="space-y-3 min-w-0">
+                    <div className="space-y-3 min-w-0 flex-1">
                       <div
-                        className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                          msg.role === 'user'
-                            ? 'bg-[#121214] border border-amber-500/30 text-white font-medium rounded-tr-none'
+                        className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${msg.role === 'user'
+                            ? 'bg-[#121214] border border-[#27272a] text-white font-medium rounded-tr-none ml-auto max-w-2xl'
                             : 'bg-[#09090b] border border-[#1f1f23] text-slate-200 rounded-tl-none'
-                        }`}
+                          }`}
                       >
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {msg.role === 'user' ? (
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        ) : (
+                          <ChatMessageMarkdown content={msg.content} />
+                        )}
                       </div>
 
                       {/* Verifiable Citations Pills */}
@@ -517,8 +525,8 @@ export const CodeLensChatPage: React.FC = () => {
                 {/* Streaming Assistant In-Progress Bubble */}
                 {isStreaming && (
                   <div className="flex gap-3 max-w-3xl">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-[#0d1017] flex items-center justify-center shrink-0 shadow-md">
-                      <Bot className="w-4 h-4" />
+                    <div className="size-6 flex items-center justify-center shrink-0 mt-1 text-amber-400">
+                      <Sparkles className="size-5 text-amber-400 animate-pulse" />
                     </div>
                     <div className="space-y-3 min-w-0 flex-1">
                       {streamStatus && (
@@ -529,8 +537,8 @@ export const CodeLensChatPage: React.FC = () => {
                       )}
 
                       {streamingTokens && (
-                        <div className="p-4 rounded-2xl bg-[#09090b] border border-[#1f1f23] text-xs sm:text-sm text-slate-200 rounded-tl-none whitespace-pre-wrap leading-relaxed">
-                          {streamingTokens}
+                        <div className="p-4 rounded-2xl bg-[#09090b] border border-[#1f1f23] text-xs sm:text-sm text-slate-200 rounded-tl-none leading-relaxed">
+                          <ChatMessageMarkdown content={streamingTokens} />
                           <span className="inline-block w-1.5 h-4 bg-amber-400 ml-1 animate-pulse" />
                         </div>
                       )}
@@ -543,7 +551,7 @@ export const CodeLensChatPage: React.FC = () => {
           </div>
 
           {/* Query Input Bar */}
-          <div className="p-4 bg-[#050505] border-t border-[#1f1f23]">
+          <div className="p-4 pb-6 bg-transparent">
             <form
               onSubmit={(e) => {
                 e.preventDefault();

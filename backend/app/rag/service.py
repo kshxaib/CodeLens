@@ -1,3 +1,4 @@
+import re
 import json
 import asyncio
 from typing import AsyncGenerator, List, Dict, Any, Optional
@@ -64,9 +65,25 @@ async def stream_chat_response(
                 "message": "Retrieving relevant codebase context from vector store...",
             })
 
+            # Query contextualization for pronoun references ("is that", "these", "this", "it", etc.)
+            search_query = question.strip()
+            if conversation_history:
+                last_user_messages = [
+                    m.get("content", "").strip()
+                    for m in conversation_history
+                    if m.get("role") == "user" and m.get("content", "").strip()
+                ]
+                if last_user_messages:
+                    prev_question = last_user_messages[-1]
+                    lower_q = question.lower()
+                    pronouns = {"this", "that", "these", "those", "it", "its", "they", "them", "here", "there"}
+                    tokens = set(re.findall(r"\b\w+\b", lower_q))
+                    if tokens.intersection(pronouns) or len(tokens) <= 6:
+                        search_query = f"{prev_question} {question}".strip()
+
             retrieved_chunks = retrieve_context(
                 repository_id=repository_id,
-                query=question,
+                query=search_query,
                 user_openai_key=active_api_key,
                 limit=limit_context_chunks,
             )

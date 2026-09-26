@@ -236,10 +236,10 @@ async def stream_chat(
     db.add(user_msg)
     db.commit()
 
-    # 5. Fetch prior conversation history for context continuity
+    # 5. Fetch prior conversation history for context continuity (excluding current message)
     past_messages = (
         db.query(Message)
-        .filter(Message.conversation_id == conv.id)
+        .filter(Message.conversation_id == conv.id, Message.id != user_msg.id)
         .order_by(Message.created_at.asc())
         .all()
     )
