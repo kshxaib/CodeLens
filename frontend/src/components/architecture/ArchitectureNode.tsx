@@ -26,6 +26,8 @@ interface NodeProps {
     isBlastTarget?: boolean;
     isUpstream?: boolean;
     isDownstream?: boolean;
+    isPathNode?: boolean;
+    isPathActiveStep?: boolean;
     tier?: string;
   };
   selected?: boolean;
@@ -64,7 +66,11 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
   const tierCfg = ARCH_TIERS[tierKey] || ARCH_TIERS.application;
 
   let ringClass = 'border-[#1f1f23] hover:border-[#38383f]';
-  if (data.isBlastTarget || selected) {
+  if (data.isPathActiveStep) {
+    ringClass = 'ring-4 ring-sky-400 border-sky-400 shadow-[0_0_30px_rgba(56,189,248,0.7)] scale-105 z-30';
+  } else if (data.isPathNode) {
+    ringClass = 'ring-2 ring-sky-400/90 border-sky-400/70 shadow-[0_0_18px_rgba(56,189,248,0.35)]';
+  } else if (data.isBlastTarget || selected) {
     ringClass = 'ring-2 ring-amber-400 border-amber-400/80 shadow-[0_0_20px_rgba(245,158,11,0.25)]';
   } else if (data.isUpstream) {
     ringClass = 'ring-2 ring-amber-400/80 border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]';

@@ -42,6 +42,11 @@ import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
 import { SequenceView } from '../components/sequence/SequenceView';
 import { LifecycleView } from '../components/lifecycle/LifecycleView';
+import { TraceProvider, useTrace } from '../context/TraceContext';
+import { TracePanel } from '../components/trace/TracePanel';
+import { WhyModal } from '../components/trace/WhyModal';
+import { ExplainModal } from '../components/trace/ExplainModal';
+import { ChangeImpactModal } from '../components/trace/ChangeImpactModal';
 
 const nodeTypes = {
   architectureNode: ArchitectureNode,
@@ -57,11 +62,45 @@ const BLAST_LEGEND = [
   { color: 'bg-sky-400', label: 'Downstream Dependencies' },
 ];
 
-const ArchitectureMapCanvas: React.FC = () => {
+interface ArchitectureMapCanvasProps {
+  currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
+  setCurrentView: (view: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle') => void;
+}
+
+const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
+  currentView,
+  setCurrentView,
+}) => {
   const { id } = useParams<{ id: string }>();
   const repoId = parseInt(id || '0', 10);
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Trace Context
+  const {
+    selectedNodeId,
+    selectTraceNode,
+    pathData,
+    pathStepIndex,
+    highlightOnlyPath,
+    openWhy,
+    closeWhy,
+    isWhyOpen,
+    whyData,
+    whyLoading,
+    closeExplain,
+    isExplainOpen,
+    explainData,
+    explainLoading,
+    closeChangeImpact,
+    isChangeImpactOpen,
+    changeImpactData,
+    changeImpactLoading,
+    analyzeChange,
+    setViewNodes,
+    setViewFiles,
+    viewFiles,
+  } = useTrace();
 
   // Raw Knowledge Graph Data from backend
   const [kgData, setKgData] = useState<KnowledgeGraphData | null>(null);
@@ -70,11 +109,9 @@ const ArchitectureMapCanvas: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // UI state
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentView, setCurrentView] = useState<'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle'>('architecture');
 
   // Filtering & View Mode
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,13 +162,27 @@ const ArchitectureMapCanvas: React.FC = () => {
       }
 
       setKgData(data);
+      if (data?.nodes) {
+        setViewNodes(
+          data.nodes.map((n) => ({
+            id: n.id,
+            name: n.name,
+            type: n.type,
+            layer: n.layer,
+          }))
+        );
+        const allFiles = Array.from(
+          new Set(data.nodes.flatMap((n) => n.source_files || []))
+        );
+        setViewFiles(allFiles);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to generate Architecture Knowledge Graph.');
     } finally {
       setLoading(false);
       setIsRebuilding(false);
     }
-  }, [repoId]);
+  }, [repoId, setViewNodes, setViewFiles]);
 
   useEffect(() => {
     if (repoId) {
@@ -236,6 +287,19 @@ const ArchitectureMapCanvas: React.FC = () => {
 
     const hasFocus = !!activeFocusNodeId;
 
+    // Path highlighting sets (Features 2 & 3)
+    const pathNodeIdSet = new Set(
+      pathData?.found && pathData.path_nodes ? pathData.path_nodes.map((n) => n.id) : []
+    );
+    const activePathNodeId =
+      pathData?.found && pathStepIndex >= 0 && pathData.path_nodes
+        ? pathData.path_nodes[pathStepIndex]?.id
+        : null;
+    const pathEdgeIdSet = new Set(
+      pathData?.found && pathData.path_edges ? pathData.path_edges.map((e) => e.id) : []
+    );
+    const isPathActive = pathNodeIdSet.size > 0;
+
     // Convert ArchKGNode to ReactFlow Node
     const flowNodes: Node[] = filteredNodes.map((n) => {
       const isSelected = n.id === selectedNodeId;
@@ -243,8 +307,15 @@ const ArchitectureMapCanvas: React.FC = () => {
       const isUpstream = upstreamNodeIds.has(n.id);
       const isDownstream = downstreamNodeIds.has(n.id);
       const isTarget = n.id === activeFocusNodeId;
+      const isPathNode = pathNodeIdSet.has(n.id);
+      const isPathActiveStep = n.id === activePathNodeId;
 
-      const isDimmed = hasFocus && !isSelected && !isHovered && !isUpstream && !isDownstream && !isTarget;
+      let isDimmed = false;
+      if (isPathActive && highlightOnlyPath) {
+        isDimmed = !isPathNode;
+      } else if (hasFocus) {
+        isDimmed = !isSelected && !isHovered && !isUpstream && !isDownstream && !isTarget;
+      }
 
       return {
         id: n.id,
@@ -256,6 +327,8 @@ const ArchitectureMapCanvas: React.FC = () => {
           isHovered,
           isUpstream,
           isDownstream,
+          isPathNode,
+          isPathActiveStep,
           isBlastTarget: isTarget && isSelected,
           isDimmed,
           tier: getNodeTier(n.type, n.layer),
@@ -268,17 +341,24 @@ const ArchitectureMapCanvas: React.FC = () => {
       const isUpstream = upstreamNodeIds.has(e.source) && (e.target === activeFocusNodeId || downstreamNodeIds.has(e.target));
       const isDownstream = (e.source === activeFocusNodeId || upstreamNodeIds.has(e.source)) && downstreamNodeIds.has(e.target);
       const isConnected = e.source === activeFocusNodeId || e.target === activeFocusNodeId;
-      const isDimmed = hasFocus && !isConnected && !isUpstream && !isDownstream;
+      const isPathEdge = pathEdgeIdSet.has(e.id);
+
+      let isDimmed = false;
+      if (isPathActive && highlightOnlyPath) {
+        isDimmed = !isPathEdge;
+      } else if (hasFocus) {
+        isDimmed = !isConnected && !isUpstream && !isDownstream;
+      }
 
       return {
         id: e.id,
         source: e.source,
         target: e.target,
         type: 'architectureEdge',
-        animated: e.relationship_type === 'CALLS' || e.relationship_type === 'CONSUMES' || isConnected,
+        animated: isPathEdge || e.relationship_type === 'CALLS' || e.relationship_type === 'CONSUMES' || isConnected,
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: isUpstream ? '#f59e0b' : isDownstream ? '#38bdf8' : '#71717a',
+          color: isPathEdge ? '#38bdf8' : isUpstream ? '#f59e0b' : isDownstream ? '#38bdf8' : '#71717a',
           width: 14,
           height: 14,
         },
@@ -288,9 +368,11 @@ const ArchitectureMapCanvas: React.FC = () => {
           confidence_level: e.confidence_level,
           isUpstream,
           isDownstream,
+          isPathEdge,
           isHovered: isConnected,
           isDimmed,
           evidence_count: e.evidence?.length || 0,
+          onWhyClick: () => openWhy({ edgeId: e.id, source: e.source, target: e.target }),
         },
       };
     });
@@ -314,6 +396,10 @@ const ArchitectureMapCanvas: React.FC = () => {
     selectedNodeId,
     hoveredNodeId,
     blastRadius,
+    pathData,
+    pathStepIndex,
+    highlightOnlyPath,
+    openWhy,
     setNodes,
     setEdges,
   ]);
@@ -331,10 +417,20 @@ const ArchitectureMapCanvas: React.FC = () => {
   // ---------------------------------------------------------------------------
   // Interactions
   // ---------------------------------------------------------------------------
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
-    setBlastRadius(null);
-  }, []);
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      selectTraceNode(selectedNodeId === node.id ? null : node.id);
+      setBlastRadius(null);
+    },
+    [selectedNodeId, selectTraceNode]
+  );
+
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+    },
+    [openWhy]
+  );
 
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredNodeId(node.id);
@@ -345,10 +441,10 @@ const ArchitectureMapCanvas: React.FC = () => {
   }, []);
 
   const handlePaneClick = useCallback(() => {
-    setSelectedNodeId(null);
+    selectTraceNode(null);
     setHoveredNodeId(null);
     setBlastRadius(null);
-  }, []);
+  }, [selectTraceNode]);
 
   const handleAnalyzeBlastRadius = async (symbolName: string) => {
     if (!symbolName) return;
@@ -613,14 +709,14 @@ const ArchitectureMapCanvas: React.FC = () => {
 
         {/* BOTTOM ACTIVE FOCUS BADGE */}
         {(selectedNodeId || blastRadius) && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-md border border-[#1f1f23] px-3.5 py-2 rounded-2xl shadow-2xl">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-md border border-[#1f1f23] px-3.5 py-2 rounded-2xl shadow-2xl">
             <span className="text-[11px] font-mono text-zinc-300 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               Focus: <span className="font-bold text-white">{activeSelectedNode?.name || selectedNodeId}</span>
             </span>
             <button
               onClick={() => {
-                setSelectedNodeId(null);
+                selectTraceNode(null);
                 setBlastRadius(null);
               }}
               className="text-[10px] font-mono font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2 py-0.5 rounded-lg border border-rose-500/20 transition cursor-pointer"
@@ -638,6 +734,7 @@ const ArchitectureMapCanvas: React.FC = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
             onNodeMouseEnter={handleNodeMouseEnter}
             onNodeMouseLeave={handleNodeMouseLeave}
             onPaneClick={handlePaneClick}
@@ -687,10 +784,10 @@ const ArchitectureMapCanvas: React.FC = () => {
               edges={kgData?.edges || []}
               repositoryId={repoId}
               onClose={() => {
-                setSelectedNodeId(null);
+                selectTraceNode(null);
                 setBlastRadius(null);
               }}
-              onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
+              onSelectNode={(nodeId) => selectTraceNode(nodeId)}
               onOpenSource={handleOpenSource}
               onAnalyzeBlastRadius={handleAnalyzeBlastRadius}
               blastLoading={blastLoading}
@@ -699,6 +796,38 @@ const ArchitectureMapCanvas: React.FC = () => {
         </div>
       </div>
       )}
+
+      {/* TRACE / EXPLORE FLOATING DOCK & CONTROLS (Features 1, 2, 3, 6, 7) */}
+      <TracePanel onOpenSource={handleOpenSource} />
+
+      {/* FEATURE 4: WHY RELATIONSHIP MODAL */}
+      <WhyModal
+        isOpen={isWhyOpen}
+        onClose={closeWhy}
+        data={whyData}
+        loading={whyLoading}
+        onOpenSource={handleOpenSource}
+      />
+
+      {/* FEATURE 5: EXPLAIN COMPONENT MODAL */}
+      <ExplainModal
+        isOpen={isExplainOpen}
+        onClose={closeExplain}
+        data={explainData}
+        loading={explainLoading}
+        onOpenSource={handleOpenSource}
+      />
+
+      {/* FEATURE 7: CHANGE IMPACT SIMULATOR MODAL */}
+      <ChangeImpactModal
+        isOpen={isChangeImpactOpen}
+        onClose={closeChangeImpact}
+        onAnalyzeChange={analyzeChange}
+        data={changeImpactData}
+        loading={changeImpactLoading}
+        availableFiles={viewFiles}
+        onOpenSource={handleOpenSource}
+      />
 
       {/* SOURCE CODE VIEWER MODAL */}
       <CodeViewerModal
@@ -713,9 +842,15 @@ const ArchitectureMapCanvas: React.FC = () => {
 };
 
 export const ArchitectureMapPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const repoId = parseInt(id || '0', 10);
+  const [currentView, setCurrentView] = useState<'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle'>('architecture');
+
   return (
     <ReactFlowProvider>
-      <ArchitectureMapCanvas />
+      <TraceProvider repositoryId={repoId} currentView={currentView}>
+        <ArchitectureMapCanvas currentView={currentView} setCurrentView={setCurrentView} />
+      </TraceProvider>
     </ReactFlowProvider>
   );
 };

@@ -13,6 +13,12 @@ import type {
   DataFlowResponse,
   SequenceResponse,
   LifecycleResponse,
+  TraceNodeResponse,
+  FindPathResponse,
+  WhyRelationshipResponse,
+  ExplainComponentResponse,
+  CalculateImpactResponse,
+  ChangeImpactResponse,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -186,6 +192,56 @@ export const api = {
   getBlastRadius: async (repoId: number, symbol: string) => {
     const res = await apiClient.get<BlastRadiusResponse>(
       `/repositories/${repoId}/blast-radius?symbol=${encodeURIComponent(symbol)}`
+    );
+    return res.data;
+  },
+
+  // Interactive Trace & Explore System (All 5 Views)
+  traceNode: async (repoId: number, nodeId: string, view = 'architecture', depth = 1) => {
+    const res = await apiClient.get<TraceNodeResponse>(
+      `/repositories/${repoId}/trace/node?node_id=${encodeURIComponent(nodeId)}&view=${encodeURIComponent(view)}&depth=${depth}`
+    );
+    return res.data;
+  },
+  findPath: async (repoId: number, startNode: string, endNode: string, view = 'architecture', maxHops = 8) => {
+    const res = await apiClient.get<FindPathResponse>(
+      `/repositories/${repoId}/trace/path?start_node=${encodeURIComponent(startNode)}&end_node=${encodeURIComponent(endNode)}&view=${encodeURIComponent(view)}&max_hops=${maxHops}`
+    );
+    return res.data;
+  },
+  whyRelationship: async (
+    repoId: number,
+    params: { edgeId?: string; source?: string; target?: string; view?: string }
+  ) => {
+    const query = new URLSearchParams();
+    if (params.edgeId) query.set('edge_id', params.edgeId);
+    if (params.source) query.set('source', params.source);
+    if (params.target) query.set('target', params.target);
+    if (params.view) query.set('view', params.view);
+    const res = await apiClient.get<WhyRelationshipResponse>(
+      `/repositories/${repoId}/trace/why?${query.toString()}`
+    );
+    return res.data;
+  },
+  explainComponent: async (repoId: number, nodeId: string, view = 'architecture') => {
+    const res = await apiClient.post<ExplainComponentResponse>(
+      `/repositories/${repoId}/trace/explain`,
+      { node_id: nodeId, view }
+    );
+    return res.data;
+  },
+  calculateImpact: async (repoId: number, nodeId: string, view = 'architecture', maxDepth = 5) => {
+    const res = await apiClient.get<CalculateImpactResponse>(
+      `/repositories/${repoId}/trace/impact?node_id=${encodeURIComponent(nodeId)}&view=${encodeURIComponent(view)}&max_depth=${maxDepth}`
+    );
+    return res.data;
+  },
+  changeImpact: async (repoId: number, params: { filePath?: string; symbol?: string }) => {
+    const query = new URLSearchParams();
+    if (params.filePath) query.set('file_path', params.filePath);
+    if (params.symbol) query.set('symbol', params.symbol);
+    const res = await apiClient.get<ChangeImpactResponse>(
+      `/repositories/${repoId}/trace/change-impact?${query.toString()}`
     );
     return res.data;
   },

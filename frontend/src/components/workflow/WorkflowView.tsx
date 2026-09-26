@@ -19,6 +19,7 @@ import { getWorkflowLayoutedElements } from './layout';
 import { api } from '../../api/client';
 import type { WorkflowItem, WorkflowStep } from '../../types';
 import { Loader2 } from 'lucide-react';
+import { useTrace } from '../../context/TraceContext';
 
 interface WorkflowViewProps {
   repositoryId: number;
@@ -41,6 +42,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
+  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -93,6 +95,20 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   const activeWorkflow = useMemo(() => {
     return workflows.find((w) => w.id === selectedWorkflowId) || workflows[0] || null;
   }, [workflows, selectedWorkflowId]);
+
+  // Sync workflow steps with TraceContext
+  useEffect(() => {
+    if (activeWorkflow?.steps) {
+      setViewNodes(
+        activeWorkflow.steps.map((s) => ({
+          id: s.id,
+          name: s.name,
+          type: s.step_type,
+          layer: 'application',
+        }))
+      );
+    }
+  }, [activeWorkflow, setViewNodes]);
 
   // 2. Simulator Timer Loop
   useEffect(() => {
@@ -233,9 +249,21 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   }, [nodes.length, selectedWorkflowId, layoutDirection, reactFlowInstance]);
 
   // Node Click
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedStepId((prev) => (prev === node.id ? null : node.id));
-  }, []);
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      setSelectedStepId((prev) => (prev === node.id ? null : node.id));
+      selectTraceNode(node.id);
+    },
+    [selectTraceNode]
+  );
+
+  // Edge Click -> Feature 4: Why?
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+    },
+    [openWhy]
+  );
 
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredStepId(node.id);
@@ -354,6 +382,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
           onNodeMouseEnter={handleNodeMouseEnter}
           onNodeMouseLeave={handleNodeMouseLeave}
           onPaneClick={() => setSelectedStepId(null)}

@@ -12,6 +12,7 @@ from app.schemas.repository import (
     RepositoryListResponse,
     AddRepositoryRequest,
     RepositorySummary,
+    ExplainComponentRequest,
 )
 from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
@@ -20,6 +21,7 @@ from app.parser.workflow_extractor import WorkflowExtractor
 from app.parser.data_flow_extractor import DataFlowExtractor
 from app.parser.sequence_extractor import SequenceExtractor
 from app.parser.lifecycle_extractor import LifecycleExtractor
+from app.services.trace_service import TraceService
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -979,9 +981,129 @@ async def build_lifecycles_endpoint(
         graph_data = dict(arch.graph_data or {})
         graph_data["lifecycles"] = result
         arch.graph_data = graph_data
-        db.commit()
-
     return result
+
+
+def _get_trace_service(id: int, current_user: User, db: Session) -> TraceService:
+    get_user_repository_access(id, current_user, db)
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+    kg = build_knowledge_graph(file_dicts)
+
+    wf_data = arch.graph_data.get("workflows") if arch and arch.graph_data else {}
+    df_data = arch.graph_data.get("data_flows") if arch and arch.graph_data else {}
+    lc_data = arch.graph_data.get("lifecycles") if arch and arch.graph_data else {}
+    seq_data = arch.graph_data.get("sequences") if arch and arch.graph_data else {}
+
+    return TraceService(kg, file_dicts, wf_data, df_data, lc_data, seq_data)
+
+
+@router.get("/{id}/trace/node", summary="Trace Node Upstream and Downstream")
+async def trace_node_endpoint(
+    id: int,
+    node_id: str,
+    view: str = "architecture",
+    depth: int = 1,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Calculates Upstream (callers/sources), Current, and Downstream (callees/targets) for a node."""
+    service = _get_trace_service(id, current_user, db)
+    return service.trace_node(node_id, view=view, depth=depth)
+
+
+@router.get("/{id}/trace/path", summary="Find Path Between Two Nodes")
+async def find_path_endpoint(
+    id: int,
+    start_node: str,
+    end_node: str,
+    view: str = "architecture",
+    max_hops: int = 8,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Calculates the relevant direct or indirect path between two nodes."""
+    service = _get_trace_service(id, current_user, db)
+    return service.find_path(start_node, end_node, view=view, max_hops=max_hops)
+
+
+@router.get("/{id}/trace/why", summary="Why Does This Relationship Exist?")
+async def why_relationship_endpoint(
+    id: int,
+    edge_id: Optional[str] = None,
+    source: Optional[str] = None,
+    target: Optional[str] = None,
+    view: str = "architecture",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Explains why CodeLens believes a relationship exists, with exact code and AST evidence."""
+    service = _get_trace_service(id, current_user, db)
+    return service.why_relationship(edge_id=edge_id, source_id=source, target_id=target, view=view)
+
+
+@router.post("/{id}/trace/explain", summary="Explain Architecture Component")
+async def explain_component_endpoint(
+    id: int,
+    payload: ExplainComponentRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Explains a component using evidence-first analysis (Gemini / OpenAI / Deterministic)."""
+    service = _get_trace_service(id, current_user, db)
+    gemini_key = decrypt_api_key(current_user.gemini_api_key) if current_user.gemini_api_key else None
+    openai_key = decrypt_api_key(current_user.openai_api_key) if current_user.openai_api_key else None
+    return await service.explain_component(
+        node_id=payload.node_id,
+        view=payload.view,
+        gemini_api_key=gemini_key,
+        openai_api_key=openai_key,
+    )
+
+
+@router.get("/{id}/trace/impact", summary="Calculate Dependent Impact")
+async def calculate_impact_endpoint(
+    id: int,
+    node_id: str,
+    view: str = "architecture",
+    max_depth: int = 5,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Calculates direct dependents, indirect dependents, dependency depth, and risk level."""
+    service = _get_trace_service(id, current_user, db)
+    return service.calculate_impact(node_id, view=view, max_depth=max_depth)
+
+
+@router.get("/{id}/trace/change-impact", summary="Calculate File or Symbol Change Impact")
+async def change_impact_endpoint(
+    id: int,
+    file_path: Optional[str] = None,
+    symbol: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Calculates potentially affected files, modules, services, APIs, workflows, and data pipelines."""
+    service = _get_trace_service(id, current_user, db)
+    return service.change_impact(file_path=file_path, symbol_name=symbol)
 
 
 

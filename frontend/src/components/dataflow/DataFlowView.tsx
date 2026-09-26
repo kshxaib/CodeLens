@@ -19,6 +19,7 @@ import { getDataFlowLayoutedElements } from './layout';
 import { api } from '../../api/client';
 import type { DataPipeline } from '../../types';
 import { Loader2 } from 'lucide-react';
+import { useTrace } from '../../context/TraceContext';
 
 interface DataFlowViewProps {
   repositoryId: number;
@@ -41,6 +42,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
+  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -93,6 +95,20 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   const activePipeline = useMemo(() => {
     return pipelines.find((p) => p.id === selectedPipelineId) || pipelines[0] || null;
   }, [pipelines, selectedPipelineId]);
+
+  // Sync data flow nodes with TraceContext
+  useEffect(() => {
+    if (activePipeline?.nodes) {
+      setViewNodes(
+        activePipeline.nodes.map((n) => ({
+          id: n.id,
+          name: n.name,
+          type: n.data_classification,
+          layer: 'data',
+        }))
+      );
+    }
+  }, [activePipeline, setViewNodes]);
 
   // 2. Lineage Simulator Timer Loop
   useEffect(() => {
@@ -294,9 +310,20 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   }, [activePipeline?.id, layoutDirection, reactFlowInstance]);
 
   // Handlers
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
-  }, []);
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
+      selectTraceNode(node.id);
+    },
+    [selectTraceNode]
+  );
+
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+    },
+    [openWhy]
+  );
 
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredNodeId(node.id);
@@ -421,6 +448,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
           onNodeMouseEnter={handleNodeMouseEnter}
           onNodeMouseLeave={handleNodeMouseLeave}
           onPaneClick={handlePaneClick}

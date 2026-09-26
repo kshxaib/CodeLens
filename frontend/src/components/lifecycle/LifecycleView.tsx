@@ -20,6 +20,7 @@ import { api } from '../../api/client';
 import type { EntityLifecycle, LifecycleTransition } from '../../types';
 import type { LifecycleFilterType } from './constants';
 import { Loader2, RefreshCw } from 'lucide-react';
+import { useTrace } from '../../context/TraceContext';
 
 interface LifecycleViewProps {
   repositoryId: number;
@@ -42,6 +43,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
+  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +105,20 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setIsPlaying(false);
     setSimulationIndex(-1);
   }, [selectedLifecycleId]);
+
+  // Sync states to TraceContext
+  useEffect(() => {
+    if (activeLifecycle?.states) {
+      setViewNodes(
+        activeLifecycle.states.map((s) => ({
+          id: s.id,
+          name: s.name,
+          type: s.state_type,
+          layer: 'domain',
+        }))
+      );
+    }
+  }, [activeLifecycle, setViewNodes]);
 
   // 2. Linear / Happy Path Simulation list of transitions
   const simulationTransitions = useMemo(() => {
@@ -286,19 +302,27 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   ]);
 
   // Click on node
-  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedStateId(node.id);
-    setSelectedTransition(null);
-  }, []);
+  const handleNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      setSelectedStateId(node.id);
+      setSelectedTransition(null);
+      selectTraceNode(node.id);
+    },
+    [selectTraceNode]
+  );
 
   // Click on edge
-  const handleEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
-    const t = (edge.data as any)?.transition as LifecycleTransition;
-    if (t) {
-      setSelectedTransition(t);
-      setSelectedStateId(null);
-    }
-  }, []);
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      const t = (edge.data as any)?.transition as LifecycleTransition;
+      if (t) {
+        setSelectedTransition(t);
+        setSelectedStateId(null);
+      }
+      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+    },
+    [openWhy]
+  );
 
   // Click on pane clears selection
   const handlePaneClick = useCallback(() => {

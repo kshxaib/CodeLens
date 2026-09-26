@@ -493,6 +493,163 @@ export interface LifecycleResponse {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Trace & Explore Types
+// ---------------------------------------------------------------------------
+
+export interface TraceConnectedItem {
+  node: {
+    id: string;
+    name: string;
+    display_name?: string;
+    type?: string;
+    layer?: string;
+    description?: string;
+    source_files?: string[];
+  };
+  relationship_type: string;
+  direction: 'incoming' | 'outgoing';
+  distance: number;
+  confidence?: number;
+  confidence_level?: string;
+  label?: string;
+  condition?: string | null;
+  event?: string;
+  evidence?: SourceEvidence[];
+}
+
+export interface TraceNodeResponse {
+  current: {
+    id: string;
+    name: string;
+    display_name?: string;
+    type?: string;
+    layer?: string;
+    description?: string;
+    source_files?: string[];
+    evidence?: SourceEvidence[];
+  };
+  upstream: TraceConnectedItem[];
+  downstream: TraceConnectedItem[];
+  summary: {
+    upstream_count: number;
+    downstream_count: number;
+    total_connected: number;
+  };
+}
+
+export interface FindPathResponse {
+  found: boolean;
+  path_nodes: {
+    id: string;
+    name: string;
+    display_name?: string;
+    type?: string;
+    layer?: string;
+    description?: string;
+    source_files?: string[];
+  }[];
+  path_edges: {
+    id: string;
+    source: string;
+    target: string;
+    relationship_type?: string;
+    direction?: string;
+    confidence?: number;
+    evidence?: SourceEvidence[];
+    [key: string]: any;
+  }[];
+  hop_count: number;
+  is_indirect?: boolean;
+  summary: string;
+}
+
+export interface WhyRelationshipResponse {
+  source: {
+    id: string;
+    name: string;
+    type?: string;
+  };
+  target: {
+    id: string;
+    name: string;
+    type?: string;
+  };
+  relationship_type: string;
+  direction: string;
+  confidence: number;
+  confidence_level: string;
+  reason: string;
+  evidence: SourceEvidence[];
+}
+
+export interface ExplainComponentResponse {
+  component_name: string;
+  component_type: string;
+  layer: string;
+  explanation: string;
+  deterministic_brief: string;
+  evidence: SourceEvidence[];
+  upstream_count: number;
+  downstream_count: number;
+  confidence: string;
+}
+
+export interface DependentItem {
+  id: string;
+  name: string;
+  type: string;
+  layer: string;
+  source_files: string[];
+  depth: number;
+  relationship_type: string;
+}
+
+export interface CalculateImpactResponse {
+  target: {
+    id: string;
+    name: string;
+    type?: string;
+    layer?: string;
+  };
+  direct_dependents: DependentItem[];
+  indirect_dependents: DependentItem[];
+  dependency_depth: number;
+  total_dependents_count: number;
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  layer_breakdown: Record<string, number>;
+}
+
+export interface ChangeImpactResponse {
+  query: {
+    file_path?: string;
+    symbol_name?: string;
+  };
+  root_nodes: {
+    id: string;
+    name: string;
+    type: string;
+    layer: string;
+  }[];
+  total_impacted_nodes: number;
+  affected_files: string[];
+  affected_modules: string[];
+  affected_services: string[];
+  affected_apis: string[];
+  affected_workflows: {
+    id: string;
+    name: string;
+    affected_steps: string[];
+  }[];
+  affected_data_flows: {
+    id: string;
+    name: string;
+    affected_entities: string[];
+  }[];
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+}
+
+
 
 
 

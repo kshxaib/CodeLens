@@ -12,9 +12,13 @@ import {
   Loader2,
   Code,
   Info,
+  HelpCircle,
+  Compass,
+  ShieldAlert,
 } from 'lucide-react';
 import { ARCH_TIERS, CONFIDENCE_BADGES, getRelationshipCfg, getNodeTier } from './constants';
 import type { ArchKGNode, ArchKGEdge } from '../../types';
+import { useTrace } from '../../context/TraceContext';
 
 interface ArchitectureInspectorProps {
   node: ArchKGNode;
@@ -38,6 +42,7 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
   onAnalyzeBlastRadius,
   blastLoading = false,
 }) => {
+  const { openExplain, openWhy, selectTraceNode, calculateImpact } = useTrace();
   const [activeTab, setActiveTab] = useState<'overview' | 'modules' | 'symbols' | 'relationships' | 'evidence'>('overview');
 
   const tierKey = getNodeTier(node.type, node.layer);
@@ -163,6 +168,36 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
+            {/* Trace & AI Action Buttons */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <button
+                onClick={() => selectTraceNode(node.id)}
+                className="py-2 px-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold flex items-center justify-center gap-1 transition cursor-pointer shadow-sm text-[11px]"
+                title="Trace Upstream callers and Downstream callees"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Trace</span>
+              </button>
+
+              <button
+                onClick={() => openExplain(node.id)}
+                className="py-2 px-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 font-bold flex items-center justify-center gap-1 transition cursor-pointer shadow-sm text-[11px]"
+                title="Explain component using evidence-first synthesis"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Explain</span>
+              </button>
+
+              <button
+                onClick={() => calculateImpact(node.id)}
+                className="py-2 px-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold flex items-center justify-center gap-1 transition cursor-pointer shadow-sm text-[11px]"
+                title="Calculate dependent impact and depth"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Impact</span>
+              </button>
+            </div>
+
             {/* Quick Action: Open Primary Source */}
             {primarySourceFile && (
               <button
@@ -380,7 +415,21 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
                             </div>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+                            }}
+                            className="px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 transition"
+                            title="Why does this relationship exist?"
+                          >
+                            <HelpCircle className="w-3 h-3" />
+                            <span>Why?</span>
+                          </button>
+                          <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
+                        </div>
                       </div>
                     );
                   })}
@@ -428,7 +477,21 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
                             </div>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
+                            }}
+                            className="px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 transition"
+                            title="Why does this relationship exist?"
+                          >
+                            <HelpCircle className="w-3 h-3" />
+                            <span>Why?</span>
+                          </button>
+                          <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
+                        </div>
                       </div>
                     );
                   })}

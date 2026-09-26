@@ -8,9 +8,12 @@ import {
   AlertTriangle,
   ShieldCheck,
   Code2,
+  HelpCircle,
+  Compass,
 } from 'lucide-react';
 import type { SequenceMessage, SequenceParticipant } from '../../types';
 import { getInteractionConfig, getParticipantConfig } from './constants';
+import { useTrace } from '../../context/TraceContext';
 
 interface SequenceInspectorProps {
   message: SequenceMessage;
@@ -25,6 +28,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
   onClose,
   onOpenSource,
 }) => {
+  const { openWhy, selectTraceNode } = useTrace();
   const cfg = getInteractionConfig(message.interaction_type);
 
   const caller = participants.find((p) => p.id === message.caller_id);
@@ -108,6 +112,23 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </button>
         )}
 
+        {/* Feature 4: Why Does CodeLens Believe This Relationship Exists? */}
+        <button
+          onClick={() =>
+            openWhy({
+              source: message.caller_id,
+              target: message.callee_id,
+            })
+          }
+          className="w-full py-2 px-3.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold flex items-center justify-between transition cursor-pointer shadow-sm text-xs"
+        >
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Why does this interaction exist?</span>
+          </div>
+          <span className="text-[10px] text-amber-400/80 font-mono">Verify AST & Evidence</span>
+        </button>
+
         {/* Interaction Participants (Caller -> Callee) */}
         <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-3">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
@@ -116,9 +137,16 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
 
           <div className="flex items-center gap-2.5">
             {/* Caller */}
-            <div className="flex-1 p-2.5 rounded-lg bg-[#141417] border border-[#27272a] text-center">
-              <span className="text-[9px] text-zinc-500 block mb-1">CALLER</span>
-              <div className="flex items-center justify-center gap-1.5 text-zinc-200 font-semibold truncate">
+            <div
+              onClick={() => selectTraceNode(caller?.id || message.caller_id)}
+              className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-sky-500/10 border border-[#27272a] hover:border-sky-500/40 text-center cursor-pointer transition group"
+              title="Click to Trace Caller"
+            >
+              <div className="flex items-center justify-between text-[9px] text-zinc-500 mb-1">
+                <span>CALLER</span>
+                <Compass className="w-2.5 h-2.5 text-zinc-500 group-hover:text-sky-400" />
+              </div>
+              <div className="flex items-center justify-center gap-1.5 text-zinc-200 group-hover:text-sky-300 font-semibold truncate">
                 {CallerIcon && <CallerIcon className="w-3 h-3 text-sky-400 shrink-0" />}
                 <span className="truncate text-xs">{caller?.name || message.caller_id}</span>
               </div>
@@ -127,9 +155,16 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
             <ArrowRight className="w-4 h-4 text-zinc-500 shrink-0" />
 
             {/* Callee */}
-            <div className="flex-1 p-2.5 rounded-lg bg-[#141417] border border-[#27272a] text-center">
-              <span className="text-[9px] text-zinc-500 block mb-1">CALLEE</span>
-              <div className="flex items-center justify-center gap-1.5 text-zinc-200 font-semibold truncate">
+            <div
+              onClick={() => selectTraceNode(callee?.id || message.callee_id)}
+              className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-emerald-500/10 border border-[#27272a] hover:border-emerald-500/40 text-center cursor-pointer transition group"
+              title="Click to Trace Callee"
+            >
+              <div className="flex items-center justify-between text-[9px] text-zinc-500 mb-1">
+                <span>CALLEE</span>
+                <Compass className="w-2.5 h-2.5 text-zinc-500 group-hover:text-emerald-400" />
+              </div>
+              <div className="flex items-center justify-center gap-1.5 text-zinc-200 group-hover:text-emerald-300 font-semibold truncate">
                 {CalleeIcon && <CalleeIcon className="w-3 h-3 text-emerald-400 shrink-0" />}
                 <span className="truncate text-xs">{callee?.name || message.callee_id}</span>
               </div>

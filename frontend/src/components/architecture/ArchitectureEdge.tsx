@@ -16,8 +16,10 @@ export interface ArchitectureEdgeData {
   isSelected?: boolean;
   isUpstream?: boolean;
   isDownstream?: boolean;
+  isPathEdge?: boolean;
   isDimmed?: boolean;
   evidence_count?: number;
+  onWhyClick?: () => void;
 }
 
 export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
@@ -50,7 +52,10 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
   let strokeColor = cfg.stroke;
   let strokeWidth = cfg.width;
 
-  if (edgeData.isUpstream) {
+  if (edgeData.isPathEdge) {
+    strokeColor = '#38bdf8';
+    strokeWidth = 3.5;
+  } else if (edgeData.isUpstream) {
     strokeColor = '#f59e0b';
     strokeWidth = 2.5;
   } else if (edgeData.isDownstream) {
@@ -91,8 +96,14 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
           className="group transition-opacity duration-200"
         >
           <div
+            onClick={(e) => {
+              e.stopPropagation();
+              edgeData.onWhyClick?.();
+            }}
             className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase border shadow-md transition-all cursor-pointer ${
-              edgeData.isUpstream
+              edgeData.isPathEdge
+                ? 'bg-sky-500 text-zinc-950 border-sky-300 font-extrabold shadow-lg ring-2 ring-sky-400/60'
+                : edgeData.isUpstream
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-400/50'
                 : edgeData.isDownstream
                 ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 ring-1 ring-sky-400/50'
@@ -100,7 +111,7 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
                 ? 'bg-white/10 text-white border-white/30 ring-1 ring-white/30'
                 : 'bg-[#09090b]/90 text-zinc-400 border-[#27272a] hover:border-zinc-500 hover:text-zinc-200'
             }`}
-            title={`${relType} (${edgeData.confidence_level || 'deterministic'})`}
+            title={`Why: ${relType} (${edgeData.confidence_level || 'deterministic'}). Click to inspect evidence.`}
           >
             {cfg.label}
           </div>

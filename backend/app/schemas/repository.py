@@ -63,3 +63,9 @@ class AddRepositoryRequest(BaseModel):
         if not match:
             raise ValueError("Invalid GitHub repository URL. Must be in format https://github.com/owner/repo")
         return cleaned
+
+
+class ExplainComponentRequest(BaseModel):
+    node_id: str
+    view: str = "architecture"
+
