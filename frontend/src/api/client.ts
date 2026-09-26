@@ -9,6 +9,7 @@ import type {
   ArchitectureGraphData,
   BlastRadiusResponse,
   KnowledgeGraphData,
+  WorkflowsResponse,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -145,6 +146,14 @@ export const api = {
   },
   buildKnowledgeGraph: async (repoId: number) => {
     const res = await apiClient.post<KnowledgeGraphData>(`/repositories/${repoId}/knowledge-graph/build`);
+    return res.data;
+  },
+  getWorkflows: async (repoId: number) => {
+    const res = await apiClient.get<WorkflowsResponse>(`/repositories/${repoId}/workflows`);
+    return res.data;
+  },
+  buildWorkflows: async (repoId: number) => {
+    const res = await apiClient.post<WorkflowsResponse>(`/repositories/${repoId}/workflows/build`);
     return res.data;
   },
   getBlastRadius: async (repoId: number, symbol: string) => {

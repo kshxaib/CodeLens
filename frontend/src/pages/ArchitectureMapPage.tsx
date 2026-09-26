@@ -38,6 +38,7 @@ import { ArchitectureToolbar } from '../components/architecture/ArchitectureTool
 import { getLayoutedElements } from '../components/architecture/layout';
 import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
+import { WorkflowView } from '../components/workflow/WorkflowView';
 
 const nodeTypes = {
   architectureNode: ArchitectureNode,
@@ -70,6 +71,7 @@ const ArchitectureMapCanvas: React.FC = () => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentView, setCurrentView] = useState<'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle'>('architecture');
 
   // Filtering & View Mode
   const [searchQuery, setSearchQuery] = useState('');
@@ -425,19 +427,26 @@ const ArchitectureMapCanvas: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      <style>{`
-        .arc-left { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, transform 0.28s cubic-bezier(0.4,0,0.2,1); }
-        .arc-left.open  { width: 270px; opacity: 1; transform: translateX(0); }
-        .arc-left.closed{ width: 0px; opacity: 0; transform: translateX(-20px); overflow: hidden; }
-        .arc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
-        .arc-right.open  { width: 400px; opacity: 1; }
-        .arc-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
-      `}</style>
-
-      <div
-        ref={containerRef}
-        className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
-      >
+      {currentView === 'workflow' ? (
+        <WorkflowView
+          repositoryId={repoId}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onOpenSource={handleOpenSource}
+        />
+      ) : (
+        <div
+          ref={containerRef}
+          className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+        >
+          <style>{`
+            .arc-left { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+            .arc-left.open  { width: 270px; opacity: 1; transform: translateX(0); }
+            .arc-left.closed{ width: 0px; opacity: 0; transform: translateX(-20px); overflow: hidden; }
+            .arc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
+            .arc-right.open  { width: 400px; opacity: 1; }
+            .arc-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
+          `}</style>
         {/* LEFT LAYER GUIDE SIDEBAR */}
         <div
           className={`arc-left flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] flex flex-col z-30 ${
@@ -550,6 +559,8 @@ const ArchitectureMapCanvas: React.FC = () => {
 
         {/* TOP TOOLBAR */}
         <ArchitectureToolbar
+          currentView={currentView}
+          onViewChange={setCurrentView}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           selectedTier={selectedTier}
@@ -663,6 +674,7 @@ const ArchitectureMapCanvas: React.FC = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* SOURCE CODE VIEWER MODAL */}
       <CodeViewerModal

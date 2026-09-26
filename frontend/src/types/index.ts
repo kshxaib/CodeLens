@@ -226,3 +226,65 @@ export interface KnowledgeGraphData {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Unified Workflow Types
+// ---------------------------------------------------------------------------
+
+export type WorkflowStepType =
+  | 'start'
+  | 'step'
+  | 'decision'
+  | 'parallel'
+  | 'failure'
+  | 'retry'
+  | 'external'
+  | 'approval'
+  | 'async_op'
+  | 'end';
+
+export type WorkflowTransitionType =
+  | 'normal'
+  | 'success'
+  | 'failure'
+  | 'retry'
+  | 'async';
+
+export interface WorkflowStep {
+  id: string;
+  workflow_id: string;
+  name: string;
+  step_type: WorkflowStepType;
+  description: string;
+  associated_node_id?: string | null;
+  inputs: string[];
+  outputs: string[];
+  calls: string[];
+  evidence?: SourceEvidence | null;
+  metadata?: Record<string, any>;
+}
+
+export interface WorkflowTransition {
+  id: string;
+  source: string;
+  target: string;
+  transition_type: WorkflowTransitionType;
+  label: string;
+  condition?: string | null;
+  evidence?: SourceEvidence | null;
+}
+
+export interface WorkflowItem {
+  id: string;
+  name: string;
+  description: string;
+  trigger: string;
+  steps: WorkflowStep[];
+  transitions: WorkflowTransition[];
+  metadata?: Record<string, any>;
+}
+
+export interface WorkflowsResponse {
+  workflows: WorkflowItem[];
+}
+
+

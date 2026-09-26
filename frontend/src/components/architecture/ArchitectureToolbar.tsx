@@ -14,6 +14,8 @@ import {
 import { ARCH_TIERS, RELATIONSHIP_CONFIG } from './constants';
 
 interface ArchitectureToolbarProps {
+  currentView?: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
+  onViewChange?: (view: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle') => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   selectedTier: string;
@@ -52,6 +54,8 @@ const NODE_TYPES: { id: string; label: string }[] = [
 ];
 
 export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
+  currentView = 'architecture',
+  onViewChange,
   searchQuery,
   onSearchChange,
   selectedTier,
@@ -95,7 +99,54 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
       {/* LEFT: Search & Filter Controls */}
-      <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl">
+      <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl flex-wrap">
+        {/* VIEW SELECTOR */}
+        {onViewChange && (
+          <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[11px] font-mono">
+            <button
+              onClick={() => onViewChange('architecture')}
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                currentView === 'architecture'
+                  ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Architecture
+            </button>
+            <button
+              onClick={() => onViewChange('workflow')}
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                currentView === 'workflow'
+                  ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Workflow
+            </button>
+            <button
+              disabled
+              title="Coming Soon"
+              className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+            >
+              Sequence
+            </button>
+            <button
+              disabled
+              title="Coming Soon"
+              className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+            >
+              Data Flow
+            </button>
+            <button
+              disabled
+              title="Coming Soon"
+              className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+            >
+              Lifecycle
+            </button>
+          </div>
+        )}
+
         {/* Search Input */}
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 pointer-events-none" />
@@ -104,7 +155,7 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search architecture..."
-            className="w-48 sm:w-60 bg-[#121214] text-xs text-white placeholder-zinc-500 rounded-xl pl-8 pr-7 py-1.5 border border-[#27272a] focus:outline-none focus:border-amber-400/80 font-mono transition"
+            className="w-40 sm:w-56 bg-[#121214] text-xs text-white placeholder-zinc-500 rounded-xl pl-8 pr-7 py-1.5 border border-[#27272a] focus:outline-none focus:border-amber-400/80 font-mono transition"
           />
           {searchQuery && (
             <button

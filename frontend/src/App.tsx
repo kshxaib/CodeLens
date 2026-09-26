@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Loader2, Code2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { AuthProvider } from './context/AuthContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import { useAuthStore } from './store/useAuthStore';

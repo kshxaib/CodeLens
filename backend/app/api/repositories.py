@@ -16,6 +16,7 @@ from app.schemas.repository import (
 from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
 from app.parser.knowledge_graph import build_knowledge_graph
+from app.parser.workflow_extractor import WorkflowExtractor
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -445,3 +446,122 @@ async def build_knowledge_graph_endpoint(
         db.commit()
 
     return kg_dict
+
+
+@router.get("/{id}/workflows", summary="Get Extracted Workflows")
+async def get_workflows_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns extracted business workflows for the repository.
+    Answers: "What process does this system execute?"
+    Supports start, step, decision, failure, retry, external, and async nodes.
+    """
+    get_user_repository_access(id, current_user, db)
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+
+    workflows_data = arch.graph_data.get("workflows") if (arch and arch.graph_data) else None
+    if workflows_data:
+        return {"workflows": workflows_data}
+
+    # Generate on demand
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = WorkflowExtractor(file_dicts, kg)
+    workflows = extractor.extract_all_workflows()
+    serialized_workflows = [wf.to_dict() for wf in workflows]
+
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["workflows"] = serialized_workflows
+        arch.graph_data = graph_data
+        db.commit()
+    else:
+        new_arch = ArchitectureGraph(
+            repository_id=id,
+            graph_data={"workflows": serialized_workflows, "knowledge_graph": kg.to_dict(), "nodes": [], "edges": []}
+        )
+        db.add(new_arch)
+        db.commit()
+
+    return {"workflows": serialized_workflows}
+
+
+@router.post("/{id}/workflows/build", summary="Rebuild Extracted Workflows On-Demand")
+async def build_workflows_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-extracts and persists all business workflows from source files and KnowledgeGraph.
+    """
+    get_user_repository_access(id, current_user, db)
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = WorkflowExtractor(file_dicts, kg)
+    workflows = extractor.extract_all_workflows()
+    serialized_workflows = [wf.to_dict() for wf in workflows]
+
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["workflows"] = serialized_workflows
+        arch.graph_data = graph_data
+        db.commit()
+
+    return {"workflows": serialized_workflows}
+
