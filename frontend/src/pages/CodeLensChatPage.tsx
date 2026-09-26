@@ -19,6 +19,8 @@ import type { ConversationItem, ConversationDetail, MessageItem, Citation } from
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 import { DeleteChatConfirmModal } from '../components/common/DeleteChatConfirmModal';
+import { CreateChatModal } from '../components/common/CreateChatModal';
+import { Button } from '@/components/ui/button';
 
 export const CodeLensChatPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -46,6 +48,11 @@ export const CodeLensChatPage: React.FC = () => {
   // Chat deletion state
   const [chatToDelete, setChatToDelete] = useState<ConversationItem | null>(null);
   const [isDeletingChat, setIsDeletingChat] = useState(false);
+
+  // Create chat modal state
+  const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -92,14 +99,33 @@ export const CodeLensChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentConversation?.messages, streamingTokens]);
 
-  const handleNewChat = async () => {
+  const handleNewChat = () => {
+    if (!activeRepoId) return;
+    setPendingMessage(null);
+    setIsCreateChatModalOpen(true);
+  };
+
+  const handleCreateChat = async (title: string) => {
     if (!activeRepoId) return;
     try {
-      const newChat = await api.createConversation(activeRepoId, 'New Chat');
+      setIsCreatingChat(true);
+      const newChat = await api.createConversation(activeRepoId, title);
       await fetchConversations(activeRepoId);
       await loadChatDetail(activeRepoId, newChat.id);
+      setIsCreateChatModalOpen(false);
+
+      if (pendingMessage) {
+        const msg = pendingMessage;
+        setPendingMessage(null);
+        setTimeout(() => {
+          handleSendMessage(msg, newChat.id);
+        }, 100);
+      }
     } catch (err) {
       console.error('Create conversation error:', err);
+      throw err;
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -121,7 +147,7 @@ export const CodeLensChatPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (customPrompt?: string) => {
+  const handleSendMessage = async (customPrompt?: string, overrideChatId?: number) => {
     const question = (customPrompt || inputQuery).trim();
     if (!question || !activeRepoId || isStreaming) return;
 
@@ -130,13 +156,13 @@ export const CodeLensChatPage: React.FC = () => {
       return;
     }
 
-    let targetChatId = activeChatId;
+    let targetChatId = overrideChatId || activeChatId;
 
-    // Auto-create chat if none active
+    // Prompt user for thread name if no chat is active
     if (!targetChatId) {
-      const newChat = await api.createConversation(activeRepoId, question.slice(0, 30));
-      targetChatId = newChat.id;
-      setActiveChatId(targetChatId);
+      setPendingMessage(question);
+      setIsCreateChatModalOpen(true);
+      return;
     }
 
     // Optimistically push user message
@@ -353,13 +379,13 @@ export const CodeLensChatPage: React.FC = () => {
             </div>
 
             {/* New Chat Button */}
-            <button
+            <Button
               onClick={handleNewChat}
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
+              className="w-full h-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs transition cursor-pointer shadow-sm"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="mr-1.5 size-4" />
               <span>New Chat Thread</span>
-            </button>
+            </Button>
 
             {/* Thread List */}
             <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-22rem)] pr-1">
@@ -573,6 +599,17 @@ export const CodeLensChatPage: React.FC = () => {
           onConfirm={handleConfirmDeleteChat}
           chatTitle={chatToDelete?.title}
           isLoading={isDeletingChat}
+        />
+
+        {/* Create Chat Thread Modal */}
+        <CreateChatModal
+          isOpen={isCreateChatModalOpen}
+          onClose={() => {
+            setIsCreateChatModalOpen(false);
+            setPendingMessage(null);
+          }}
+          onCreate={handleCreateChat}
+          isLoading={isCreatingChat}
         />
       </div>
     </WorkspaceLayout>
