@@ -124,7 +124,7 @@ export const DashboardPage: React.FC = () => {
               <section className="flex justify-between items-end">
                 <div className="flex flex-col gap-2">
                   <div className="text-muted-foreground text-xs font-mono">
-                    Workspace / Overview
+                    Overview
                   </div>
                   <h1 className="font-bold text-3xl leading-tight text-foreground">
                     Dashboard

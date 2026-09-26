@@ -187,7 +187,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
               <Code2 className="w-3.5 h-3.5 text-sky-400" />
-              Request Payload / Parameters
+              Request Payload
             </span>
             <div className="p-2.5 rounded-lg bg-[#070709] border border-[#18181b] overflow-x-auto text-[11px] text-sky-300 font-mono">
               <pre>{message.payload}</pre>
@@ -200,7 +200,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
               <Code2 className="w-3.5 h-3.5 text-emerald-400" />
-              Response / Return Value
+              Response
             </span>
             <div className="p-2.5 rounded-lg bg-[#070709] border border-[#18181b] overflow-x-auto text-[11px] text-emerald-300 font-mono">
               <pre>{message.response_payload}</pre>

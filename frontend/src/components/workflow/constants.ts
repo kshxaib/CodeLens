@@ -14,8 +14,8 @@ export interface StepTypeConfig {
 export const STEP_TYPE_CONFIG: Record<WorkflowStepType, StepTypeConfig> = {
   start: {
     id: 'start',
-    label: 'Start / Trigger',
-    sub: 'Request Entrypoint / Event Trigger',
+    label: 'Start',
+    sub: 'Request Entrypoint',
     color: 'text-emerald-400',
     border: 'border-emerald-500/40',
     bg: 'bg-emerald-500/10',
@@ -85,7 +85,7 @@ export const STEP_TYPE_CONFIG: Record<WorkflowStepType, StepTypeConfig> = {
   approval: {
     id: 'approval',
     label: 'Human Approval',
-    sub: 'Manual Confirmation / Review',
+    sub: 'Manual Confirmation',
     color: 'text-yellow-400',
     border: 'border-yellow-500/40',
     bg: 'bg-yellow-500/10',
@@ -104,8 +104,8 @@ export const STEP_TYPE_CONFIG: Record<WorkflowStepType, StepTypeConfig> = {
   },
   end: {
     id: 'end',
-    label: 'End / Complete',
-    sub: 'Workflow Resolution / Return',
+    label: 'Complete',
+    sub: 'Workflow Resolution',
     color: 'text-emerald-400',
     border: 'border-emerald-500/40',
     bg: 'bg-emerald-500/10',

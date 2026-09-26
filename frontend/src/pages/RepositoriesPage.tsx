@@ -120,7 +120,7 @@ export const RepositoriesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="text-muted-foreground text-xs font-mono mb-1">
-            Workspace / Repositories
+            Repositories
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Connected Repositories</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">

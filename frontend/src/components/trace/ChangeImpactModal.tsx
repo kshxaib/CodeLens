@@ -109,7 +109,7 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
           <div className="flex-1 min-w-[160px] relative">
             <input
               type="text"
-              placeholder="Or function / symbol name..."
+              placeholder="Or symbol name..."
               value={symbolQuery}
               onChange={(e) => setSymbolQuery(e.target.value)}
               className="w-full bg-[#18181b] text-zinc-200 text-xs px-3 py-2 rounded-xl border border-zinc-700/80 font-mono focus:outline-none focus:border-rose-500/60 placeholder:text-zinc-600"

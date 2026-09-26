@@ -49,17 +49,19 @@ async def test_stream_chat_response_mock_mode(mock_retrieve):
 
 @pytest.mark.asyncio
 @patch("app.rag.service.retrieve_context")
-@patch("app.rag.service.genai.Client")
+@patch("app.rag.service.OpenAI")
 async def test_stream_chat_response_live_client(mock_client_cls, mock_retrieve):
     mock_retrieve.return_value = []
 
-    # Mock Gemini streaming client
+    # Mock OpenAI streaming client
     chunk1 = MagicMock()
-    chunk1.text = "Here is the "
+    chunk1.choices = [MagicMock()]
+    chunk1.choices[0].delta.content = "Here is the "
     chunk2 = MagicMock()
-    chunk2.text = "answer to your question."
+    chunk2.choices = [MagicMock()]
+    chunk2.choices[0].delta.content = "answer to your question."
     mock_instance = MagicMock()
-    mock_instance.models.generate_content_stream.return_value = [chunk1, chunk2]
+    mock_instance.chat.completions.create.return_value = [chunk1, chunk2]
     mock_client_cls.return_value = mock_instance
 
     events = []
@@ -67,7 +69,7 @@ async def test_stream_chat_response_live_client(mock_client_cls, mock_retrieve):
         repository_id=1,
         repo_full_name="kshxaib/CodeLens",
         question="What is this repository?",
-        user_gemini_key="AIzaRealKey12345",
+        user_openai_key="sk-real-live-key-12345",
     ):
         events.append(item)
 

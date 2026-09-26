@@ -371,7 +371,7 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           <button
             onClick={onOpenTrace}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-sky-300 hover:border-sky-500/40 transition cursor-pointer text-xs font-mono"
-            title="Open Trace / Explore Panel"
+            title="Open Trace Panel"
           >
             <GitBranch className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Trace</span>

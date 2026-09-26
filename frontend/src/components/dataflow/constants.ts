@@ -15,7 +15,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   request_payload: {
     id: 'request_payload',
     label: 'Request Payload',
-    sub: 'Inbound HTTP Body / Parameters',
+    sub: 'Inbound Request Body',
     color: 'text-sky-400',
     border: 'border-sky-500/40',
     bg: 'bg-sky-500/10',
@@ -24,7 +24,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   },
   dto_schema: {
     id: 'dto_schema',
-    label: 'Schema / DTO',
+    label: 'Schema',
     sub: 'Typed Data Transfer Object',
     color: 'text-amber-400',
     border: 'border-amber-500/40',
@@ -35,7 +35,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   transformation_step: {
     id: 'transformation_step',
     label: 'Transformation',
-    sub: 'Validation / Hashing / Mapping',
+    sub: 'Validation and Mapping',
     color: 'text-purple-400',
     border: 'border-purple-500/40',
     bg: 'bg-purple-500/10',
@@ -45,7 +45,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   database_model: {
     id: 'database_model',
     label: 'Database Entity',
-    sub: 'Persisted ORM / SQL Record',
+    sub: 'Persisted Database Record',
     color: 'text-emerald-400',
     border: 'border-emerald-500/40',
     bg: 'bg-emerald-500/10',
@@ -55,7 +55,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   response_payload: {
     id: 'response_payload',
     label: 'Response Payload',
-    sub: 'HTTP Response JSON / Output',
+    sub: 'HTTP Response Output',
     color: 'text-teal-400',
     border: 'border-teal-500/40',
     bg: 'bg-teal-500/10',
@@ -65,7 +65,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   file_binary: {
     id: 'file_binary',
     label: 'Binary Asset',
-    sub: 'Multipart File / Stream Upload',
+    sub: 'File Upload Stream',
     color: 'text-rose-400',
     border: 'border-rose-500/40',
     bg: 'bg-rose-500/10',
@@ -75,7 +75,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   storage_object: {
     id: 'storage_object',
     label: 'Storage Object',
-    sub: 'Cloud Bucket / S3 Storage',
+    sub: 'Cloud Object Storage',
     color: 'text-indigo-400',
     border: 'border-indigo-500/40',
     bg: 'bg-indigo-500/10',
@@ -84,8 +84,8 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   },
   queue_message: {
     id: 'queue_message',
-    label: 'Queue / Event',
-    sub: 'PubSub / Background Job',
+    label: 'Event Queue',
+    sub: 'Message Broker',
     color: 'text-orange-400',
     border: 'border-orange-500/40',
     bg: 'bg-orange-500/10',
@@ -94,8 +94,8 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   },
   token_secret: {
     id: 'token_secret',
-    label: 'Token / Secret',
-    sub: 'JWT / Hashed Credential',
+    label: 'Security Token',
+    sub: 'Authentication Credential',
     color: 'text-red-400',
     border: 'border-red-500/40',
     bg: 'bg-red-500/10',
@@ -105,7 +105,7 @@ export const DATA_CLASSIFICATION_CONFIG: Record<DataClassificationType, DataClas
   cache_entry: {
     id: 'cache_entry',
     label: 'Cache Entry',
-    sub: 'In-Memory / Redis Store',
+    sub: 'In-Memory Cache Store',
     color: 'text-cyan-400',
     border: 'border-cyan-500/40',
     bg: 'bg-cyan-500/10',

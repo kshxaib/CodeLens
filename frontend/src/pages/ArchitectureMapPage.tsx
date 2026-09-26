@@ -95,6 +95,8 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     setViewNodes,
     setViewFiles,
     viewFiles,
+    calculateImpact,
+    impactData,
   } = useTrace();
 
   // Raw Knowledge Graph Data from backend
@@ -268,16 +270,26 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         }
       });
 
+      // Integrate with AKG Impact Analysis data
+      if (impactData && (impactData.target?.id === activeFocusNodeId || impactData.target?.name === activeFocusNodeId)) {
+        impactData.direct_dependents?.forEach((dep) => {
+          upstreamNodeIds.add(dep.id);
+        });
+        impactData.indirect_dependents?.forEach((dep) => {
+          upstreamNodeIds.add(dep.id);
+        });
+      }
+
       // If blast radius data exists, integrate with blast upstream/downstream
       if (blastRadius) {
         const upstreamNames = new Set(blastRadius.upstream_dependents || []);
         const downstreamNames = new Set(blastRadius.downstream_dependencies || []);
 
         filteredNodes.forEach((n) => {
-          if (upstreamNames.has(n.name) || upstreamNames.has(n.display_name)) {
+          if (upstreamNames.has(n.name) || upstreamNames.has(n.display_name) || upstreamNames.has(n.id)) {
             upstreamNodeIds.add(n.id);
           }
-          if (downstreamNames.has(n.name) || downstreamNames.has(n.display_name)) {
+          if (downstreamNames.has(n.name) || downstreamNames.has(n.display_name) || downstreamNames.has(n.id)) {
             downstreamNodeIds.add(n.id);
           }
         });
@@ -395,6 +407,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     selectedNodeId,
     hoveredNodeId,
     blastRadius,
+    impactData,
     pathData,
     pathStepIndex,
     highlightOnlyPath,
@@ -449,6 +462,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     if (!symbolName) return;
     try {
       setBlastLoading(true);
+      await calculateImpact(symbolName);
       const res = await api.getBlastRadius(repoId, symbolName);
       setBlastRadius(res);
     } catch (err: any) {

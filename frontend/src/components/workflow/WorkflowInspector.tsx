@@ -104,7 +104,7 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
         <div className="space-y-3">
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
-              Inputs / Arguments
+              Inputs
             </span>
             {step.inputs && step.inputs.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
@@ -124,7 +124,7 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
 
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
-              Outputs / Return State
+              Outputs
             </span>
             {step.outputs && step.outputs.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
@@ -138,7 +138,7 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
                 ))}
               </div>
             ) : (
-              <span className="text-zinc-500 text-[10px]">Mutates context / Next step receives payload</span>
+              <span className="text-zinc-500 text-[10px]">Mutates context</span>
             )}
           </div>
         </div>

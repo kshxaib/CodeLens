@@ -853,3 +853,219 @@ DETERMINISTIC FACTS:
                 "high" if len(affected_files) > 5 else ("medium" if len(affected_files) > 1 else "low")
             ),
         }
+
+    # -------------------------------------------------------------------------
+    # FEATURE 8: Symbol Blast Radius (Unified AKG Engine)
+    # -------------------------------------------------------------------------
+
+    def compute_symbol_blast_radius(
+        self,
+        symbol_name: str,
+        max_depth: int = 3,
+    ) -> Dict[str, Any]:
+        """
+        Computes symbol blast radius (upstream callers and downstream callees)
+        using the Architecture Knowledge Graph.
+
+        Replaces the old legacy AST crawler with the canonical graph representation.
+        """
+        if not symbol_name:
+            return {
+                "target_symbol": "",
+                "risk_level": "low",
+                "impact_level": "low",
+                "impacted_count": 0,
+                "upstream_count": 0,
+                "downstream_count": 0,
+                "direct_count": 0,
+                "upstream_dependents": [],
+                "downstream_dependencies": [],
+                "direct_dependencies": [],
+                "nodes": [],
+                "edges": [],
+            }
+
+        clean_symbol = symbol_name.strip().lower()
+
+        # 1. Find nodes associated with target symbol
+        target_nodes: List[ArchNode] = []
+        for node in self.kg.nodes:
+            if any(s.get("name", "").lower() == clean_symbol for s in node.symbols):
+                target_nodes.append(node)
+            elif node.name.lower() == clean_symbol or node.display_name.lower() == clean_symbol:
+                target_nodes.append(node)
+
+        # Fallback: check file contents if no direct node matched
+        if not target_nodes:
+            for node in self.kg.nodes:
+                for sf in node.source_files:
+                    if clean_symbol in sf.lower():
+                        target_nodes.append(node)
+                        break
+
+        target_ids = {n.id for n in target_nodes}
+
+        # 2. Traverse Upstream (impacted callers)
+        upstream_nodes: Dict[str, ArchNode] = {}
+        queue: deque = deque([(nid, 0) for nid in target_ids])
+        visited_upstream: Set[str] = set(target_ids)
+
+        while queue:
+            curr_id, depth = queue.popleft()
+            if depth >= max_depth:
+                continue
+            for edge in self.incoming_edges.get(curr_id, []):
+                caller_id = edge.source
+                if caller_id not in visited_upstream:
+                    visited_upstream.add(caller_id)
+                    node = self.nodes_by_id.get(caller_id)
+                    if node:
+                        upstream_nodes[caller_id] = node
+                    queue.append((caller_id, depth + 1))
+
+        # 3. Traverse Downstream (callees / dependencies)
+        downstream_nodes: Dict[str, ArchNode] = {}
+        downstream_queue: deque = deque([(nid, 0) for nid in target_ids])
+        visited_downstream: Set[str] = set(target_ids)
+
+        while downstream_queue:
+            curr_id, depth = downstream_queue.popleft()
+            if depth >= max_depth:
+                continue
+            for edge in self.outgoing_edges.get(curr_id, []):
+                callee_id = edge.target
+                if callee_id not in visited_downstream:
+                    visited_downstream.add(callee_id)
+                    node = self.nodes_by_id.get(callee_id)
+                    if node:
+                        downstream_nodes[callee_id] = node
+                    downstream_queue.append((callee_id, depth + 1))
+
+        # Check call expressions / symbol definitions across files if graph lacks synthetic callees
+        extra_downstream: List[str] = []
+        if target_nodes and self.files:
+            for tn in target_nodes:
+                for sf in tn.source_files:
+                    file_dict = next((f for f in self.files if f.get("file_path") == sf), None)
+                    if file_dict and file_dict.get("content"):
+                        from app.parser.symbols import extract_symbols
+                        syms = extract_symbols(file_dict["content"], sf)
+                        for s in syms:
+                            if s.kind == "call" and s.name != symbol_name:
+                                extra_downstream.append(s.name)
+
+        # Also check callers across files if AST resolution didn't map all calls
+        if self.files:
+            for f in self.files:
+                path = f.get("file_path", "")
+                content = f.get("content", "")
+                if path not in [sf for tn in target_nodes for sf in tn.source_files]:
+                    if symbol_name in content:
+                        node = next((n for n in self.kg.nodes if path in n.source_files), None)
+                        if node and node.id not in upstream_nodes and node.id not in target_ids:
+                            upstream_nodes[node.id] = node
+
+        impacted_count = len(upstream_nodes)
+        if impacted_count >= 5:
+            risk_level = "high"
+        elif impacted_count >= 2:
+            risk_level = "medium"
+        else:
+            risk_level = "low"
+
+        # Build visualization nodes and edges
+        viz_nodes: List[Dict[str, Any]] = [
+            {
+                "id": "target_node",
+                "type": "targetNode",
+                "data": {
+                    "label": symbol_name,
+                    "isTarget": True,
+                    "role": "Target Symbol",
+                    "riskLevel": risk_level,
+                },
+            }
+        ]
+        viz_edges: List[Dict[str, Any]] = []
+
+        for idx, (up_id, up_node) in enumerate(upstream_nodes.items(), start=1):
+            viz_id = f"upstream_{idx}"
+            viz_nodes.append({
+                "id": viz_id,
+                "type": "upstreamNode",
+                "data": {
+                    "label": up_node.display_name or up_node.name,
+                    "filePath": up_node.source_files[0] if up_node.source_files else "",
+                    "role": "Upstream Caller (Impacted)",
+                    "type": up_node.type.value,
+                    "layer": up_node.layer.value,
+                },
+            })
+            viz_edges.append({
+                "id": f"edge_up_{idx}",
+                "source": viz_id,
+                "target": "target_node",
+                "label": "calls",
+                "animated": True,
+                "style": {"stroke": "#EF4444"},
+            })
+
+        down_idx = 1
+        for down_id, down_node in downstream_nodes.items():
+            viz_id = f"downstream_{down_idx}"
+            viz_nodes.append({
+                "id": viz_id,
+                "type": "downstreamNode",
+                "data": {
+                    "label": down_node.display_name or down_node.name,
+                    "filePath": down_node.source_files[0] if down_node.source_files else "",
+                    "role": "Downstream Callee",
+                    "type": down_node.type.value,
+                    "layer": down_node.layer.value,
+                },
+            })
+            viz_edges.append({
+                "id": f"edge_down_{down_idx}",
+                "source": "target_node",
+                "target": viz_id,
+                "label": "invokes",
+                "style": {"stroke": "#38BDF8"},
+            })
+            down_idx += 1
+
+        for ex_name in extra_downstream:
+            viz_id = f"downstream_{down_idx}"
+            viz_nodes.append({
+                "id": viz_id,
+                "type": "downstreamNode",
+                "data": {
+                    "label": ex_name,
+                    "role": "Downstream Callee",
+                },
+            })
+            viz_edges.append({
+                "id": f"edge_down_{down_idx}",
+                "source": "target_node",
+                "target": viz_id,
+                "label": "invokes",
+                "style": {"stroke": "#38BDF8"},
+            })
+            down_idx += 1
+
+        upstream_names = [n.display_name or n.name for n in upstream_nodes.values()]
+        downstream_names = [n.display_name or n.name for n in downstream_nodes.values()] + extra_downstream
+
+        return {
+            "target_symbol": symbol_name,
+            "risk_level": risk_level,
+            "impact_level": risk_level,
+            "impacted_count": impacted_count,
+            "upstream_count": len(upstream_nodes),
+            "downstream_count": len(downstream_names),
+            "direct_count": len(upstream_nodes) + len(downstream_names),
+            "upstream_dependents": upstream_names,
+            "downstream_dependencies": downstream_names,
+            "direct_dependencies": downstream_names,
+            "nodes": viz_nodes,
+            "edges": viz_edges,
+        }

@@ -191,7 +191,7 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
             }`}
           >
             <Layers className="w-3 h-3 text-amber-400" />
-            Schemas / DTOs
+            Schemas
           </button>
         </div>
       </div>

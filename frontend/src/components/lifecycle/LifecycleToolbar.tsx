@@ -187,7 +187,7 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           {totalSimSteps > 1 && (
             <div className="text-[10px] font-mono text-zinc-400 px-1 border-l border-zinc-800">
               <span className="text-indigo-400 font-bold">{currentSimIndex + 1}</span>
-              <span className="text-zinc-600"> / </span>
+              <span className="text-zinc-600"> of </span>
               <span>{totalSimSteps}</span>
             </div>
           )}

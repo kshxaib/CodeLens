@@ -211,7 +211,7 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
               })}
             </div>
           ) : (
-            <span className="text-zinc-500 text-[10px]">Terminal state / Outbound response</span>
+            <span className="text-zinc-500 text-[10px]">Outbound terminal response</span>
           )}
         </div>
 

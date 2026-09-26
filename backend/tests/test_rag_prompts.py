@@ -39,7 +39,7 @@ def test_build_user_prompt_with_history_and_chunks():
     assert "backend/app/core/security.py" in prompt
     assert "Lines 10-35" in prompt
     assert "create_access_token" in prompt
-    assert "### DEVELOPER QUESTION:" in prompt
+    assert "### USER QUERY:" in prompt
     assert "Where is token expiration defined?" in prompt
 
 

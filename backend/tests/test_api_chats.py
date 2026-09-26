@@ -16,9 +16,19 @@ TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @pytest.fixture
 def chat_context():
     session = TestSession()
+    session.query(RepositoryAccess).filter(RepositoryAccess.user_id.in_(
+        session.query(User.id).filter(User.github_id.in_([666610, 666612]))
+    )).delete(synchronize_session=False)
+    session.query(Conversation).filter(Conversation.repository_id.in_(
+        session.query(Repository.id).filter_by(github_id=666611)
+    )).delete(synchronize_session=False)
+    session.query(Repository).filter_by(github_id=666611).delete()
+    session.query(User).filter(User.github_id.in_([666610, 666612])).delete()
+    session.commit()
+
     encrypted_key = encrypt_api_key("AIzaSy_MOCK_TEST_KEY_SecretChat123")
     user = User(
-        github_id=666601,
+        github_id=666610,
         username="chat_tester",
         email="chat_test@codelens.dev",
         gemini_api_key=encrypted_key,
@@ -27,7 +37,7 @@ def chat_context():
     session.flush()
 
     repo = Repository(
-        github_id=666602,
+        github_id=666611,
         name="CodeLens-Chat-Demo",
         full_name="kshxaib/CodeLens-Chat-Demo",
         owner="kshxaib",
@@ -164,7 +174,7 @@ def test_stream_chat_missing_gemini_key(chat_context):
 
     # Create user without key
     user_no_key = User(
-        github_id=666603,
+        github_id=666612,
         username="nokeyuser",
         email="nokey@codelens.dev",
         gemini_api_key=None,
@@ -185,7 +195,7 @@ def test_stream_chat_missing_gemini_key(chat_context):
         json={"content": "Hello without key"},
     )
     assert res.status_code == 400
-    assert "Gemini API key is required" in res.json()["detail"]
+    assert "API key is required" in res.json()["detail"]
 
     # Cleanup user_no_key
     session.query(Conversation).filter_by(id=conv.id).delete()

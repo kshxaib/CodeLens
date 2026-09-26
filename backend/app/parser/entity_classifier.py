@@ -239,10 +239,11 @@ def classify_file(
     if ext in (".html", ".css", ".scss", ".sass", ".vue", ".svelte"):
         return EntityType.COMPONENT, ArchLayer.PRESENTATION, 1.0, ConfidenceLevel.DETERMINISTIC
 
-    # 2. Main entry point detection — DETERMINISTIC
-    if stem in ("main", "app", "index", "server") and language == "python":
-        if re.search(r"FastAPI\(|Flask\(|uvicorn|django", content):
+    # 2. Main entry point detection — HIGH / DETERMINISTIC
+    if stem in ("main", "app", "index", "server") and (language == "python" or ext in (".py", ".js", ".ts")):
+        if not content or re.search(r"FastAPI\(|Flask\(|uvicorn|django|express|createServer", content):
             return EntityType.APPLICATION, ArchLayer.API_GATEWAY, 1.0, ConfidenceLevel.DETERMINISTIC
+        return EntityType.APPLICATION, ArchLayer.API_GATEWAY, CONFIDENCE_VALUES[ConfidenceLevel.HIGH], ConfidenceLevel.HIGH
 
     # 3. Python: decorator-based detection — DETERMINISTIC (decorator is explicit)
     if language == "python":

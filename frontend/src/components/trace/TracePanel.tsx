@@ -84,7 +84,7 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
           <div className="w-5 h-5 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
             <Compass className="w-3.5 h-3.5 group-hover:rotate-45 transition-transform duration-300" />
           </div>
-          <span className="text-xs font-mono font-bold tracking-tight">Trace & Explore</span>
+          <span className="text-xs font-mono font-bold tracking-tight">Trace</span>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 capitalize">
             {currentView}
           </span>
@@ -108,7 +108,7 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             <Compass className="w-3.5 h-3.5" />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-white tracking-tight">TRACE / EXPLORE</span>
+            <span className="font-bold text-white tracking-tight">TRACE</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700">
               {viewLabels[currentView] || currentView}
             </span>

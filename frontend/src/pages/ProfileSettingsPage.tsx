@@ -98,7 +98,7 @@ export const ProfileSettingsPage: React.FC = () => {
       {/* Header */}
       <div>
         <div className="text-muted-foreground text-xs font-mono mb-1">
-          Workspace / Profile & Settings
+          Profile & Settings
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Account & Security Settings</h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">

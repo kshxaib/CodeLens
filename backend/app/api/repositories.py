@@ -14,7 +14,6 @@ from app.schemas.repository import (
     RepositorySummary,
     ExplainComponentRequest,
 )
-from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.parser.workflow_extractor import WorkflowExtractor
@@ -289,19 +288,11 @@ async def get_repository_architecture(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Returns cached living architecture topology diagram for visual canvas."""
-    get_user_repository_access(id, current_user, db)
-    arch = db.query(ArchitectureGraph).filter(ArchitectureGraph.repository_id == id).order_by(
-        ArchitectureGraph.created_at.desc()
-    ).first()
-
-    if not arch:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Architecture map not available. Please index the repository first.",
-        )
-
-    return arch.graph_data
+    """
+    Returns the canonical Architecture Knowledge Graph for the repository.
+    Ensures /{id}/architecture and /{id}/knowledge-graph return the same unified schema.
+    """
+    return await get_knowledge_graph(id=id, current_user=current_user, db=db)
 
 
 @router.get("/{id}/blast-radius", summary="Compute Symbol Blast Radius")
@@ -311,16 +302,9 @@ async def get_symbol_blast_radius(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Computes caller-callee dependency blast radius for a given symbol."""
-    get_user_repository_access(id, current_user, db)
-    files = db.query(File.file_path, File.content, File.language).filter(File.repository_id == id).all()
-
-    file_dicts = [
-        {"file_path": f.file_path, "content": f.content, "language": f.language}
-        for f in files
-    ]
-
-    return compute_blast_radius(symbol, file_dicts)
+    """Computes caller-callee dependency blast radius using the Architecture Knowledge Graph."""
+    service = _get_trace_service(id, current_user, db)
+    return service.compute_symbol_blast_radius(symbol)
 
 
 @router.get("/{id}/knowledge-graph", summary="Get Architecture Knowledge Graph")

@@ -128,12 +128,12 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
               <div>
                 <span className="text-zinc-500 text-[10px] block">Guard Condition:</span>
                 <span className="text-amber-300">
-                  {selectedTransition.condition ? `[${selectedTransition.condition}]` : 'Unconditional / Default'}
+                  {selectedTransition.condition ? `[${selectedTransition.condition}]` : 'Unconditional'}
                 </span>
               </div>
 
               <div>
-                <span className="text-zinc-500 text-[10px] block">Action / Handler Function:</span>
+                <span className="text-zinc-500 text-[10px] block">Action Handler:</span>
                 <span className="text-indigo-300">
                   {selectedTransition.action || 'Direct State Mutation'}
                 </span>

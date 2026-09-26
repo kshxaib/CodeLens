@@ -13,6 +13,9 @@ TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @pytest.fixture
 def auth_user():
     session = TestSession()
+    session.query(User).filter_by(github_id=666601).delete()
+    session.commit()
+
     user = User(
         github_id=666601,
         username="gemini_user_test",

@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.db.models import Repository, File, ArchitectureGraph
 from app.services.git_service import clone_and_scan_repository
 from app.services.chunker import chunk_file, CodeChunk
-from app.parser.architecture import generate_architecture_graph
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.rag.embeddings import generate_batch_embeddings
 from app.rag.vector_store import delete_repository_vectors, upsert_chunks
@@ -73,19 +72,19 @@ def index_repository(
 
         db.commit()
 
-        # 4. Generate Architecture Graph & Knowledge Graph, save to PostgreSQL
-        arch_graph_data = generate_architecture_graph(scanned_files)
-
-        # Build the semantic Knowledge Graph and embed it in graph_data.
-        # Using the existing JSON column avoids a DB migration while still
-        # making the KG available to the new /knowledge-graph API endpoint.
+        # 4. Generate Unified Architecture Knowledge Graph, save to PostgreSQL
         try:
             kg = build_knowledge_graph(scanned_files)
-            arch_graph_data["knowledge_graph"] = kg.to_dict()
+            kg_dict = kg.to_dict()
+            arch_graph_data = {
+                "knowledge_graph": kg_dict,
+                "nodes": kg_dict.get("nodes", []),
+                "edges": kg_dict.get("edges", []),
+                "summary": kg.summary(),
+            }
         except Exception as kg_err:
-            # KG build failure must NOT block the existing indexing pipeline.
             print(f"[!] Knowledge graph build warning for repo {repository_id}: {kg_err}")
-            arch_graph_data["knowledge_graph"] = None
+            arch_graph_data = {"knowledge_graph": None, "nodes": [], "edges": []}
 
         arch_record = ArchitectureGraph(
             repository_id=repository_id,

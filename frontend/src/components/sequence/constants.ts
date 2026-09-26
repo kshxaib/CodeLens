@@ -24,7 +24,7 @@ export interface ParticipantConfig {
 
 export const PARTICIPANT_CONFIG: Record<ParticipantType, ParticipantConfig> = {
   actor: {
-    label: 'Actor / User',
+    label: 'Actor',
     sub: 'Request Initiator',
     icon: User,
     dot: '#f59e0b',
@@ -35,7 +35,7 @@ export const PARTICIPANT_CONFIG: Record<ParticipantType, ParticipantConfig> = {
   },
   client: {
     label: 'Client App',
-    sub: 'Web / Mobile SPA',
+    sub: 'Web Client',
     icon: Monitor,
     dot: '#a855f7',
     badgeBg: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
@@ -45,7 +45,7 @@ export const PARTICIPANT_CONFIG: Record<ParticipantType, ParticipantConfig> = {
   },
   api_gateway: {
     label: 'API Gateway',
-    sub: 'Router / Reverse Proxy',
+    sub: 'Gateway Router',
     icon: Globe,
     dot: '#0284c7',
     badgeBg: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
@@ -74,7 +74,7 @@ export const PARTICIPANT_CONFIG: Record<ParticipantType, ParticipantConfig> = {
     glow: 'rgba(192, 132, 252, 0.25)',
   },
   database: {
-    label: 'Database / ORM',
+    label: 'Database',
     sub: 'Persistent Data Store',
     icon: Database,
     dot: '#10b981',
@@ -95,7 +95,7 @@ export const PARTICIPANT_CONFIG: Record<ParticipantType, ParticipantConfig> = {
   },
   queue: {
     label: 'Message Queue',
-    sub: 'Event Bus / PubSub',
+    sub: 'Event Bus',
     icon: Layers,
     dot: '#f97316',
     badgeBg: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
@@ -158,7 +158,7 @@ export const INTERACTION_CONFIG: Record<InteractionType, InteractionConfig> = {
     badgeBg: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
   },
   error: {
-    label: 'Error / 4xx/5xx',
+    label: 'Error Response',
     color: '#f43f5e',
     strokeDasharray: '4,4',
     badgeBg: 'bg-rose-500/10 text-rose-300 border-rose-500/30',

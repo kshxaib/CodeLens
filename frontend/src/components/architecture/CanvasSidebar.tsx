@@ -343,7 +343,7 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
               </p>
               <div className="space-y-1.5 text-[10px] font-mono">
                 {[
-                  { color: '#f59e0b', label: 'Selected / Focus node' },
+                  { color: '#f59e0b', label: 'Selected node' },
                   { color: '#f59e0b', label: 'Upstream callers', opacity: 0.7 },
                   { color: '#38bdf8', label: 'Downstream dependencies' },
                   { color: '#38bdf8', label: 'Active path step', ring: true },

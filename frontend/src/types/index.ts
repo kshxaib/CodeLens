@@ -84,32 +84,17 @@ export interface ConversationDetail extends ConversationItem {
   messages: MessageItem[];
 }
 
-export interface ArchitectureNode {
-  id: string;
-  label: string;
-  file_path: string;
-  layer: 'presentation' | 'application' | 'domain' | 'infrastructure' | 'unknown';
-  symbol_count: number;
-  symbols: Array<{
-    name: string;
-    kind: string;
-    line_number: number;
-  }>;
-}
+/** Legacy Architecture Node type — aliased to canonical ArchKGNode */
+export type ArchitectureNode = ArchKGNode;
 
-export interface ArchitectureEdge {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-  weight?: number;
-}
+/** Legacy Architecture Edge type — aliased to canonical ArchKGEdge */
+export type ArchitectureEdge = ArchKGEdge;
 
-export interface ArchitectureGraphData {
-  nodes: ArchitectureNode[];
-  edges: ArchitectureEdge[];
-  layer_counts?: Record<string, number>;
-}
+/**
+ * Unified Architecture Graph representation.
+ * Synonymous with KnowledgeGraphData so no competing graph schemas exist.
+ */
+export type ArchitectureGraphData = KnowledgeGraphData;
 
 export interface BlastRadiusResponse {
   target_symbol: string;

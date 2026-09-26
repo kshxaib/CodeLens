@@ -15,7 +15,7 @@ export const STATE_TYPE_CONFIG: Record<StateType, StateTypeConfig> = {
   initial: {
     id: 'initial',
     label: 'Initial State',
-    sub: 'Entrypoint / Created State',
+    sub: 'Initial Entrypoint',
     color: 'text-sky-400',
     border: 'border-sky-500/40',
     bg: 'bg-sky-500/10',
@@ -24,7 +24,7 @@ export const STATE_TYPE_CONFIG: Record<StateType, StateTypeConfig> = {
   },
   intermediate: {
     id: 'intermediate',
-    label: 'Active / Intermediate',
+    label: 'Active State',
     sub: 'In-Progress Lifecycle Phase',
     color: 'text-indigo-400',
     border: 'border-indigo-500/40',
@@ -45,7 +45,7 @@ export const STATE_TYPE_CONFIG: Record<StateType, StateTypeConfig> = {
   terminal_failure: {
     id: 'terminal_failure',
     label: 'Terminal (Failure)',
-    sub: 'Failed / Aborted / Rejected State',
+    sub: 'Failed Terminal State',
     color: 'text-rose-400',
     border: 'border-rose-500/50',
     bg: 'bg-rose-500/10',

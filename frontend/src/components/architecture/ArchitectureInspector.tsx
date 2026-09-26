@@ -218,7 +218,7 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
             {/* Description */}
             <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
-                Description / Role
+                Description
               </span>
               <p className="text-zinc-300 leading-relaxed text-[11px]">
                 {node.description ||
@@ -263,7 +263,7 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
             {/* Impact Analysis Action */}
             <div className="border-t border-[#1f1f23] pt-4">
               <button
-                onClick={() => onAnalyzeBlastRadius(node.symbols?.[0]?.name || node.name)}
+                onClick={() => onAnalyzeBlastRadius(node.id || node.name)}
                 disabled={blastLoading}
                 className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-lg disabled:opacity-50"
               >
