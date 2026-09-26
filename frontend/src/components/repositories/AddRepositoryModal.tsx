@@ -11,9 +11,12 @@ import {
   GitBranch,
   Cpu,
   Layers,
+  KeyRound,
 } from 'lucide-react';
 import { GithubIcon } from '../common/Icons';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { AddGeminiKeyModal } from '../common/AddGeminiKeyModal';
 import { api } from '../../api/client';
 import type { RepositoryItem } from '../../types';
 
@@ -64,9 +67,11 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { user } = useAuthStore();
   const { addRepository, triggerIndexing, fetchRepositories } = useWorkspaceStore();
   const [stage, setStage] = useState<ModalStage>('input');
   const [repoUrl, setRepoUrl] = useState('');
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [activeRepo, setActiveRepo] = useState<RepositoryItem | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -106,6 +111,12 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
     const cleanUrl = repoUrl.trim();
     if (!cleanUrl) {
       setError('Please enter a GitHub repository URL.');
+      return;
+    }
+
+    if (!user?.has_gemini_key) {
+      setError('Gemini API key is required to index a repository. Please add your key first.');
+      setIsKeyModalOpen(true);
       return;
     }
 
@@ -225,6 +236,22 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         {/* STAGE 1: INPUT FORM */}
         {stage === 'input' && (
           <>
+            {!user?.has_gemini_key && (
+              <div className="mb-4 p-3 rounded-xl bg-black border border-[#27272a] text-zinc-300 text-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-zinc-400 shrink-0" />
+                  <span>Gemini API key required for indexing</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsKeyModalOpen(true)}
+                  className="px-2.5 py-1 bg-white hover:bg-zinc-200 text-black text-[11px] font-medium rounded-lg transition cursor-pointer"
+                >
+                  Add Key
+                </button>
+              </div>
+            )}
+
             {error && (
               <div className="mb-4 p-3 rounded-xl bg-[#141416] border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
@@ -434,6 +461,18 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Add Gemini Key Modal */}
+      {isKeyModalOpen && (
+        <AddGeminiKeyModal
+          isOpen={isKeyModalOpen}
+          onClose={() => setIsKeyModalOpen(false)}
+          onSuccess={() => {
+            setIsKeyModalOpen(false);
+            setError(null);
+          }}
+        />
+      )}
     </div>
   );
 };

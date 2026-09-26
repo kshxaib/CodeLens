@@ -78,6 +78,10 @@ export const api = {
     const res = await apiClient.put<UserProfile>('/user/gemini-key', { api_key: apiKey });
     return res.data;
   },
+  deleteGeminiKey: async () => {
+    const res = await apiClient.delete<{ status: string; has_key: boolean; message: string }>('/user/gemini-key');
+    return res.data;
+  },
 
   // Repositories
   getRepositories: async () => {

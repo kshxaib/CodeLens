@@ -10,6 +10,7 @@ interface AuthState {
   handleCallback: (code: string) => Promise<UserProfile>;
   logout: () => Promise<void>;
   updateGeminiKey: (apiKey: string) => Promise<UserProfile>;
+  removeGeminiKey: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: UserProfile | null) => void;
 }
@@ -94,6 +95,24 @@ export const useAuthStore = create<AuthState>((set) => ({
           : null,
       }));
       return stateUser(res);
+    }
+  },
+
+  removeGeminiKey: async () => {
+    await api.deleteGeminiKey();
+    try {
+      const profile = await api.getUserProfile();
+      set({ user: profile });
+    } catch {
+      set((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              has_gemini_key: false,
+              masked_gemini_key: '',
+            }
+          : null,
+      }));
     }
   },
 }));

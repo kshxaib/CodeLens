@@ -78,7 +78,19 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
+  const handleAddRepoClick = () => {
+    if (!user?.has_gemini_key) {
+      setIsKeyModalOpen(true);
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
+
   const handleReindex = async (repoId: number) => {
+    if (!user?.has_gemini_key) {
+      setIsKeyModalOpen(true);
+      return;
+    }
     try {
       await triggerIndexing(repoId);
     } catch (err) {
@@ -103,7 +115,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    onClick={() => setIsAddModalOpen(true)}
+                    onClick={handleAddRepoClick}
                     className="rounded-lg bg-primary text-primary-foreground text-sm pr-3 pl-3 h-9 font-semibold hover:bg-primary/90 shadow-md cursor-pointer"
                   >
                     + Add Repository
@@ -201,31 +213,24 @@ export const DashboardPage: React.FC = () => {
 
               {/* Gemini API Key Prompt Banner - Only shown if key has NOT been added */}
               {!user?.has_gemini_key && (
-                <section className="rounded-xl bg-[#09090b] border border-amber-500/25 flex flex-col sm:flex-row p-4 justify-between items-start sm:items-center gap-4">
+                <section className="rounded-xl bg-black border border-[#27272a] flex flex-col sm:flex-row p-4 justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                      <KeyRound className="w-4 h-4" />
-                    </div>
+                    <KeyRound className="w-4 h-4 text-zinc-400 shrink-0" />
                     <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-white">
-                          Gemini API Key Required
-                        </span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          Action Needed
-                        </span>
-                      </div>
-                      <span className="text-muted-foreground text-xs">
-                        Configure your free Google Gemini API key to unlock repository indexing and grounded AI chat.
+                      <span className="font-medium text-sm text-white">
+                        Gemini API Key Required
+                      </span>
+                      <span className="text-zinc-400 text-xs">
+                        Configure your Gemini API key to enable repository indexing and AI chat.
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <Button
                       onClick={() => setIsKeyModalOpen(true)}
-                      className="rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold px-4 h-8 transition shadow-sm cursor-pointer"
+                      className="rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-medium px-3.5 h-8 transition cursor-pointer"
                     >
-                      + Add Gemini Key
+                      Add Key
                     </Button>
                   </div>
                 </section>
@@ -255,7 +260,7 @@ export const DashboardPage: React.FC = () => {
                           Connect your first GitHub repository to generate 4-layer architecture maps and query with AI.
                         </p>
                         <Button
-                          onClick={() => setIsAddModalOpen(true)}
+                          onClick={handleAddRepoClick}
                           className="rounded-lg bg-primary text-primary-foreground text-xs font-semibold px-4 h-8"
                         >
                           + Connect Repository
@@ -561,17 +566,12 @@ export const DashboardPage: React.FC = () => {
 
       {/* Floating Confirmation Pop Message */}
       {confirmationToast && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 bg-[#09090b] border border-emerald-500/40 text-white px-4 py-3 rounded-xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-          <div className="flex flex-col pr-2">
-            <span className="text-xs font-semibold text-emerald-400">Gemini API Key Verified ✓</span>
-            <span className="text-[11px] text-slate-300">{confirmationToast}</span>
-          </div>
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-[#27272a] text-white px-3.5 py-2.5 rounded-lg animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="text-xs text-zinc-200 pr-2">{confirmationToast}</span>
           <button
             onClick={() => setConfirmationToast(null)}
-            className="text-slate-500 hover:text-white p-1 rounded-md hover:bg-[#18181b] transition ml-2 cursor-pointer"
+            className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-900 transition cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

@@ -18,13 +18,25 @@ import { LogoutConfirmModal } from '../components/common/LogoutConfirmModal';
 import { RevokeKeyConfirmModal } from '../components/common/RevokeKeyConfirmModal';
 
 export const ProfileSettingsPage: React.FC = () => {
-  const { user, updateGeminiKey, refreshUser } = useAuthStore();
+  const { user, updateGeminiKey, removeGeminiKey, refreshUser } = useAuthStore();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const extractErrorMessage = (err: any, fallback: string): string => {
+    const detail = err?.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail[0]?.msg || fallback;
+    }
+    const msg = err?.response?.data?.message;
+    if (typeof msg === 'string') return msg;
+    if (typeof err?.message === 'string') return err.message;
+    return fallback;
+  };
 
   const handleSaveKey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +60,7 @@ export const ProfileSettingsPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: 'error',
-        message: err.message || 'Failed to verify Gemini API key. Please check the key and try again.',
+        message: extractErrorMessage(err, 'Failed to verify Gemini API key. Please check the key and try again.'),
       });
     } finally {
       setSubmitting(false);
@@ -58,12 +70,17 @@ export const ProfileSettingsPage: React.FC = () => {
   const handleRevokeKey = async () => {
     try {
       setSubmitting(true);
-      await updateGeminiKey('');
-      setFeedback({ type: 'success', message: 'Gemini API key removed.' });
+      setFeedback(null);
+      await removeGeminiKey();
       await refreshUser();
+      setFeedback({ type: 'success', message: 'Gemini API key removed.' });
       setIsRevokeModalOpen(false);
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to remove key.' });
+      setFeedback({
+        type: 'error',
+        message: extractErrorMessage(err, 'Failed to remove key.'),
+      });
+      setIsRevokeModalOpen(false);
     } finally {
       setSubmitting(false);
     }

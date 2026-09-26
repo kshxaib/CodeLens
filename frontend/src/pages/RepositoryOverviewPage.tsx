@@ -12,19 +12,25 @@ import {
   ExternalLink,
   ChevronRight,
   Layers,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { RepositoryItem, FileItem } from '../types';
 import { LoadingScreen } from '../components/common/LoadingScreen';
 import { ErrorState } from '../components/common/ErrorState';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
+import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 
 export const RepositoryOverviewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const repoId = parseInt(id || '0', 10);
   const { setSelectedRepo } = useWorkspaceStore();
+  const { user } = useAuthStore();
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
 
   const [repo, setRepo] = useState<RepositoryItem | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -56,13 +62,26 @@ export const RepositoryOverviewPage: React.FC = () => {
     if (repoId) fetchRepoData();
   }, [repoId]);
 
+  const [indexError, setIndexError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (indexError) {
+      const timer = setTimeout(() => setIndexError(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [indexError]);
+
   const handleTriggerIndex = async () => {
+    if (!user?.has_gemini_key) {
+      setIsKeyModalOpen(true);
+      return;
+    }
     try {
       setIndexing(true);
       await api.indexRepository(repoId);
       await fetchRepoData();
     } catch (err: any) {
-      alert(err.message || 'Indexing failed');
+      setIndexError(err?.response?.data?.detail || err.message || 'Indexing failed');
     } finally {
       setIndexing(false);
     }
@@ -216,6 +235,31 @@ export const RepositoryOverviewPage: React.FC = () => {
         repositoryId={repo.id}
         fileId={selectedFileId || undefined}
       />
+
+      {/* Floating Error Toast */}
+      {indexError && (
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-[#27272a] text-white px-3.5 py-2.5 rounded-lg animate-fadeIn">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span className="text-xs text-zinc-200 pr-2">{indexError}</span>
+          <button
+            onClick={() => setIndexError(null)}
+            className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-900 transition cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Add Gemini Key Modal */}
+      {isKeyModalOpen && (
+        <AddGeminiKeyModal
+          isOpen={isKeyModalOpen}
+          onClose={() => setIsKeyModalOpen(false)}
+          onSuccess={() => {
+            setIsKeyModalOpen(false);
+          }}
+        />
+      )}
     </WorkspaceLayout>
   );
 };

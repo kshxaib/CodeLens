@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   MessageSquare,
   Plus,
@@ -17,6 +17,7 @@ import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { ConversationItem, ConversationDetail, MessageItem, Citation } from '../types';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
+import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 
 export const CodeLensChatPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -25,7 +26,6 @@ export const CodeLensChatPage: React.FC = () => {
 
   const { user } = useAuthStore();
   const { repositories, setSelectedRepo } = useWorkspaceStore();
-  const navigate = useNavigate();
 
   const [activeRepoId, setActiveRepoId] = useState<number>(repoId || (repositories[0]?.id ?? 0));
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -40,6 +40,7 @@ export const CodeLensChatPage: React.FC = () => {
   // Code Viewer state
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerTarget, setViewerTarget] = useState<{ filePath: string; lines?: { start: number; end: number } } | null>(null);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -113,8 +114,7 @@ export const CodeLensChatPage: React.FC = () => {
     if (!question || !activeRepoId || isStreaming) return;
 
     if (!user?.has_gemini_key) {
-      alert('Gemini API key is required to use AI Copilot. Please configure it in Profile Settings.');
-      navigate('/profile');
+      setIsKeyModalOpen(true);
       return;
     }
 
@@ -474,6 +474,17 @@ export const CodeLensChatPage: React.FC = () => {
             repositoryId={activeRepoId}
             filePath={viewerTarget.filePath}
             highlightLines={viewerTarget.lines}
+          />
+        )}
+
+        {/* Add Gemini Key Modal */}
+        {isKeyModalOpen && (
+          <AddGeminiKeyModal
+            isOpen={isKeyModalOpen}
+            onClose={() => setIsKeyModalOpen(false)}
+            onSuccess={() => {
+              setIsKeyModalOpen(false);
+            }}
           />
         )}
       </div>

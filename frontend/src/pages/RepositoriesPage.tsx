@@ -15,15 +15,19 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { AddRepositoryModal } from '../components/repositories/AddRepositoryModal';
+import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 import { EmptyState } from '../components/common/EmptyState';
 import type { RepositoryItem } from '../types';
 
 export const RepositoriesPage: React.FC = () => {
+  const { user } = useAuthStore();
   const { repositories, loading, setSelectedRepo, triggerIndexing } = useWorkspaceStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [indexingId, setIndexingId] = useState<number | null>(null);
   const navigate = useNavigate();
 
@@ -32,9 +36,21 @@ export const RepositoriesPage: React.FC = () => {
     (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const handleAddRepoClick = () => {
+    if (!user?.has_gemini_key) {
+      setIsKeyModalOpen(true);
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
+
   const handleIndexClick = async (e: React.MouseEvent, repoId: number) => {
     e.stopPropagation();
     e.preventDefault();
+    if (!user?.has_gemini_key) {
+      setIsKeyModalOpen(true);
+      return;
+    }
     try {
       setIndexingId(repoId);
       await triggerIndexing(repoId);
@@ -93,8 +109,8 @@ export const RepositoriesPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
+          onClick={handleAddRepoClick}
+          className="inline-flex items-center gap-2 bg-white hover:bg-zinc-200 text-black text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add Repository</span>
@@ -119,7 +135,7 @@ export const RepositoriesPage: React.FC = () => {
       {repositories.length === 0 && !loading ? (
         <EmptyState
           type="repositories"
-          onAction={() => setIsAddModalOpen(true)}
+          onAction={handleAddRepoClick}
         />
       ) : filteredRepos.length === 0 ? (
         <EmptyState
@@ -221,6 +237,17 @@ export const RepositoriesPage: React.FC = () => {
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={(newId) => {
             navigate(`/repository/${newId}`);
+          }}
+        />
+      )}
+
+      {/* Add Gemini Key Modal */}
+      {isKeyModalOpen && (
+        <AddGeminiKeyModal
+          isOpen={isKeyModalOpen}
+          onClose={() => setIsKeyModalOpen(false)}
+          onSuccess={() => {
+            setIsKeyModalOpen(false);
           }}
         />
       )}
