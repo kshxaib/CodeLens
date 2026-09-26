@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  X,
-  ExternalLink,
-  ChevronRight,
-  FileCode2,
-  Database,
-  ArrowDownRight,
-  ArrowUpRight,
-  Tag,
-} from 'lucide-react';
+import { X, ExternalLink, ChevronRight, FileCode2, Database, ArrowDownRight, ArrowUpRight, Tag } from 'lucide-react';
 import { getDataClassificationCfg } from './constants';
 import type { DataNode, DataFlowEdge } from '../../types';
 
@@ -31,13 +22,11 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
 }) => {
   const cfg = getDataClassificationCfg(node.data_classification);
 
-  // Incoming and outgoing lineage edges
   const incomingEdges = edges.filter((e) => e.target === node.id);
   const outgoingEdges = edges.filter((e) => e.source === node.id);
 
   return (
     <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[420px] z-30 select-text">
-      {/* Top Header */}
       <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
@@ -72,9 +61,7 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
         </button>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
-        {/* Quick Action: Open Source */}
         {node.evidence && (
           <button
             onClick={() =>
@@ -98,7 +85,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           </button>
         )}
 
-        {/* Storage Destination */}
         {node.storage && (
           <div className="p-3 rounded-xl border border-sky-500/30 bg-sky-950/20 flex items-center gap-2.5 text-sky-200">
             <Database className="w-4 h-4 text-sky-400 shrink-0" />
@@ -113,7 +99,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           </div>
         )}
 
-        {/* Description */}
         <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             Entity Description
@@ -123,7 +108,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           </p>
         </div>
 
-        {/* Fields & Schema Attributes */}
         {node.fields && node.fields.length > 0 && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <div className="flex items-center justify-between">
@@ -145,7 +129,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           </div>
         )}
 
-        {/* Upstream Data Lineage (Ancestors) */}
         <div className="space-y-2 border-t border-[#1f1f23] pt-4">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
             <ArrowDownRight className="w-3.5 h-3.5 text-zinc-500" />
@@ -180,7 +163,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           )}
         </div>
 
-        {/* Downstream Data Lineage (Descendants) */}
         <div className="space-y-2 border-t border-[#1f1f23] pt-4">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
             <ArrowUpRight className="w-3.5 h-3.5 text-amber-500" />
@@ -215,7 +197,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           )}
         </div>
 
-        {/* Source Evidence Code Snippet */}
         {node.evidence && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <div className="flex items-center justify-between">

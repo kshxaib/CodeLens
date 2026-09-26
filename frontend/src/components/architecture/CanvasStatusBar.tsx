@@ -1,22 +1,6 @@
-/**
- * CanvasStatusBar — Bottom status bar for the Architecture Canvas.
- *
- * Shows:
- * - Breadcrumb (repo → view)
- * - Active node/path selection
- * - Evidence status
- * - Node/edge counts
- * - Zoom level
- */
+
 import React from 'react';
-import {
-  ChevronRight,
-  CheckCircle2,
-  AlertTriangle,
-  Layers,
-  GitBranch,
-  ZoomIn,
-} from 'lucide-react';
+import { ChevronRight, CheckCircle2, AlertTriangle, Layers, GitBranch, ZoomIn } from 'lucide-react';
 
 interface CanvasStatusBarProps {
   repoName?: string;
@@ -55,7 +39,6 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({
 }) => {
   return (
     <div className="absolute bottom-0 left-0 right-0 z-20 h-8 bg-[#09090b]/95 backdrop-blur-md border-t border-[#1f1f23] flex items-center px-3 gap-3 text-[10px] font-mono text-zinc-500 pointer-events-none select-none">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-zinc-500 shrink-0">
         <Layers className="w-3 h-3 text-zinc-600" />
         {repoName && (
@@ -69,7 +52,6 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({
 
       <span className="text-zinc-700">|</span>
 
-      {/* Node/Edge counts */}
       <div className="flex items-center gap-2 shrink-0">
         <span className={filteredNodes < totalNodes ? 'text-amber-400' : 'text-zinc-400'}>
           {filteredNodes < totalNodes ? `${filteredNodes}/${totalNodes}` : totalNodes} nodes
@@ -80,7 +62,6 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({
         </span>
       </div>
 
-      {/* Selected context */}
       {(selectedNodeName || selectedEdgeLabel || pathLabel) && (
         <>
           <span className="text-zinc-700">|</span>
@@ -105,7 +86,6 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({
         </>
       )}
 
-      {/* Evidence status */}
       {evidenceStatus && evidenceStatus !== 'none' && (
         <>
           <span className="text-zinc-700">|</span>
@@ -125,10 +105,8 @@ export const CanvasStatusBar: React.FC<CanvasStatusBarProps> = ({
         </>
       )}
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Zoom */}
       {zoom !== undefined && (
         <div className="flex items-center gap-1 shrink-0">
           <ZoomIn className="w-3 h-3 text-zinc-600" />

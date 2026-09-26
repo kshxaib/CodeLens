@@ -1,26 +1,9 @@
 from datetime import datetime, timezone
-from sqlalchemy import (
-    Column,
-    Integer,
-    BigInteger,
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    UniqueConstraint,
-    Index,
-    JSON,
-    func,
-)
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Text, DateTime, ForeignKey, UniqueConstraint, Index, JSON, func
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
-
 class User(Base):
-    """
-    User model storing GitHub identity, OAuth tokens, and encrypted BYOK Gemini API keys.
-    """
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -29,12 +12,11 @@ class User(Base):
     email = Column(String(255), nullable=True)
     avatar_url = Column(String(500), nullable=True)
     github_access_token = Column(String(500), nullable=True)
-    openai_api_key = Column(String(500), nullable=True)  # Fernet encrypted OpenAI key
-    gemini_api_key = Column(String(500), nullable=True)  # Legacy Fernet encrypted key
+    openai_api_key = Column(String(500), nullable=True)
+    gemini_api_key = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationships
     repository_accesses = relationship(
         "RepositoryAccess",
         back_populates="user",
@@ -48,11 +30,7 @@ class User(Base):
         passive_deletes=True,
     )
 
-
 class Repository(Base):
-    """
-    Repository model storing ingested GitHub repositories, indexing state, and metadata.
-    """
     __tablename__ = "repositories"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -65,7 +43,7 @@ class Repository(Base):
     private = Column(Boolean, default=False, nullable=False)
     default_branch = Column(String(255), default="main", nullable=False)
     description = Column(String(1000), nullable=True)
-    index_status = Column(String(50), default="not_indexed", nullable=False)  # not_indexed | indexing | indexed | failed
+    index_status = Column(String(50), default="not_indexed", nullable=False)
     last_indexed_commit = Column(String(100), nullable=True)
     last_indexed_at = Column(DateTime(timezone=True), nullable=True)
     file_count = Column(Integer, default=0, nullable=False)
@@ -73,7 +51,6 @@ class Repository(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationships
     accesses = relationship(
         "RepositoryAccess",
         back_populates="repository",
@@ -99,17 +76,13 @@ class Repository(Base):
         passive_deletes=True,
     )
 
-
 class RepositoryAccess(Base):
-    """
-    Mapping table representing user access rights and roles per repository.
-    """
     __tablename__ = "repository_access"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     repository_id = Column(Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
-    permission = Column(String(50), default="read", nullable=False)  # read | write | admin
+    permission = Column(String(50), default="read", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -117,15 +90,10 @@ class RepositoryAccess(Base):
         UniqueConstraint("user_id", "repository_id", name="uq_user_repository_access"),
     )
 
-    # Relationships
     user = relationship("User", back_populates="repository_accesses")
     repository = relationship("Repository", back_populates="accesses")
 
-
 class File(Base):
-    """
-    Source code files stored for in-app code viewing and exact citation highlighting.
-    """
     __tablename__ = "files"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -144,14 +112,9 @@ class File(Base):
         Index("idx_files_repo_path", "repository_id", "file_path"),
     )
 
-    # Relationships
     repository = relationship("Repository", back_populates="files")
 
-
 class Conversation(Base):
-    """
-    Multi-threaded conversation session per repository and user.
-    """
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -161,7 +124,6 @@ class Conversation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationships
     repository = relationship("Repository", back_populates="conversations")
     user = relationship("User", back_populates="conversations")
     messages = relationship(
@@ -171,39 +133,29 @@ class Conversation(Base):
         passive_deletes=True,
     )
 
-
 class Message(Base):
-    """
-    Chat message history containing user questions, assistant streaming responses, and citations.
-    """
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
-    role = Column(String(50), nullable=False)  # user | assistant | system
+    role = Column(String(50), nullable=False)
     content = Column(Text, nullable=False)
-    sources = Column(JSON, default=list, nullable=True)  # List of citation objects
+    sources = Column(JSON, default=list, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    # Relationships
     conversation = relationship("Conversation", back_populates="messages")
 
-
 class ArchitectureGraph(Base):
-    """
-    Cached architecture topology diagrams and blast radius dependency metadata.
-    """
     __tablename__ = "architecture_graphs"
 
     id = Column(Integer, primary_key=True, index=True)
     repository_id = Column(Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
     commit_sha = Column(String(100), nullable=False)
-    graph_data = Column(JSON, nullable=False)  # Nodes and edges JSON structure
+    graph_data = Column(JSON, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("repository_id", "commit_sha", name="uq_repo_arch_commit"),
     )
 
-    # Relationships
     repository = relationship("Repository", back_populates="architecture_graphs")

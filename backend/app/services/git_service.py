@@ -58,17 +58,14 @@ EXCLUDED_FILES = {
     "thumbs.db",
 }
 
-MAX_FILE_SIZE_BYTES = 1024 * 1024  # 1MB max file size limit for source code
-
+MAX_FILE_SIZE_BYTES = 1024 * 1024
 
 def is_excluded(file_path: Path, root_dir: Path) -> bool:
-    """Checks whether a file should be excluded from indexing."""
     try:
         rel_parts = file_path.relative_to(root_dir).parts
     except ValueError:
         rel_parts = file_path.parts
 
-    # Check directory exclusions
     for part in rel_parts[:-1]:
         if part.lower() in EXCLUDED_DIRS or part.startswith("."):
             return True
@@ -77,28 +74,20 @@ def is_excluded(file_path: Path, root_dir: Path) -> bool:
     if file_name in EXCLUDED_FILES or file_name.startswith("."):
         return True
 
-    # Check extension exclusions
     ext = file_path.suffix.lower()
     if ext in EXCLUDED_EXTENSIONS:
         return True
 
-    # Double extension check (e.g. .min.js)
     if any(file_name.endswith(ex) for ex in EXCLUDED_EXTENSIONS):
         return True
 
     return False
 
-
 def scan_directory(directory_path: str) -> List[Dict[str, Any]]:
-    """
-    Scans a directory recursively and extracts metadata and contents
-    for all eligible source code files.
-    """
     root = Path(directory_path).resolve()
     scanned_files: List[Dict[str, Any]] = []
 
     for root_dir, dirs, files in os.walk(root):
-        # Prune excluded directories in-place
         dirs[:] = [d for d in dirs if d.lower() not in EXCLUDED_DIRS and not d.startswith(".")]
 
         for file_name in files:
@@ -111,11 +100,9 @@ def scan_directory(directory_path: str) -> List[Dict[str, Any]]:
                 stat = file_path.stat()
                 file_size = stat.st_size
 
-                # Skip files larger than 1MB
                 if file_size > MAX_FILE_SIZE_BYTES or file_size == 0:
                     continue
 
-                # Read text safely (skip binary content)
                 try:
                     content = file_path.read_text(encoding="utf-8")
                 except (UnicodeDecodeError, Exception):
@@ -138,24 +125,17 @@ def scan_directory(directory_path: str) -> List[Dict[str, Any]]:
                 print(f"[!] Warning reading {file_path}: {e}")
                 continue
 
-    # Sort alphabetically by path
     scanned_files.sort(key=lambda f: f["file_path"])
     return scanned_files
-
 
 def clone_and_scan_repository(
     clone_url: str,
     github_token: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], str]:
-    """
-    Performs an ephemeral shallow clone of a GitHub repository,
-    scans all files, extracts commit SHA, and cleans up the temporary directory.
-    """
     temp_dir = tempfile.mkdtemp(prefix="codelens_clone_")
     commit_sha = "unknown"
 
     try:
-        # Inject token if private repository authentication is needed
         clean_clone_url = clone_url.rstrip("/")
         auth_clone_url = clean_clone_url
         if github_token and "github.com" in clean_clone_url:
@@ -164,7 +144,6 @@ def clone_and_scan_repository(
                 f"https://x-access-token:{github_token}@github.com",
             )
 
-        # Execute git clone --depth 1
         cmd = ["git", "clone", "--depth", "1", auth_clone_url, temp_dir]
         result = subprocess.run(
             cmd,
@@ -177,7 +156,6 @@ def clone_and_scan_repository(
         if result.returncode != 0:
             raise RuntimeError(f"Git clone failed: {result.stderr.strip()}")
 
-        # Get latest commit SHA
         sha_res = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=temp_dir,
@@ -188,11 +166,9 @@ def clone_and_scan_repository(
         if sha_res.returncode == 0:
             commit_sha = sha_res.stdout.strip()
 
-        # Scan files in cloned repo
         scanned_files = scan_directory(temp_dir)
         return scanned_files, commit_sha
 
     finally:
-        # Guarantee cleanup of temporary directory
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir, ignore_errors=True)

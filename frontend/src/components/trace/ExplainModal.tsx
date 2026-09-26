@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  X,
-  ExternalLink,
-  ShieldCheck,
-  FileCode2,
-  Sparkles,
-} from 'lucide-react';
+import { X, ExternalLink, ShieldCheck, FileCode2, Sparkles } from 'lucide-react';
 import type { ExplainComponentResponse } from '../../types';
 
 interface ExplainModalProps {
@@ -28,7 +22,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-[#09090b] border border-[#27272a] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/90 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
@@ -55,7 +48,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
           </button>
         </div>
 
-        {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-5 font-mono text-xs">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-zinc-400">
@@ -64,7 +56,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
             </div>
           ) : data ? (
             <>
-              {/* Component Identity Card */}
               <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <h3 className="text-base font-bold text-white">{data.component_name}</h3>
@@ -83,7 +74,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
                 </div>
               </div>
 
-              {/* Inbound & Outbound Invocations */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3.5 rounded-xl border border-zinc-800/80 bg-[#0c0c0e]">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold mb-1">
@@ -100,7 +90,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
                 </div>
               </div>
 
-              {/* Architectural Explanation */}
               <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Architectural Synthesis
@@ -110,7 +99,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
                 </div>
               </div>
 
-              {/* Source Evidence */}
               {data.evidence && data.evidence.length > 0 && (
                 <div className="space-y-3">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
@@ -159,7 +147,6 @@ export const ExplainModal: React.FC<ExplainModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-3 border-t border-[#1f1f23] bg-[#0c0c0e] flex justify-end">
           <button
             onClick={onClose}

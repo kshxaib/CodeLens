@@ -9,24 +9,13 @@ from app.db.session import engine
 
 router = APIRouter(prefix="/health", tags=["Health Checks"])
 
-
 @router.get("", summary="Comprehensive Health & Keep-Alive Check")
 async def health_check():
-    """
-    Comprehensive health check endpoint that verifies and keeps alive:
-    1. FastAPI application process
-    2. PostgreSQL 16 database connection (executes SELECT 1)
-    3. Qdrant vector database connection (pings /healthz)
-
-    Ideal for Render / CronJob pinging every 10 minutes to prevent cold-starts
-    and keep free-tier databases from sleeping/suspending.
-    """
     timestamp = datetime.now(timezone.utc).isoformat()
     db_status = {"status": "unhealthy", "engine": "PostgreSQL", "latency_ms": None}
     qdrant_status = {"status": "unhealthy", "engine": "Qdrant", "latency_ms": None}
     is_healthy = True
 
-    # 1. Check PostgreSQL Database connection & execute keep-alive query
     try:
         db_start = time.perf_counter()
         with engine.connect() as conn:
@@ -37,7 +26,6 @@ async def health_check():
         is_healthy = False
         db_status = {"status": "disconnected", "engine": "PostgreSQL", "error": str(e), "latency_ms": None}
 
-    # 2. Check Qdrant Vector DB connection & execute keep-alive ping
     try:
         qdrant_start = time.perf_counter()
         async with httpx.AsyncClient(timeout=3.0) as client:
@@ -67,10 +55,8 @@ async def health_check():
 
     return response_payload
 
-
 @router.get("/db", summary="PostgreSQL Database Keep-Alive Check")
 async def db_health_check():
-    """Individual check for PostgreSQL database."""
     try:
         start_time = time.perf_counter()
         with engine.connect() as conn:
@@ -83,10 +69,8 @@ async def db_health_check():
             content={"status": "disconnected", "database": "PostgreSQL", "error": str(e)},
         )
 
-
 @router.get("/qdrant", summary="Qdrant Vector DB Keep-Alive Check")
 async def qdrant_health_check():
-    """Individual check for Qdrant vector database."""
     try:
         start_time = time.perf_counter()
         async with httpx.AsyncClient(timeout=3.0) as client:

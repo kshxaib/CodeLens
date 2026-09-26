@@ -1,49 +1,13 @@
-"""
-Evidence Service for CodeLens.
-
-Provides a dedicated, queryable layer for source evidence across the
-Architecture Knowledge Graph. Every claim — node classification, edge
-relationship — must be traceable to deterministic source code.
-
-Core Principle (ENFORCED):
-  - Claims WITHOUT direct code evidence are NEVER presented as certain.
-  - They are explicitly marked: is_inferred=True, confidence_level="inferred".
-  - LLM-generated summaries MUST cite AST-proven facts.
-
-Evidence Types (from graph_schema.EvidenceType):
-  - ast             → Direct AST parse (class definition, decorator, base class)
-  - import          → Static import statement
-  - function_call   → Call expression in source code
-  - route           → HTTP route decorator or router.add_route()
-  - db_access       → ORM query or raw SQL
-  - configuration   → Config file or environment variable reference
-  - inferred        → Heuristic guess (naming conventions, topology)
-  - llm_inferred    → LLM-generated claim grounded in AST facts
-"""
 from __future__ import annotations
 
 from typing import Dict, List, Any, Optional
 
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchEdge,
-    ArchNode,
-    SourceEvidence,
-    EvidenceType,
-    ConfidenceLevel,
-    CONFIDENCE_VALUES,
-)
-
-
-# ---------------------------------------------------------------------------
-# Evidence verification result structure
-# ---------------------------------------------------------------------------
+from app.parser.graph_schema import KnowledgeGraph, ArchEdge, ArchNode, SourceEvidence, EvidenceType, ConfidenceLevel, CONFIDENCE_VALUES
 
 def _make_evidence_dict(
     ev: SourceEvidence,
     file_content: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Serialize a SourceEvidence with enriched snippet from real file content."""
     snippet = ev.snippet
     if not snippet and file_content and ev.has_location:
         lines = file_content.splitlines()
@@ -62,19 +26,8 @@ def _make_evidence_dict(
         "has_location": ev.has_location,
     }
 
-
 class EvidenceService:
-    """
-    Dedicated service for querying and verifying source evidence in the Knowledge Graph.
 
-    Guarantees:
-    1. Claims without evidence are EXPLICITLY marked is_inferred=True / confidence="inferred".
-    2. Evidence is fetched from real file content when snippet is missing.
-    3. LLM explanations are flagged as llm_inferred and must reference AST evidence.
-    4. Inferred edges are NOT rejected — they are surfaced transparently.
-    """
-
-    # Human-readable labels for each evidence type
     EVIDENCE_TYPE_LABELS: Dict[str, str] = {
         EvidenceType.AST.value: "AST Parse",
         EvidenceType.IMPORT.value: "Static Import",
@@ -86,7 +39,6 @@ class EvidenceService:
         EvidenceType.LLM_INFERRED.value: "LLM Inferred",
     }
 
-    # Color tokens for UI badge rendering
     EVIDENCE_TYPE_COLORS: Dict[str, str] = {
         EvidenceType.AST.value: "emerald",
         EvidenceType.IMPORT.value: "sky",
@@ -110,16 +62,7 @@ class EvidenceService:
         self.nodes_by_id: Dict[str, ArchNode] = {n.id: n for n in kg.nodes}
         self.edges_by_id: Dict[str, ArchEdge] = {e.id: e for e in kg.edges}
 
-    # ---------------------------------------------------------------------------
-    # Public API
-    # ---------------------------------------------------------------------------
-
     def get_node_evidence(self, node_id: str) -> Dict[str, Any]:
-        """
-        Returns the full evidence set for a node classification.
-
-        If the node has no evidence, it is marked as inferred.
-        """
         node = self.nodes_by_id.get(node_id)
         if not node:
             return self._not_found_response(node_id, "node")
@@ -147,15 +90,8 @@ class EvidenceService:
         source_id: Optional[str] = None,
         target_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Returns full provenance for an edge relationship.
-
-        If the edge has no direct code evidence, the claim is EXPLICITLY
-        marked as inferred — never falsely presented as certain.
-        """
         edge = self._resolve_edge(edge_id, source_id, target_id)
         if not edge:
-            # No edge found → explicitly inferred connection
             return self._inferred_edge_response(source_id, target_id)
 
         src_node = self.nodes_by_id.get(edge.source)
@@ -181,10 +117,6 @@ class EvidenceService:
         }
 
     def get_repository_evidence_stats(self) -> Dict[str, Any]:
-        """
-        Returns overall evidence quality statistics for the repository.
-        Useful for a repository-level "confidence dashboard".
-        """
         total_edges = len(self.kg.edges)
         total_nodes = len(self.kg.nodes)
 
@@ -192,14 +124,12 @@ class EvidenceService:
         edges_inferred = sum(1 for e in self.kg.edges if e.is_inferred)
         edges_no_evidence = sum(1 for e in self.kg.edges if not e.evidence)
 
-        # Evidence type breakdown
         type_counts: Dict[str, int] = {}
         for edge in self.kg.edges:
             for ev in edge.evidence:
                 t = ev.evidence_type.value
                 type_counts[t] = type_counts.get(t, 0) + 1
 
-        # Average confidence
         avg_confidence = (
             sum(e.confidence for e in self.kg.edges) / total_edges
             if total_edges > 0 else 0.0
@@ -228,14 +158,6 @@ class EvidenceService:
         target_id: str,
         claimed_relationship: str,
     ) -> Dict[str, Any]:
-        """
-        Verifies whether a specific claimed relationship has source evidence.
-
-        Returns:
-        - VERIFIED: Direct evidence found in source code
-        - INFERRED: No direct evidence; relationship is a heuristic guess
-        - NOT_FOUND: Edge does not exist in the graph at all
-        """
         edge = self._resolve_edge(None, source_id, target_id)
         if not edge:
             return {
@@ -246,7 +168,6 @@ class EvidenceService:
                 "evidence": [],
             }
 
-        # Check if claimed type matches
         type_match = edge.relationship_type.value.upper() == claimed_relationship.upper()
         evidence_items = self._enrich_evidence_list(edge.evidence)
 
@@ -276,10 +197,6 @@ class EvidenceService:
             "evidence": evidence_items,
         }
 
-    # ---------------------------------------------------------------------------
-    # Internal helpers
-    # ---------------------------------------------------------------------------
-
     def _resolve_edge(
         self,
         edge_id: Optional[str],
@@ -301,7 +218,6 @@ class EvidenceService:
         return None
 
     def _enrich_evidence_list(self, evidence: List[SourceEvidence]) -> List[Dict[str, Any]]:
-        """Convert evidence items to dict, enriching snippet from file content."""
         result = []
         for ev in evidence:
             file_content = None
@@ -397,7 +313,6 @@ class EvidenceService:
             if ev["file_path"]:
                 files.add(ev["file_path"])
 
-        # Strongest type priority (higher = more certain)
         priority = {
             "ast": 8, "import": 7, "route": 6, "function_call": 5,
             "db_access": 4, "configuration": 3, "llm_inferred": 2, "inferred": 1,
@@ -413,7 +328,6 @@ class EvidenceService:
         }
 
     def _get_evidence_type_metadata(self, evidence_items: List[Dict]) -> List[Dict[str, Any]]:
-        """Returns UI metadata (label, color) for each unique evidence type present."""
         seen = set()
         result = []
         for ev in evidence_items:
@@ -458,7 +372,6 @@ class EvidenceService:
         source_id: Optional[str],
         target_id: Optional[str],
     ) -> Dict[str, Any]:
-        """Explicit response for edges with no evidence in the graph."""
         return {
             "edge_id": None,
             "source": {"id": source_id or "unknown", "name": source_id or "unknown"},

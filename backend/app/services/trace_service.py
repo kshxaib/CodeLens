@@ -1,16 +1,3 @@
-"""
-Trace & Explore Service for CodeLens.
-
-Provides interactive graph exploration and impact analysis across all five views
-(Architecture, Workflow, Sequence, Data Flow, Lifecycle):
-
-1. trace_node: Upstream, Current, Downstream traversal
-2. find_path: Shortest / relevant path between two nodes
-3. why_relationship: AST rule & source evidence explanation for edges
-4. explain_component: Evidence-first architectural explanation (LLM + deterministic fallback)
-5. calculate_impact: Direct/indirect dependents, depth, risk level
-6. change_impact: File/function/symbol change propagation to files, APIs, workflows, and data pipelines
-"""
 from __future__ import annotations
 
 import os
@@ -18,20 +5,10 @@ import re
 from collections import defaultdict, deque
 from typing import Dict, List, Any, Optional, Set, Tuple
 
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    ArchEdge,
-    SourceEvidence,
-    ConfidenceLevel,
-)
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, ArchEdge, SourceEvidence, ConfidenceLevel
 from app.core.security import decrypt_api_key
 
-
 class TraceService:
-    """
-    Unified graph intelligence engine operating on the canonical Architecture Knowledge Graph.
-    """
 
     def __init__(
         self,
@@ -49,24 +26,17 @@ class TraceService:
         self.lifecycles_data = lifecycles_data or {}
         self.sequences_data = sequences_data or {}
 
-        # Fast lookup indexes
         self.nodes_by_id: Dict[str, ArchNode] = {n.id: n for n in kg.nodes}
         self.nodes_by_name: Dict[str, ArchNode] = {n.name.lower(): n for n in kg.nodes}
         self.files_by_path: Dict[str, Dict[str, Any]] = {f.get("file_path", ""): f for f in files}
 
-        # Adjacency maps for canonical KG
         self.outgoing_edges: Dict[str, List[ArchEdge]] = defaultdict(list)
         self.incoming_edges: Dict[str, List[ArchEdge]] = defaultdict(list)
         for e in kg.edges:
             self.outgoing_edges[e.source].append(e)
             self.incoming_edges[e.target].append(e)
 
-    # -------------------------------------------------------------------------
-    # Helper to resolve node across view models
-    # -------------------------------------------------------------------------
-
     def _resolve_node(self, node_id: str, view: str = "architecture") -> Optional[Dict[str, Any]]:
-        """Resolves node info either from canonical KG or view subgraphs."""
         node_id_clean = node_id.strip()
         if node_id_clean in self.nodes_by_id:
             return self.nodes_by_id[node_id_clean].to_dict()
@@ -75,12 +45,10 @@ class TraceService:
         if lower_id in self.nodes_by_name:
             return self.nodes_by_name[lower_id].to_dict()
 
-        # Partial match
         for nid, n in self.nodes_by_id.items():
             if lower_id in nid.lower() or lower_id in n.name.lower() or lower_id in n.display_name.lower():
                 return n.to_dict()
 
-        # View-specific fallbacks (Workflow step, Lifecycle state, Dataflow node)
         if view == "workflow":
             for wf in self.workflows_data.get("workflows", []):
                 for step in wf.get("steps", []):
@@ -111,15 +79,7 @@ class TraceService:
 
         return None
 
-    # -------------------------------------------------------------------------
-    # FEATURE 1: Trace Path (Upstream, Current, Downstream)
-    # -------------------------------------------------------------------------
-
     def trace_node(self, node_id: str, view: str = "architecture", depth: int = 1) -> Dict[str, Any]:
-        """
-        Calculates Upstream (callers/sources), Current, and Downstream (callees/targets)
-        for a selected node.
-        """
         current = self._resolve_node(node_id, view)
         target_id = current["id"] if current else node_id
 
@@ -127,8 +87,6 @@ class TraceService:
         downstream: List[Dict[str, Any]] = []
 
         if view == "architecture" or target_id in self.nodes_by_id:
-            # Canonical KG traversal
-            # Upstream (incoming edges)
             for edge in self.incoming_edges.get(target_id, []):
                 src_node = self.nodes_by_id.get(edge.source)
                 if src_node:
@@ -142,7 +100,6 @@ class TraceService:
                         "evidence": [ev.to_dict() for ev in edge.evidence],
                     })
 
-            # Downstream (outgoing edges)
             for edge in self.outgoing_edges.get(target_id, []):
                 tgt_node = self.nodes_by_id.get(edge.target)
                 if tgt_node:
@@ -230,7 +187,6 @@ class TraceService:
                             "evidence": [t.get("evidence")] if t.get("evidence") else [],
                         })
 
-        # Deduplicate results
         def dedupe(items):
             seen = set()
             out = []
@@ -252,10 +208,6 @@ class TraceService:
             },
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 2: Trace Between Two Nodes
-    # -------------------------------------------------------------------------
-
     def find_path(
         self,
         start_node_id: str,
@@ -263,10 +215,6 @@ class TraceService:
         view: str = "architecture",
         max_hops: int = 8,
     ) -> Dict[str, Any]:
-        """
-        Calculates and returns the exact ordered path between two nodes:
-        LoginPage -> AuthAPI -> AuthService -> UserRepository -> PostgreSQL
-        """
         start_res = self._resolve_node(start_node_id, view)
         end_res = self._resolve_node(end_node_id, view)
 
@@ -283,7 +231,6 @@ class TraceService:
                 "summary": f"Start and End are the same node: {node_data.get('name')}",
             }
 
-        # Build view-specific adjacency graph
         adj: Dict[str, List[Tuple[str, Any]]] = defaultdict(list)
         undirected_adj: Dict[str, List[Tuple[str, Any]]] = defaultdict(list)
 
@@ -311,7 +258,6 @@ class TraceService:
                     undirected_adj[e["source"]].append((e["target"], e))
                     undirected_adj[e["target"]].append((e["source"], e))
 
-        # BFS for directed shortest path
         queue = deque([(s_id, [s_id], [])])
         visited: Set[str] = {s_id}
         found_path: Optional[List[str]] = None
@@ -331,7 +277,6 @@ class TraceService:
                     visited.add(nxt)
                     queue.append((nxt, path + [nxt], edge_list + [edge_obj]))
 
-        # Fallback to undirected if no forward directed path exists
         is_undirected_fallback = False
         if not found_path:
             u_queue = deque([(s_id, [s_id], [])])
@@ -359,7 +304,6 @@ class TraceService:
                 "summary": f"No path found between '{start_res.get('name', s_id) if start_res else s_id}' and '{end_res.get('name', e_id) if end_res else e_id}'.",
             }
 
-        # Format nodes and edges in path
         formatted_nodes: List[Dict[str, Any]] = []
         for nid in found_path:
             n_res = self._resolve_node(nid, view) or {"id": nid, "name": nid, "display_name": nid}
@@ -386,10 +330,6 @@ class TraceService:
             "summary": summary_text,
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 4: Why? (Why does CodeLens believe this relationship exists?)
-    # -------------------------------------------------------------------------
-
     def why_relationship(
         self,
         edge_id: Optional[str] = None,
@@ -397,14 +337,8 @@ class TraceService:
         target_id: Optional[str] = None,
         view: str = "architecture",
     ) -> Dict[str, Any]:
-        """
-        Inspects an edge and explains:
-        'Why does CodeLens believe this relationship exists?'
-        Returns exact code, line range, AST evidence rule, and confidence.
-        """
         target_edge: Optional[ArchEdge] = None
 
-        # Look in canonical KG
         if edge_id:
             target_edge = next((e for e in self.kg.edges if e.id == edge_id), None)
 
@@ -423,7 +357,6 @@ class TraceService:
             tgt_node = self.nodes_by_id.get(target_edge.target)
             rel_type = target_edge.relationship_type.value
 
-            # Build human-readable AST justification
             reason_map = {
                 "CALLS": f"{src_node.name if src_node else 'Source'} directly calls or invokes methods/classes defined in {tgt_node.name if tgt_node else 'Target'}.",
                 "IMPORTS": f"{src_node.name if src_node else 'Source'} explicitly imports symbols from {tgt_node.name if tgt_node else 'Target'}.",
@@ -440,7 +373,6 @@ class TraceService:
 
             evidence_items = []
             for ev in target_edge.evidence:
-                # If snippet is missing, fetch from source files
                 snippet = ev.snippet
                 if not snippet and ev.file_path in self.files_by_path:
                     file_content = self.files_by_path[ev.file_path].get("content", "")
@@ -467,7 +399,6 @@ class TraceService:
                 "evidence": evidence_items,
             }
 
-        # View-specific fallbacks (Lifecycle, Workflow)
         if view == "lifecycle" and source_id and target_id:
             for lc in self.lifecycles_data.get("lifecycles", []):
                 for t in lc.get("transitions", []):
@@ -511,10 +442,6 @@ class TraceService:
             "evidence": [],
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 5: Explain (Grounded Architecture Component Explanation)
-    # -------------------------------------------------------------------------
-
     async def explain_component(
         self,
         node_id: str,
@@ -522,10 +449,6 @@ class TraceService:
         gemini_api_key: Optional[str] = None,
         openai_api_key: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Explains a component using Gemini or deterministic analysis.
-        Strict rule: Gather ALL deterministic facts first. Never hallucinate claims.
-        """
         node_res = self._resolve_node(node_id, view)
         if not node_res:
             return {
@@ -535,12 +458,10 @@ class TraceService:
                 "confidence": "inferred",
             }
 
-        # 1. Gather all deterministic facts
         trace_data = self.trace_node(node_id, view)
         up_items = trace_data.get("upstream", [])
         down_items = trace_data.get("downstream", [])
 
-        # Gather code excerpts
         source_evidence: List[Dict[str, Any]] = []
         for fpath in node_res.get("source_files", []):
             f_info = self.files_by_path.get(fpath)
@@ -555,7 +476,6 @@ class TraceService:
                     "snippet": snippet,
                 })
 
-        # Structured deterministic brief
         brief_lines = [
             f"Component: {node_res.get('name')}",
             f"Architectural Role / Entity Type: {node_res.get('type')}",
@@ -570,7 +490,6 @@ class TraceService:
 
         deterministic_brief = "\n".join(brief_lines)
 
-        # 2. Check if an LLM key is available (Gemini or OpenAI)
         active_gemini_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
         active_openai_key = openai_api_key or os.getenv("OPENAI_API_KEY")
 
@@ -578,7 +497,6 @@ class TraceService:
 
         if active_gemini_key:
             try:
-                # Use Google GenAI
                 from google import genai
                 client = genai.Client(api_key=active_gemini_key)
                 prompt = f"""
@@ -628,7 +546,6 @@ DETERMINISTIC FACTS:
             except Exception as e:
                 print(f"[!] OpenAI fallback explanation failed: {e}")
 
-        # 3. Fallback deterministic structured explanation
         if not llm_explanation:
             up_names = [f"`{u.get('node', {}).get('name')}`" for u in up_items]
             up_str = ", ".join(up_names) if up_names else "None — acts as a root or external entrypoint."
@@ -658,22 +575,10 @@ DETERMINISTIC FACTS:
             "confidence": "deterministic" if node_res.get("confidence", 1.0) >= 0.85 else "high",
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 6: Impact ("Show what depends on this")
-    # -------------------------------------------------------------------------
-
     def calculate_impact(self, node_id: str, view: str = "architecture", max_depth: int = 5) -> Dict[str, Any]:
-        """
-        Calculates impact:
-        - direct dependents (distance = 1)
-        - indirect dependents (distance > 1)
-        - dependency depth
-        - risk score
-        """
         current = self._resolve_node(node_id, view)
         target_id = current["id"] if current else node_id
 
-        # Traverse upstream (who depends on target_id)
         direct_dependents: List[Dict[str, Any]] = []
         indirect_dependents: List[Dict[str, Any]] = []
         visited: Dict[str, int] = {target_id: 0}
@@ -714,7 +619,6 @@ DETERMINISTIC FACTS:
 
         total_impacted = len(direct_dependents) + len(indirect_dependents)
 
-        # Risk scoring
         if total_impacted >= 8 or max_observed_depth >= 4:
             risk_level = "critical"
         elif total_impacted >= 4 or max_observed_depth >= 3:
@@ -724,7 +628,6 @@ DETERMINISTIC FACTS:
         else:
             risk_level = "low"
 
-        # Layer breakdown
         layer_counts: Dict[str, int] = defaultdict(int)
         for dep in direct_dependents + indirect_dependents:
             layer_counts[dep["layer"]] += 1
@@ -739,28 +642,13 @@ DETERMINISTIC FACTS:
             "layer_breakdown": dict(layer_counts),
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 7: Change Impact (File / Function / Symbol change propagation)
-    # -------------------------------------------------------------------------
-
     def change_impact(
         self,
         file_path: Optional[str] = None,
         symbol_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Calculates potentially affected:
-        - files
-        - modules
-        - services
-        - APIs
-        - workflows
-        - data flows
-        Every result is traceable to the graph.
-        """
         matched_nodes: List[ArchNode] = []
 
-        # Find nodes associated with this file or symbol
         clean_file = (file_path or "").replace("\\", "/").strip()
         clean_symbol = (symbol_name or "").strip()
 
@@ -778,7 +666,6 @@ DETERMINISTIC FACTS:
             if file_match or sym_match or name_match:
                 matched_nodes.append(node)
 
-        # Traverse upstream from all matched nodes to find impacted blast radius
         impacted_node_ids: Set[str] = set()
         queue = deque([n.id for n in matched_nodes])
 
@@ -794,7 +681,6 @@ DETERMINISTIC FACTS:
 
         impacted_nodes = [self.nodes_by_id[nid] for nid in impacted_node_ids if nid in self.nodes_by_id]
 
-        # Categorize affected entities
         affected_files: Set[str] = set()
         affected_modules: List[str] = []
         affected_services: List[str] = []
@@ -811,7 +697,6 @@ DETERMINISTIC FACTS:
             elif node.type.value == "api_endpoint" or node.layer.value == "api_gateway":
                 affected_apis.append(node.name)
 
-        # Map to Affected Workflows
         affected_workflows: List[Dict[str, Any]] = []
         for wf in self.workflows_data.get("workflows", []):
             matching_steps = [
@@ -825,7 +710,6 @@ DETERMINISTIC FACTS:
                     "affected_steps": matching_steps,
                 })
 
-        # Map to Affected Data Flows
         affected_data_flows: List[Dict[str, Any]] = []
         for pipe in self.dataflows_data.get("pipelines", []):
             matching_entities = [
@@ -854,21 +738,11 @@ DETERMINISTIC FACTS:
             ),
         }
 
-    # -------------------------------------------------------------------------
-    # FEATURE 8: Symbol Blast Radius (Unified AKG Engine)
-    # -------------------------------------------------------------------------
-
     def compute_symbol_blast_radius(
         self,
         symbol_name: str,
         max_depth: int = 3,
     ) -> Dict[str, Any]:
-        """
-        Computes symbol blast radius (upstream callers and downstream callees)
-        using the Architecture Knowledge Graph.
-
-        Replaces the old legacy AST crawler with the canonical graph representation.
-        """
         if not symbol_name:
             return {
                 "target_symbol": "",
@@ -887,7 +761,6 @@ DETERMINISTIC FACTS:
 
         clean_symbol = symbol_name.strip().lower()
 
-        # 1. Find nodes associated with target symbol
         target_nodes: List[ArchNode] = []
         for node in self.kg.nodes:
             if any(s.get("name", "").lower() == clean_symbol for s in node.symbols):
@@ -895,7 +768,6 @@ DETERMINISTIC FACTS:
             elif node.name.lower() == clean_symbol or node.display_name.lower() == clean_symbol:
                 target_nodes.append(node)
 
-        # Fallback: check file contents if no direct node matched
         if not target_nodes:
             for node in self.kg.nodes:
                 for sf in node.source_files:
@@ -905,7 +777,6 @@ DETERMINISTIC FACTS:
 
         target_ids = {n.id for n in target_nodes}
 
-        # 2. Traverse Upstream (impacted callers)
         upstream_nodes: Dict[str, ArchNode] = {}
         queue: deque = deque([(nid, 0) for nid in target_ids])
         visited_upstream: Set[str] = set(target_ids)
@@ -923,7 +794,6 @@ DETERMINISTIC FACTS:
                         upstream_nodes[caller_id] = node
                     queue.append((caller_id, depth + 1))
 
-        # 3. Traverse Downstream (callees / dependencies)
         downstream_nodes: Dict[str, ArchNode] = {}
         downstream_queue: deque = deque([(nid, 0) for nid in target_ids])
         visited_downstream: Set[str] = set(target_ids)
@@ -941,7 +811,6 @@ DETERMINISTIC FACTS:
                         downstream_nodes[callee_id] = node
                     downstream_queue.append((callee_id, depth + 1))
 
-        # Check call expressions / symbol definitions across files if graph lacks synthetic callees
         extra_downstream: List[str] = []
         if target_nodes and self.files:
             for tn in target_nodes:
@@ -954,7 +823,6 @@ DETERMINISTIC FACTS:
                             if s.kind == "call" and s.name != symbol_name:
                                 extra_downstream.append(s.name)
 
-        # Also check callers across files if AST resolution didn't map all calls
         if self.files:
             for f in self.files:
                 path = f.get("file_path", "")
@@ -973,7 +841,6 @@ DETERMINISTIC FACTS:
         else:
             risk_level = "low"
 
-        # Build visualization nodes and edges
         viz_nodes: List[Dict[str, Any]] = [
             {
                 "id": "target_node",

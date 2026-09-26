@@ -2,21 +2,11 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.db.session import Base, engine
-from app.db.models import (
-    User,
-    Repository,
-    RepositoryAccess,
-    File,
-    Conversation,
-    Message,
-    ArchitectureGraph,
-)
+from app.db.models import User, Repository, RepositoryAccess, File, Conversation, Message, ArchitectureGraph
 from app.core.security import encrypt_api_key, decrypt_api_key
 
-# Create tables in PostgreSQL before running tests
 Base.metadata.create_all(bind=engine)
 TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture
 def db():
@@ -26,7 +16,6 @@ def db():
     finally:
         session.rollback()
         session.close()
-
 
 def test_create_user_with_encrypted_gemini_key(db):
     plain_gemini_key = "AIzaSyTestApiKeyForVerification12345"
@@ -49,13 +38,10 @@ def test_create_user_with_encrypted_gemini_key(db):
     assert user.gemini_api_key == encrypted_key
     assert decrypt_api_key(user.gemini_api_key) == plain_gemini_key
 
-    # Cleanup
     db.delete(user)
     db.commit()
 
-
 def test_repository_hierarchy_and_relationships(db):
-    # 1. Create User
     user = User(
         github_id=999902,
         username="repo_owner",
@@ -65,7 +51,6 @@ def test_repository_hierarchy_and_relationships(db):
     db.commit()
     db.refresh(user)
 
-    # 2. Create Repository
     repo = Repository(
         github_id=888801,
         owner="repo_owner",
@@ -82,7 +67,6 @@ def test_repository_hierarchy_and_relationships(db):
     db.commit()
     db.refresh(repo)
 
-    # 3. Create Repository Access
     access = RepositoryAccess(
         user_id=user.id,
         repository_id=repo.id,
@@ -90,7 +74,6 @@ def test_repository_hierarchy_and_relationships(db):
     )
     db.add(access)
 
-    # 4. Create Source Code File
     file_record = File(
         repository_id=repo.id,
         file_path="src/main.py",
@@ -101,7 +84,6 @@ def test_repository_hierarchy_and_relationships(db):
     )
     db.add(file_record)
 
-    # 5. Create Architecture Graph
     arch_graph = ArchitectureGraph(
         repository_id=repo.id,
         commit_sha="a1b2c3d4e5",
@@ -109,7 +91,6 @@ def test_repository_hierarchy_and_relationships(db):
     )
     db.add(arch_graph)
 
-    # 6. Create Chat Conversation
     convo = Conversation(
         repository_id=repo.id,
         user_id=user.id,
@@ -119,7 +100,6 @@ def test_repository_hierarchy_and_relationships(db):
     db.commit()
     db.refresh(convo)
 
-    # 7. Create Chat Message with Citations
     msg = Message(
         conversation_id=convo.id,
         role="assistant",
@@ -129,7 +109,6 @@ def test_repository_hierarchy_and_relationships(db):
     db.add(msg)
     db.commit()
 
-    # Verify querying and relations
     fetched_repo = db.query(Repository).filter_by(id=repo.id).first()
     assert fetched_repo is not None
     assert len(fetched_repo.files) == 1
@@ -139,7 +118,6 @@ def test_repository_hierarchy_and_relationships(db):
     assert fetched_repo.conversations[0].messages[0].sources[0]["symbol"] == "main"
     assert len(fetched_repo.architecture_graphs) == 1
 
-    # 8. Test CASCADE Delete: deleting repository cleans up files, convos, messages, arch graphs
     db.delete(fetched_repo)
     db.commit()
 
@@ -148,6 +126,5 @@ def test_repository_hierarchy_and_relationships(db):
     assert db.query(ArchitectureGraph).filter_by(repository_id=repo.id).first() is None
     assert db.query(Message).filter_by(conversation_id=convo.id).first() is None
 
-    # Cleanup user
     db.delete(user)
     db.commit()

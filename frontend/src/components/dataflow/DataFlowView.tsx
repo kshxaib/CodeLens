@@ -1,16 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  useReactFlow,
-  type Node,
-  type Edge,
-} from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { DataFlowNode } from './DataFlowNode';
 import { DataFlowEdge } from './DataFlowEdge';
 import { DataFlowInspector } from './DataFlowInspector';
@@ -51,25 +40,20 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Inspector & Selection
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  // Toolbar & Simulator
   const [searchQuery, setSearchQuery] = useState('');
   const [classificationFilter, setClassificationFilter] = useState('all');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Lineage animation playback simulator
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
 
-  // ReactFlow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // 1. Fetch data flows
   const fetchDataFlows = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,12 +75,10 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     fetchDataFlows();
   }, [fetchDataFlows]);
 
-  // Active pipeline
   const activePipeline = useMemo(() => {
     return pipelines.find((p) => p.id === selectedPipelineId) || pipelines[0] || null;
   }, [pipelines, selectedPipelineId]);
 
-  // Sync data flow nodes with TraceContext
   useEffect(() => {
     if (activePipeline?.nodes) {
       setViewNodes(
@@ -110,7 +92,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     }
   }, [activePipeline, setViewNodes]);
 
-  // 2. Lineage Simulator Timer Loop
   useEffect(() => {
     if (!isPlaying || !activePipeline || !activePipeline.nodes.length) return;
 
@@ -145,7 +126,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     setSimulationIndex(-1);
   }, []);
 
-  // 3. Upstream & Downstream Lineage Computation
   const { upstreamIds, downstreamIds } = useMemo(() => {
     if (!selectedNodeId || !activePipeline) {
       return { upstreamIds: new Set<string>(), downstreamIds: new Set<string>() };
@@ -154,7 +134,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     const up = new Set<string>();
     const down = new Set<string>();
 
-    // BFS Upstream (traverse source <- target)
     const queueUp = [selectedNodeId];
     while (queueUp.length > 0) {
       const curr = queueUp.shift()!;
@@ -166,7 +145,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
       }
     }
 
-    // BFS Downstream (traverse source -> target)
     const queueDown = [selectedNodeId];
     while (queueDown.length > 0) {
       const curr = queueDown.shift()!;
@@ -181,7 +159,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     return { upstreamIds: up, downstreamIds: down };
   }, [selectedNodeId, activePipeline]);
 
-  // 4. Construct ReactFlow graph from active pipeline
   useEffect(() => {
     if (!activePipeline) {
       setNodes([]);
@@ -192,7 +169,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     const rawNodes = activePipeline.nodes || [];
     const rawEdges = activePipeline.edges || [];
 
-    // Filter nodes based on search & classification
     const filteredNodes = rawNodes.filter((n) => {
       if (classificationFilter === 'transformations' && !n.is_transformation) return false;
       if (classificationFilter === 'models' && n.data_classification !== 'database_model') return false;
@@ -211,7 +187,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
 
     const visibleNodeIds = new Set(filteredNodes.map((n) => n.id));
 
-    // Filter edges connecting visible nodes
     const filteredEdges = rawEdges.filter(
       (e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)
     );
@@ -221,7 +196,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
         ? rawNodes[simulationIndex].id
         : null;
 
-    // Convert to ReactFlow Nodes
     const flowNodes: Node[] = filteredNodes.map((n) => {
       const isSelected = n.id === selectedNodeId;
       const isHovered = n.id === hoveredNodeId;
@@ -247,7 +221,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
       };
     });
 
-    // Convert to ReactFlow Edges
     const flowEdges: Edge[] = filteredEdges.map((e) => {
       const isConnected = e.source === selectedNodeId || e.target === selectedNodeId;
       const isLineageEdge =
@@ -278,7 +251,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
       };
     });
 
-    // Dagre layout
     const layouted = getDataFlowLayoutedElements(flowNodes, flowEdges, {
       direction: layoutDirection,
     });
@@ -299,7 +271,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     setEdges,
   ]);
 
-  // Fit to screen on initial load
   useEffect(() => {
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
@@ -309,7 +280,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     }
   }, [activePipeline?.id, layoutDirection, reactFlowInstance]);
 
-  // Handlers
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
@@ -364,7 +334,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     URL.revokeObjectURL(url);
   }, [activePipeline]);
 
-  // Selected Data Node for inspector
   const activeSelectedDataNode = useMemo(() => {
     if (!selectedNodeId || !activePipeline) return null;
     return activePipeline.nodes.find((n) => n.id === selectedNodeId) || null;
@@ -407,7 +376,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
         .df-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
       `}</style>
 
-      {/* Top Floating Toolbar */}
       <DataFlowToolbar
         currentView={currentView}
         onViewChange={onViewChange}
@@ -438,7 +406,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
         onExport={handleExportJSON}
       />
 
-      {/* ReactFlow Canvas */}
       <div className="flex-1 h-full w-full">
         <ReactFlow
           nodes={nodes}
@@ -485,7 +452,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
         </ReactFlow>
       </div>
 
-      {/* Right Slide-in Inspector Drawer */}
       <div
         className={`df-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
           activeSelectedDataNode ? 'open' : 'closed'

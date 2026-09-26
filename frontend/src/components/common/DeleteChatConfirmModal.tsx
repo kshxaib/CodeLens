@@ -22,7 +22,6 @@ export const DeleteChatConfirmModal: React.FC<DeleteChatConfirmModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="w-full max-w-md bg-card rounded-xl p-6 border border-border relative flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           disabled={isLoading}
@@ -31,7 +30,6 @@ export const DeleteChatConfirmModal: React.FC<DeleteChatConfirmModalProps> = ({
           <X className="size-4" />
         </button>
 
-        {/* Modal Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="size-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-destructive shrink-0">
             <Trash2 className="size-4" />
@@ -42,7 +40,6 @@ export const DeleteChatConfirmModal: React.FC<DeleteChatConfirmModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Body */}
         <div className="p-3.5 rounded-lg bg-secondary border border-border mb-5">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Are you sure you want to delete{' '}
@@ -53,7 +50,6 @@ export const DeleteChatConfirmModal: React.FC<DeleteChatConfirmModalProps> = ({
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
           <Button
             type="button"

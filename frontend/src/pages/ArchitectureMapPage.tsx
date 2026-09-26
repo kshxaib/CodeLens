@@ -1,24 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  ReactFlowProvider,
-  useReactFlow,
-  useViewport,
-  type Node,
-  type Edge,
-} from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, ReactFlowProvider, useReactFlow, useViewport, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import {
-  Loader2,
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { api } from '../api/client';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { KnowledgeGraphData, BlastRadiusResponse } from '../types';
@@ -50,12 +35,10 @@ const edgeTypes = {
   architectureEdge: ArchitectureEdge,
 };
 
-// Zoom tracker hook — reads from ReactFlow viewport
 function useZoomLevel() {
   const { zoom } = useViewport();
   return zoom;
 }
-
 
 interface ArchitectureMapCanvasProps {
   currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
@@ -71,7 +54,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trace Context
   const {
     selectedNodeId,
     selectTraceNode,
@@ -99,19 +81,16 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     impactData,
   } = useTrace();
 
-  // Raw Knowledge Graph Data from backend
   const [kgData, setKgData] = useState<KnowledgeGraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRebuilding, setIsRebuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // UI state
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const zoom = useZoomLevel();
 
-  // Filtering & View Mode
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -120,27 +99,20 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [viewMode, setViewMode] = useState<'system' | 'full'>('system');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
 
-  // Blast radius state
   const [blastRadius, setBlastRadius] = useState<BlastRadiusResponse | null>(null);
   const [blastLoading, setBlastLoading] = useState(false);
 
-  // Source code viewer modal state
   const [codeViewerState, setCodeViewerState] = useState<{
     isOpen: boolean;
     filePath?: string;
     highlightLines?: { start: number; end: number };
   }>({ isOpen: false });
 
-  // React Flow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // Filtered edge count (computed from edges state)
   const filteredEdgesCount = edges.length;
 
-  // ---------------------------------------------------------------------------
-  // Data Fetching
-  // ---------------------------------------------------------------------------
   const fetchKnowledgeGraph = useCallback(async (forceRebuild = false) => {
     try {
       if (forceRebuild) {
@@ -157,7 +129,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         try {
           data = await api.getKnowledgeGraph(repoId);
         } catch (fetchErr: any) {
-          // If 404 or missing, automatically trigger on-demand build
           data = await api.buildKnowledgeGraph(repoId);
         }
       }
@@ -191,20 +162,15 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     }
   }, [repoId, fetchKnowledgeGraph]);
 
-  // ---------------------------------------------------------------------------
-  // Graph Filtering & Layout Transformation
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!kgData) return;
 
     const rawNodes = kgData.nodes || [];
     const rawEdges = kgData.edges || [];
 
-    // Filter nodes according to viewMode, tier, type, scope, and search
     const filteredNodes = rawNodes.filter((n) => {
       const tierKey = getNodeTier(n.type, n.layer);
 
-      // View mode filter: 'system' shows semantic components, services, APIs, databases, external
       if (viewMode === 'system') {
         const isUtilityModule =
           (n.type === 'module' || n.type === 'function' || n.type === 'class') &&
@@ -212,20 +178,16 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         if (isUtilityModule) return false;
       }
 
-      // Tier filter
       if (selectedTier !== 'all' && tierKey !== selectedTier) return false;
 
-      // Entity type filter
       if (selectedType !== 'all') {
         if (selectedType === 'queue' && n.type !== 'queue' && n.type !== 'worker') return false;
         else if (selectedType !== 'queue' && n.type !== selectedType) return false;
       }
 
-      // Scope filter
       if (scopeFilter === 'internal' && n.type === 'external_service') return false;
       if (scopeFilter === 'external' && n.type !== 'external_service') return false;
 
-      // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = (n.name || '').toLowerCase().includes(q);
@@ -243,14 +205,12 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
 
     const visibleNodeIdSet = new Set(filteredNodes.map((n) => n.id));
 
-    // Filter edges: both source and target must be visible, plus relationship filter
     const filteredEdges = rawEdges.filter((e) => {
       if (!visibleNodeIdSet.has(e.source) || !visibleNodeIdSet.has(e.target)) return false;
       if (selectedRel !== 'all' && e.relationship_type !== selectedRel) return false;
       return true;
     });
 
-    // Compute Upstream and Downstream dependency sets if a node is selected or hovered
     const activeFocusNodeId = selectedNodeId || hoveredNodeId;
 
     const upstreamNodeIds = new Set<string>();
@@ -258,7 +218,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     const highlightedEdgeIds = new Set<string>();
 
     if (activeFocusNodeId && visibleNodeIdSet.has(activeFocusNodeId)) {
-      // Direct edges and paths
       filteredEdges.forEach((e) => {
         if (e.target === activeFocusNodeId) {
           upstreamNodeIds.add(e.source);
@@ -270,7 +229,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         }
       });
 
-      // Integrate with AKG Impact Analysis data
       if (impactData && (impactData.target?.id === activeFocusNodeId || impactData.target?.name === activeFocusNodeId)) {
         impactData.direct_dependents?.forEach((dep) => {
           upstreamNodeIds.add(dep.id);
@@ -280,7 +238,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         });
       }
 
-      // If blast radius data exists, integrate with blast upstream/downstream
       if (blastRadius) {
         const upstreamNames = new Set(blastRadius.upstream_dependents || []);
         const downstreamNames = new Set(blastRadius.downstream_dependencies || []);
@@ -298,7 +255,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
 
     const hasFocus = !!activeFocusNodeId;
 
-    // Path highlighting sets (Features 2 & 3)
     const pathNodeIdSet = new Set(
       pathData?.found && pathData.path_nodes ? pathData.path_nodes.map((n) => n.id) : []
     );
@@ -311,7 +267,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     );
     const isPathActive = pathNodeIdSet.size > 0;
 
-    // Convert ArchKGNode to ReactFlow Node
     const flowNodes: Node[] = filteredNodes.map((n) => {
       const isSelected = n.id === selectedNodeId;
       const isHovered = n.id === hoveredNodeId;
@@ -331,7 +286,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       return {
         id: n.id,
         type: 'architectureNode',
-        position: { x: 0, y: 0 }, // Will be laid out by Dagre
+        position: { x: 0, y: 0 }, 
         data: {
           ...n,
           isSelected,
@@ -347,7 +302,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       };
     });
 
-    // Convert ArchKGEdge to ReactFlow Edge
     const flowEdges: Edge[] = filteredEdges.map((e) => {
       const isUpstream = upstreamNodeIds.has(e.source) && (e.target === activeFocusNodeId || downstreamNodeIds.has(e.target));
       const isDownstream = (e.source === activeFocusNodeId || upstreamNodeIds.has(e.source)) && downstreamNodeIds.has(e.target);
@@ -388,7 +342,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       };
     });
 
-    // Compute Dagre layered layout
     const layouted = getLayoutedElements(flowNodes, flowEdges, {
       direction: layoutDirection,
     });
@@ -416,7 +369,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     setEdges,
   ]);
 
-  // Fit to screen on initial layout
   useEffect(() => {
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
@@ -426,9 +378,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     }
   }, [nodes.length, layoutDirection, viewMode, reactFlowInstance]);
 
-  // ---------------------------------------------------------------------------
-  // Interactions
-  // ---------------------------------------------------------------------------
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       selectTraceNode(selectedNodeId === node.id ? null : node.id);
@@ -491,12 +440,10 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     }
   };
 
-  // Currently selected ArchKGNode object
   const activeSelectedNode = useMemo(() => {
     if (!selectedNodeId || !kgData) return null;
     return kgData.nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, kgData]);
-
 
   if (loading) {
     return (
@@ -578,10 +525,8 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
               .arc-inspector.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
             `}</style>
 
-            {/* ─── MAIN CONTENT ROW ─── */}
             <div className="flex flex-1 min-h-0">
 
-              {/* LEFT SIDEBAR */}
               <div className={`arc-sidebar flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] z-30 ${leftOpen ? 'open' : 'closed'}`}>
                 {leftOpen && (
                   <CanvasSidebar
@@ -597,10 +542,8 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                 )}
               </div>
 
-              {/* CANVAS + TOOLBAR + STATUS */}
               <div className="flex-1 relative min-w-0 h-full flex flex-col">
 
-                {/* TOP TOOLBAR */}
                 <ArchitectureToolbar
                   currentView={currentView}
                   onViewChange={setCurrentView}
@@ -630,7 +573,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   onOpenSidebar={() => setLeftOpen(v => !v)}
                   isSidebarOpen={leftOpen}
                   onOpenTrace={() => {
-                    // Dispatch to TracePanel open (it manages its own state via store)
                     const panel = document.querySelector('[data-trace-panel-toggle]') as HTMLButtonElement | null;
                     panel?.click();
                   }}
@@ -647,7 +589,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   repoName={kgData?.metadata?.repository_name}
                 />
 
-                {/* REACT FLOW CANVAS */}
                 <div className="flex-1 min-h-0 pb-8">
                   <ReactFlow
                     nodes={nodes}
@@ -692,7 +633,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   </ReactFlow>
                 </div>
 
-                {/* BOTTOM STATUS BAR */}
                 <CanvasStatusBar
                   repoName={kgData?.metadata?.repository_name}
                   currentView={currentView}
@@ -710,7 +650,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                 />
               </div>
 
-              {/* RIGHT INSPECTOR */}
               <div className={`arc-inspector flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl z-30 ${activeSelectedNode ? 'open' : 'closed'}`}>
                 {activeSelectedNode && (
                   <ArchitectureInspector
@@ -730,10 +669,8 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
           </div>
       )}
 
-      {/* TRACE / EXPLORE FLOATING DOCK & CONTROLS */}
       <TracePanel onOpenSource={handleOpenSource} />
 
-      {/* FEATURE 4: WHY RELATIONSHIP MODAL */}
       <WhyModal
         isOpen={isWhyOpen}
         onClose={closeWhy}
@@ -742,7 +679,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         onOpenSource={handleOpenSource}
       />
 
-      {/* FEATURE 5: EXPLAIN COMPONENT MODAL */}
       <ExplainModal
         isOpen={isExplainOpen}
         onClose={closeExplain}
@@ -751,7 +687,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         onOpenSource={handleOpenSource}
       />
 
-      {/* FEATURE 7: CHANGE IMPACT SIMULATOR MODAL */}
       <ChangeImpactModal
         isOpen={isChangeImpactOpen}
         onClose={closeChangeImpact}
@@ -762,7 +697,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         onOpenSource={handleOpenSource}
       />
 
-      {/* SOURCE CODE VIEWER MODAL */}
       <CodeViewerModal
         isOpen={codeViewerState.isOpen}
         onClose={() => setCodeViewerState({ isOpen: false })}

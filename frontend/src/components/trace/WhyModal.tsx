@@ -1,28 +1,8 @@
-/**
- * WhyModal — Relationship Evidence & Verification Modal
- *
- * Shows why CodeLens believes a relationship exists:
- * - Relationship header (source → relationship_type → target)
- * - Verification status badge (VERIFIED / INFERRED / NOT_FOUND)
- * - Confidence bar
- * - Inference justification text
- * - Source Evidence Panel with evidence type badges, code snippets, "Open Source"
- * - Explicit inferred warning when no direct code reference exists
- */
+
 import React from 'react';
-import {
-  X,
-  ArrowRight,
-  HelpCircle,
-  Sparkles,
-} from 'lucide-react';
+import { X, ArrowRight, HelpCircle, Sparkles } from 'lucide-react';
 import type { WhyRelationshipResponse } from '../../types';
-import {
-  EvidencePanel,
-  VerificationBadge,
-  ConfidenceBar,
-  InferredWarning,
-} from './EvidencePanel';
+import { EvidencePanel, VerificationBadge, ConfidenceBar, InferredWarning } from './EvidencePanel';
 
 interface WhyModalProps {
   isOpen: boolean;
@@ -41,7 +21,6 @@ export const WhyModal: React.FC<WhyModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // Derive verification status from the response
   const isInferred = data?.confidence_level === 'inferred' ||
     data?.confidence_level === 'medium' ||
     !data?.evidence?.some(e => e.has_location ?? Boolean(e.file_path && e.start_line > 0));
@@ -54,7 +33,6 @@ export const WhyModal: React.FC<WhyModalProps> = ({
 
   const confidencePct = data ? Math.round(data.confidence * 100) : 0;
 
-  // Check if reason text contains an inferred note
   const inferredWarning = data?.is_inferred
     ? '⚠ Relationship is a heuristic inference. No direct code reference was found. Treat this connection with appropriate uncertainty.'
     : (data?.evidence?.length === 0)
@@ -65,7 +43,6 @@ export const WhyModal: React.FC<WhyModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-[#09090b] border border-[#27272a] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
 
-        {/* Header */}
         <div className="px-6 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/90 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -92,7 +69,6 @@ export const WhyModal: React.FC<WhyModalProps> = ({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6 overflow-y-auto space-y-5 font-mono text-xs">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-zinc-400">
@@ -101,9 +77,7 @@ export const WhyModal: React.FC<WhyModalProps> = ({
             </div>
           ) : data ? (
             <>
-              {/* Relationship Banner */}
               <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-3">
-                {/* Source → rel → Target row */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex flex-col">
                     <span className="text-[9px] text-zinc-600 uppercase">Source</span>
@@ -137,25 +111,20 @@ export const WhyModal: React.FC<WhyModalProps> = ({
                   </div>
                 </div>
 
-                {/* Confidence bar */}
                 <ConfidenceBar value={confidencePct} label="Confidence" />
               </div>
 
-              {/* Inferred Warning (when applicable) */}
               <InferredWarning warning={inferredWarning} />
 
-              {/* Inference Justification */}
               <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-1.5">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Inference Justification
                 </span>
-                {/* Strip the ⚠ WARNING note from reason text if already shown as InferredWarning */}
                 <p className="text-zinc-200 text-xs leading-relaxed">
                   {data.reason?.split('\n\n')[0] || 'No justification available.'}
                 </p>
               </div>
 
-              {/* Source Evidence Panel */}
               <EvidencePanel
                 evidence={data.evidence || []}
                 verification={{
@@ -166,7 +135,7 @@ export const WhyModal: React.FC<WhyModalProps> = ({
                     e.has_location ?? Boolean(e.file_path && e.start_line > 0)
                   ).length || 0,
                   inferred_evidence_count: data.evidence?.filter(e => e.is_inferred).length || 0,
-                  warning: null, // Already shown via InferredWarning above
+                  warning: null, 
                 }}
                 confidence={data.confidence}
                 title="Source Evidence"
@@ -178,7 +147,6 @@ export const WhyModal: React.FC<WhyModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-3 border-t border-[#1f1f23] bg-[#0c0c0e] flex items-center justify-between shrink-0">
           <p className="text-[10px] text-zinc-600 font-mono">
             {data?.evidence?.length

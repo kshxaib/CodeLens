@@ -46,7 +46,6 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-sm bg-black rounded-xl p-5 border border-[#27272a] relative flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           disabled={submitting}
@@ -55,13 +54,11 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Modal Header */}
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-white">Add OpenAI API Key</h3>
           <p className="text-xs text-zinc-400 mt-0.5">Required for repository indexing and AI chat</p>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-3 p-2.5 rounded-lg bg-[#141416] border border-red-500/30 flex items-start gap-2 text-xs text-red-400">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -69,7 +66,6 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label htmlFor="modalApiKey" className="block text-xs font-medium text-zinc-300 mb-1">
@@ -111,7 +107,6 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
             </a>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1f1f23]">
             <button
               type="button"

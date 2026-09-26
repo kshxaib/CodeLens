@@ -1,21 +1,7 @@
-"""
-Automated test suite for CodeLens Data Flow Extraction Engine.
-
-Tests data lineage, transformations, schemas, DTOs, database models,
-and evidence-backed data flow edges using realistic application fixtures.
-"""
 import pytest
 from app.parser.graph_schema import KnowledgeGraph
 from app.parser.knowledge_graph import build_knowledge_graph
-from app.parser.data_flow_extractor import (
-    DataFlowExtractor,
-    DataClassification,
-    DataFormat,
-    DataPipeline,
-    DataNode,
-    DataFlowEdge,
-)
-
+from app.parser.data_flow_extractor import DataFlowExtractor, DataClassification, DataFormat, DataPipeline, DataNode, DataFlowEdge
 
 PAYMENT_CHECKOUT_FIXTURES = [
     {
@@ -127,24 +113,19 @@ async def upload_video(
     },
 ]
 
-
 @pytest.fixture(scope="module")
 def knowledge_graph():
     return build_knowledge_graph(PAYMENT_CHECKOUT_FIXTURES)
-
 
 @pytest.fixture(scope="module")
 def extractor(knowledge_graph):
     return DataFlowExtractor(PAYMENT_CHECKOUT_FIXTURES, knowledge_graph)
 
-
 @pytest.fixture(scope="module")
 def pipelines(extractor):
     return extractor.extract_all_pipelines()
 
-
 class TestDataFlowExtraction:
-    """Verifies that the data flow engine extracts schemas, models, and transformations."""
 
     def test_pipelines_discovered(self, pipelines):
         assert len(pipelines) >= 2
@@ -171,7 +152,7 @@ class TestDataFlowExtraction:
         assert checkout_pipeline is not None
 
         transform_nodes = [n for n in checkout_pipeline.nodes if n.is_transformation]
-        assert len(transform_nodes) >= 2  # Validation and calculations or hashing
+        assert len(transform_nodes) >= 2
 
         trans_names = [t.name.lower() for t in transform_nodes]
         assert any("validation" in t for t in trans_names)

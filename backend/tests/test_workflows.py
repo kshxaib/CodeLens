@@ -1,24 +1,5 @@
-"""
-Tests for Workflow Extraction Engine.
-
-Uses a realistic checkout & payment application fixture with:
-- Start node (HTTP POST /checkout)
-- Validation decision step
-- Failure branch (invalid cart/address)
-- Payment processing step with Stripe external call
-- Exception handling & retry loop
-- Failure branch (payment failed -> cancel order)
-- Database persistence (Order creation)
-- Async operation (background confirmation email)
-- End node (Order Confirmed 200 OK)
-"""
 import pytest
-from app.parser.workflow_extractor import (
-    WorkflowExtractor,
-    Workflow,
-    StepType,
-    TransitionType,
-)
+from app.parser.workflow_extractor import WorkflowExtractor, Workflow, StepType, TransitionType
 from app.parser.knowledge_graph import build_knowledge_graph
 
 CHECKOUT_APP_FILES = [
@@ -138,12 +119,10 @@ def send_order_confirmation(user_id: str, order_id: str):
     },
 ]
 
-
 @pytest.fixture
 def workflow_extractor():
     kg = build_knowledge_graph(CHECKOUT_APP_FILES)
     return WorkflowExtractor(CHECKOUT_APP_FILES, kg)
-
 
 class TestWorkflowExtraction:
     def test_workflow_extraction_discovers_workflows(self, workflow_extractor):
@@ -177,7 +156,6 @@ class TestWorkflowExtraction:
         assert len(decision_steps) >= 1
         assert len(failure_steps) >= 1
 
-        # Check that a failure transition exists connecting decision or step to failure
         failure_transitions = [t for t in wf.transitions if t.transition_type == TransitionType.FAILURE]
         assert len(failure_transitions) >= 1
 

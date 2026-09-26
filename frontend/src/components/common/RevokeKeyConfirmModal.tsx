@@ -21,7 +21,6 @@ export const RevokeKeyConfirmModal: React.FC<RevokeKeyConfirmModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-sm bg-black rounded-xl p-5 border border-[#27272a] relative flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           disabled={isLoading}
@@ -30,13 +29,11 @@ export const RevokeKeyConfirmModal: React.FC<RevokeKeyConfirmModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Modal Header */}
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-white">Remove OpenAI API Key</h3>
           <p className="text-xs text-zinc-400 mt-1">Are you sure you want to remove this key?</p>
         </div>
 
-        {/* Active Key Display */}
         {maskedKey && (
           <div className="px-3 py-2 rounded-lg bg-[#0c0c0e] border border-[#222226] mb-4 flex items-center justify-between text-xs">
             <span className="text-zinc-400">Active Key:</span>
@@ -44,7 +41,6 @@ export const RevokeKeyConfirmModal: React.FC<RevokeKeyConfirmModalProps> = ({
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1f1f23]">
           <button
             type="button"

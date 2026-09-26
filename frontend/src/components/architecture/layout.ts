@@ -10,11 +10,6 @@ export interface LayoutOptions {
   nodeHeight?: number;
 }
 
-/**
- * Computes an automatic layered graph layout using Dagre.
- * Respects architectural layers (Presentation -> API -> Service -> Data -> Infrastructure -> External),
- * minimizes edge crossings, and clusters connected nodes together.
- */
 export const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
@@ -36,7 +31,6 @@ export const getLayoutedElements = (
     acyclicer: 'greedy',
   });
 
-  // Add nodes to dagre
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
       width: nodeWidth,
@@ -44,18 +38,14 @@ export const getLayoutedElements = (
     });
   });
 
-  // Add edges to dagre
   edges.forEach((edge) => {
-    // Only add edge to layout if both source and target exist
     if (dagreGraph.hasNode(edge.source) && dagreGraph.hasNode(edge.target)) {
       dagreGraph.setEdge(edge.source, edge.target, {}, edge.id);
     }
   });
 
-  // Calculate layout
   dagre.layout(dagreGraph);
 
-  // Apply layout coordinates with architectural layer ordering enforcement
   const layoutedNodes: Node[] = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
 

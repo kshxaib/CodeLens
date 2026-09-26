@@ -1,6 +1,5 @@
 from app.parser.architecture import classify_layer, generate_architecture_graph
 
-
 def test_classify_layer():
     assert classify_layer("frontend/src/App.jsx", []) == "frontend"
     assert classify_layer("frontend/src/components/Header.tsx", []) == "frontend"
@@ -10,7 +9,6 @@ def test_classify_layer():
     assert classify_layer("backend/app/db/session.py", []) == "data"
     assert classify_layer("backend/app/services/indexer.py", []) == "service"
     assert classify_layer("backend/app/core/security.py", []) == "service"
-
 
 def test_generate_architecture_graph():
     sample_files = [
@@ -53,7 +51,6 @@ def test_generate_architecture_graph():
     assert graph["summary"]["layer_distribution"]["service"] == 1
     assert graph["summary"]["layer_distribution"]["data"] == 1
 
-    # Check that edges exist between imported modules
     assert len(graph["edges"]) > 0
     edge_sources = [e["source"] for e in graph["edges"]]
     assert len(edge_sources) > 0

@@ -1,29 +1,6 @@
-/**
- * CanvasSidebar — Left panel for the Architecture Canvas.
- *
- * Tabs:
- * - Layers: Architectural tiers with counts (click-to-filter)
- * - Nodes: Node type breakdown
- * - Edges: Relationship type breakdown
- * - Legend: Color/style guide
- *
- * Design: Clean, information-dense, no flashy decorations.
- */
+
 import React, { useState, useMemo } from 'react';
-import {
-  X,
-  Layers,
-  Box,
-  GitBranch,
-  BookOpen,
-  MousePointer2,
-  Code2,
-  GitMerge,
-  ZapOff,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-} from 'lucide-react';
+import { X, Layers, Box, GitBranch, BookOpen, MousePointer2, Code2, GitMerge, ZapOff, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import { ARCH_TIERS, RELATIONSHIP_CONFIG } from './constants';
 import type { KnowledgeGraphData } from '../../types';
 
@@ -129,7 +106,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
 
   return (
     <div className="flex flex-col h-full min-w-[260px] overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f1f23] shrink-0">
         <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider font-mono">
           Graph Explorer
@@ -142,7 +118,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-[#1f1f23] shrink-0">
         {tabs.map(({ id, label, Icon }) => (
           <button
@@ -160,13 +135,10 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
 
-        {/* LAYERS TAB */}
         {tab === 'layers' && (
           <>
-            {/* Evidence health */}
             <div className="mb-3 p-2.5 rounded-xl border border-[#1f1f23] bg-[#0a0a0c] space-y-2">
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono">
                 Evidence Coverage
@@ -236,7 +208,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
           </>
         )}
 
-        {/* NODES TAB */}
         {tab === 'nodes' && (
           <>
             <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider font-mono px-0.5">
@@ -273,7 +244,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
           </>
         )}
 
-        {/* EDGES TAB */}
         {tab === 'edges' && (
           <>
             <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider font-mono px-0.5">
@@ -313,10 +283,8 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
           </>
         )}
 
-        {/* LEGEND TAB */}
         {tab === 'legend' && (
           <div className="space-y-4">
-            {/* Interactions */}
             <div>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono mb-2">
                 Node Interactions
@@ -336,7 +304,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
               </div>
             </div>
 
-            {/* Node states */}
             <div>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono mb-2">
                 Node States
@@ -360,7 +327,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
               </div>
             </div>
 
-            {/* Evidence types */}
             <div>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono mb-2">
                 Evidence Confidence
@@ -380,7 +346,6 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
               </div>
             </div>
 
-            {/* Relationship legend */}
             <div>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono mb-2">
                 Relationship Types

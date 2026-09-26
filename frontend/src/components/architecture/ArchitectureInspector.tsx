@@ -1,21 +1,5 @@
 import React, { useState } from 'react';
-import {
-  X,
-  FileCode2,
-  ExternalLink,
-  ChevronRight,
-  ArrowDownLeft,
-  ArrowUpRight,
-  CheckCircle2,
-  Sparkles,
-  Zap,
-  Loader2,
-  Code,
-  Info,
-  HelpCircle,
-  Compass,
-  ShieldAlert,
-} from 'lucide-react';
+import { X, FileCode2, ExternalLink, ChevronRight, ArrowDownLeft, ArrowUpRight, CheckCircle2, Sparkles, Zap, Loader2, Code, Info, HelpCircle, Compass, ShieldAlert } from 'lucide-react';
 import { ARCH_TIERS, CONFIDENCE_BADGES, getRelationshipCfg, getNodeTier } from './constants';
 import type { ArchKGNode, ArchKGEdge } from '../../types';
 import { useTrace } from '../../store/useTraceStore';
@@ -49,7 +33,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
   const tierCfg = ARCH_TIERS[tierKey] || ARCH_TIERS.application;
   const confBadge = CONFIDENCE_BADGES[node.confidence_level] || CONFIDENCE_BADGES.deterministic;
 
-  // Incoming and outgoing edges for this node
   const incomingEdges = edges.filter((e) => e.target === node.id);
   const outgoingEdges = edges.filter((e) => e.source === node.id);
 
@@ -57,7 +40,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[380px] max-w-[420px] z-30 select-text">
-      {/* Top Header */}
       <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -97,7 +79,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
         </button>
       </div>
 
-      {/* Progressive Detail Stepper / Navigation Tabs */}
       <div className="flex items-center border-b border-[#1f1f23] bg-[#070709] px-2 py-1 gap-1 text-[11px] font-mono overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('overview')}
@@ -163,12 +144,9 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
         </button>
       </div>
 
-      {/* Inspector Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
-        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            {/* Trace & AI Action Buttons */}
             <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={() => selectTraceNode(node.id)}
@@ -198,7 +176,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               </button>
             </div>
 
-            {/* Quick Action: Open Primary Source */}
             {primarySourceFile && (
               <button
                 onClick={() => onOpenSource(primarySourceFile)}
@@ -215,7 +192,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               </button>
             )}
 
-            {/* Description */}
             <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
                 Description
@@ -226,7 +202,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               </p>
             </div>
 
-            {/* Connection Metrics */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-3 rounded-xl border border-[#1f1f23] bg-[#0c0c0e]">
                 <div className="flex items-center gap-1.5 text-zinc-400 mb-1">
@@ -247,7 +222,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               </div>
             </div>
 
-            {/* Progressive Detail Guide Card */}
             <div className="p-3.5 rounded-xl border border-dashed border-[#27272a] bg-[#09090b]/80 space-y-2">
               <div className="flex items-center gap-1.5 text-amber-400 text-[10px] font-bold uppercase">
                 <Info className="w-3.5 h-3.5" /> Progressive Detail Drilldown
@@ -260,7 +234,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               </div>
             </div>
 
-            {/* Impact Analysis Action */}
             <div className="border-t border-[#1f1f23] pt-4">
               <button
                 onClick={() => onAnalyzeBlastRadius(node.id || node.name)}
@@ -283,7 +256,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
           </div>
         )}
 
-        {/* TAB 2: MODULES (SOURCE FILES) */}
         {activeTab === 'modules' && (
           <div className="space-y-3">
             <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
@@ -327,7 +299,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
           </div>
         )}
 
-        {/* TAB 3: SYMBOLS (AST EXTRACTED) */}
         {activeTab === 'symbols' && (
           <div className="space-y-3">
             <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
@@ -376,10 +347,8 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
           </div>
         )}
 
-        {/* TAB 4: RELATIONSHIPS */}
         {activeTab === 'relationships' && (
           <div className="space-y-4">
-            {/* Outgoing Calls */}
             <div>
               <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold mb-2 flex items-center gap-1.5">
                 <ArrowUpRight className="w-3.5 h-3.5 text-sky-400" />
@@ -441,7 +410,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
               )}
             </div>
 
-            {/* Incoming Calls */}
             <div>
               <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold mb-2 flex items-center gap-1.5">
                 <ArrowDownLeft className="w-3.5 h-3.5 text-amber-400" />
@@ -505,7 +473,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
           </div>
         )}
 
-        {/* TAB 5: SOURCE EVIDENCE */}
         {activeTab === 'evidence' && (
           <div className="space-y-3">
             <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">

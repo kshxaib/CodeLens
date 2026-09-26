@@ -1,25 +1,6 @@
-/**
- * CanvasExportMenu — Export functionality for the Architecture Canvas.
- *
- * Supports:
- * - PNG (canvas screenshot via html-to-image)
- * - SVG (ReactFlow to SVG)
- * - JSON (raw Knowledge Graph data with evidence metadata)
- * - Self-contained HTML (interactive viewer with embedded graph data)
- *
- * The exported graph preserves all source evidence metadata.
- */
+
 import React, { useState, useRef } from 'react';
-import {
-  Download,
-  Image,
-  FileJson,
-  FileCode2,
-  Globe,
-  Loader2,
-  Check,
-  ChevronDown,
-} from 'lucide-react';
+import { Download, Image, FileJson, FileCode2, Globe, Loader2, Check, ChevronDown } from 'lucide-react';
 import type { KnowledgeGraphData } from '../../types';
 
 interface CanvasExportMenuProps {
@@ -95,7 +76,6 @@ export const CanvasExportMenu: React.FC<CanvasExportMenuProps> = ({
         backgroundColor: '#000000',
         pixelRatio: 2,
         filter: (node) => {
-          // Exclude toolbar and controls from screenshot
           if (node instanceof HTMLElement) {
             if (node.classList.contains('react-flow__controls')) return false;
             if (node.classList.contains('react-flow__minimap')) return false;
@@ -128,7 +108,6 @@ export const CanvasExportMenu: React.FC<CanvasExportMenuProps> = ({
           return true;
         },
       });
-      // Convert data URL to text
       const svgText = decodeURIComponent(dataUrl.split(',')[1]);
       downloadText(svgText, `codelens-arch-${slug}.svg`, 'image/svg+xml');
       markDone('svg');

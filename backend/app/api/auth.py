@@ -4,12 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 import httpx
 from sqlalchemy.orm import Session
-from app.core.config import (
-    GITHUB_CLIENT_ID,
-    GITHUB_CLIENT_SECRET,
-    FRONTEND_URL,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-)
+from app.core.config import GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, FRONTEND_URL, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.security import create_access_token, decode_access_token, mask_api_key, decrypt_api_key
 from app.db.session import get_db
 from app.db.models import User
@@ -18,14 +13,10 @@ from app.schemas.user import UserProfileResponse, UserRead
 
 router = APIRouter(prefix="/auth", tags=["Authentication & OAuth"])
 
-
 def get_current_user(
     request: Request,
     db: Session = Depends(get_db),
 ) -> User:
-    """
-    FastAPI dependency resolving authenticated user from HTTP-only session cookie or Bearer token.
-    """
     token = request.cookies.get("session_token")
     if not token:
         auth_header = request.headers.get("Authorization")
@@ -57,21 +48,16 @@ def get_current_user(
 
     return user
 
-
 def get_current_user_optional(
     request: Request,
     db: Session = Depends(get_db),
 ) -> Optional[User]:
-    """Optional user dependency for public routes that can be personalized."""
     try:
         return get_current_user(request, db)
     except HTTPException:
         return None
 
-
 def serialize_user_profile(user: User) -> UserProfileResponse:
-    """Helper to convert User model to UserProfileResponse with masked OpenAI key."""
-    # Check OpenAI key first, fallback to gemini_api_key column
     encrypted_key = getattr(user, "openai_api_key", None) or user.gemini_api_key
     decrypted_key = decrypt_api_key(encrypted_key) if encrypted_key else ""
     has_key = bool(decrypted_key)
@@ -91,14 +77,8 @@ def serialize_user_profile(user: User) -> UserProfileResponse:
         updated_at=user.updated_at,
     )
 
-
 @router.get("/github", summary="Get GitHub OAuth Redirect URL")
 async def get_github_oauth_url(redirect_uri: Optional[str] = None, redirect: bool = False):
-    """
-    Generates GitHub OAuth authorization URL with required scopes (`read:user repo`).
-    If redirect_uri is not explicitly provided, omits the parameter so GitHub automatically
-    uses the registered Authorization callback URL configured in the developer OAuth app.
-    """
     state = secrets.token_urlsafe(16)
     
     if redirect_uri:
@@ -121,24 +101,18 @@ async def get_github_oauth_url(redirect_uri: Optional[str] = None, redirect: boo
         return RedirectResponse(url=oauth_url)
     return {"url": oauth_url, "state": state}
 
-
 @router.get("/callback", summary="GitHub OAuth Callback")
 async def github_callback(
     code: str,
     response: Response,
     db: Session = Depends(get_db),
 ):
-    """
-    Exchanges authorization code for GitHub access token, fetches user profile,
-    upserts User record in PostgreSQL, and sets HTTP-only session cookie.
-    """
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="GitHub OAuth client credentials are not configured on the backend.",
         )
 
-    # 1. Exchange code for GitHub access token
     async with httpx.AsyncClient() as client:
         token_res = await client.post(
             "https://github.com/login/oauth/access_token",
@@ -164,7 +138,6 @@ async def github_callback(
                 detail="Failed to retrieve access token from GitHub.",
             )
 
-        # 2. Fetch GitHub User Profile
         user_res = await client.get(
             "https://api.github.com/user",
             headers={
@@ -180,7 +153,6 @@ async def github_callback(
 
         gh_user = user_res.json()
 
-    # 3. Upsert User in PostgreSQL
     github_id = gh_user["id"]
     username = gh_user["login"]
     avatar_url = gh_user.get("avatar_url")
@@ -206,12 +178,10 @@ async def github_callback(
     db.commit()
     db.refresh(user)
 
-    # 4. Generate JWT session token
     jwt_token = create_access_token(
         data={"sub": str(user.id), "github_id": user.github_id, "username": user.username}
     )
 
-    # 5. Set secure HTTP-only cookie
     max_age = ACCESS_TOKEN_EXPIRE_MINUTES * 60
     response.set_cookie(
         key="session_token",
@@ -219,7 +189,7 @@ async def github_callback(
         max_age=max_age,
         httponly=True,
         samesite="lax",
-        secure=False,  # Set to True in production HTTPS
+        secure=False,
         path="/",
     )
 
@@ -231,19 +201,11 @@ async def github_callback(
         "user": profile_resp,
     }
 
-
 @router.get("/me", response_model=UserProfileResponse, summary="Get Current Authenticated User")
 async def get_me(current_user: User = Depends(get_current_user)):
-    """
-    Returns the currently authenticated user's profile and Gemini BYOK key status.
-    """
     return serialize_user_profile(current_user)
-
 
 @router.post("/logout", summary="Logout User & Invalidate Session")
 async def logout(response: Response):
-    """
-    Logs out the current user by clearing the HTTP-only session cookie.
-    """
     response.delete_cookie(key="session_token", path="/")
     return {"message": "Logged out successfully", "status": "success"}

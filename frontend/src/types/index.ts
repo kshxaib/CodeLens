@@ -84,16 +84,10 @@ export interface ConversationDetail extends ConversationItem {
   messages: MessageItem[];
 }
 
-/** Legacy Architecture Node type — aliased to canonical ArchKGNode */
 export type ArchitectureNode = ArchKGNode;
 
-/** Legacy Architecture Edge type — aliased to canonical ArchKGEdge */
 export type ArchitectureEdge = ArchKGEdge;
 
-/**
- * Unified Architecture Graph representation.
- * Synonymous with KnowledgeGraphData so no competing graph schemas exist.
- */
 export type ArchitectureGraphData = KnowledgeGraphData;
 
 export interface BlastRadiusResponse {
@@ -106,10 +100,6 @@ export interface BlastRadiusResponse {
   downstream_count: number;
   impact_level: 'low' | 'medium' | 'high';
 }
-
-// ---------------------------------------------------------------------------
-// Unified Architecture Knowledge Graph Types
-// ---------------------------------------------------------------------------
 
 export type ArchNodeType =
   | 'application'
@@ -226,10 +216,6 @@ export interface KnowledgeGraphData {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Unified Workflow Types
-// ---------------------------------------------------------------------------
-
 export type WorkflowStepType =
   | 'start'
   | 'step'
@@ -286,10 +272,6 @@ export interface WorkflowItem {
 export interface WorkflowsResponse {
   workflows: WorkflowItem[];
 }
-
-// ---------------------------------------------------------------------------
-// Unified Data Flow Types
-// ---------------------------------------------------------------------------
 
 export type DataClassificationType =
   | 'request_payload'
@@ -354,10 +336,6 @@ export interface DataFlowResponse {
     total_transitions: number;
   };
 }
-
-// ---------------------------------------------------------------------------
-// Unified Sequence View Types
-// ---------------------------------------------------------------------------
 
 export type ParticipantType =
   | 'actor'
@@ -431,10 +409,6 @@ export interface SequenceResponse {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Unified Lifecycle View Types
-// ---------------------------------------------------------------------------
-
 export type StateType =
   | 'initial'
   | 'intermediate'
@@ -491,10 +465,6 @@ export interface LifecycleResponse {
     entities_with_failures: number;
   };
 }
-
-// ---------------------------------------------------------------------------
-// Trace & Explore Types
-// ---------------------------------------------------------------------------
 
 export interface TraceConnectedItem {
   node: {
@@ -650,10 +620,6 @@ export interface ChangeImpactResponse {
   risk_level: 'low' | 'medium' | 'high' | 'critical';
 }
 
-// ---------------------------------------------------------------------------
-// Source Evidence & Verification Layer Types
-// ---------------------------------------------------------------------------
-
 export interface EvidenceTypeMetadata {
   type: EvidenceType;
   label: string;
@@ -732,5 +698,4 @@ export interface VerifyClaimResponse {
   confidence_level: string;
   evidence: SourceEvidence[];
 }
-
 

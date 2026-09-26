@@ -2,14 +2,7 @@ import React, { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { create } from 'zustand';
 import { api } from '../api/client';
-import type {
-  TraceNodeResponse,
-  FindPathResponse,
-  WhyRelationshipResponse,
-  ExplainComponentResponse,
-  CalculateImpactResponse,
-  ChangeImpactResponse,
-} from '../types';
+import type { TraceNodeResponse, FindPathResponse, WhyRelationshipResponse, ExplainComponentResponse, CalculateImpactResponse, ChangeImpactResponse } from '../types';
 
 export interface ViewNodeItem {
   id: string;
@@ -26,14 +19,12 @@ export interface TraceState {
     currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle'
   ) => void;
 
-  // Feature 1: Node Trace (Upstream, Current, Downstream)
   selectedNodeId: string | null;
   traceData: TraceNodeResponse | null;
   traceLoading: boolean;
   traceError: string | null;
   selectTraceNode: (nodeId: string | null) => Promise<void>;
 
-  // Feature 2: Pathfinder (Between two nodes)
   startNodeId: string;
   endNodeId: string;
   setStartNodeId: (id: string) => void;
@@ -46,7 +37,6 @@ export interface TraceState {
   highlightOnlyPath: boolean;
   setHighlightOnlyPath: (val: boolean) => void;
 
-  // Feature 3: Path Animation
   isPathPlaying: boolean;
   pathStepIndex: number;
   pathSpeed: number;
@@ -57,27 +47,23 @@ export interface TraceState {
   restartPath: () => void;
   setSpeed: (speed: number) => void;
 
-  // Feature 4: Why? (Relationship Evidence)
   isWhyOpen: boolean;
   whyData: WhyRelationshipResponse | null;
   whyLoading: boolean;
   openWhy: (params: { edgeId?: string; source?: string; target?: string }) => Promise<void>;
   closeWhy: () => void;
 
-  // Feature 5: Explain Component
   isExplainOpen: boolean;
   explainData: ExplainComponentResponse | null;
   explainLoading: boolean;
   openExplain: (nodeId: string) => Promise<void>;
   closeExplain: () => void;
 
-  // Feature 6: Impact Analysis
   impactData: CalculateImpactResponse | null;
   impactLoading: boolean;
   calculateImpact: (nodeId: string) => Promise<void>;
   clearImpact: () => void;
 
-  // Feature 7: Change Impact
   isChangeImpactOpen: boolean;
   changeImpactData: ChangeImpactResponse | null;
   changeImpactLoading: boolean;
@@ -85,13 +71,11 @@ export interface TraceState {
   closeChangeImpact: () => void;
   analyzeChange: (params: { filePath?: string; symbol?: string }) => Promise<void>;
 
-  // View Catalog
   viewNodes: ViewNodeItem[];
   setViewNodes: (nodes: ViewNodeItem[]) => void;
   viewFiles: string[];
   setViewFiles: (files: string[]) => void;
 
-  // Dock UI visibility
   isPanelOpen: boolean;
   setIsPanelOpen: (open: boolean) => void;
   activeTab: 'trace' | 'path' | 'impact';
@@ -138,7 +122,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     });
   },
 
-  // Feature 1: Node Trace
   selectedNodeId: null,
   traceData: null,
   traceLoading: false,
@@ -171,7 +154,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     }
   },
 
-  // Feature 2: Pathfinder
   startNodeId: '',
   endNodeId: '',
   pathData: null,
@@ -222,7 +204,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     });
   },
 
-  // Feature 3: Path Animation
   isPathPlaying: false,
   pathStepIndex: -1,
   pathSpeed: 1,
@@ -293,7 +274,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     }
   },
 
-  // Feature 4: Why?
   isWhyOpen: false,
   whyData: null,
   whyLoading: false,
@@ -321,7 +301,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     set({ isWhyOpen: false, whyData: null });
   },
 
-  // Feature 5: Explain Component
   isExplainOpen: false,
   explainData: null,
   explainLoading: false,
@@ -344,7 +323,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     set({ isExplainOpen: false, explainData: null });
   },
 
-  // Feature 6: Impact Analysis
   impactData: null,
   impactLoading: false,
 
@@ -366,7 +344,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     set({ impactData: null });
   },
 
-  // Feature 7: Change Impact
   isChangeImpactOpen: false,
   changeImpactData: null,
   changeImpactLoading: false,
@@ -396,7 +373,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     }
   },
 
-  // Catalogs & Dock UI
   viewNodes: [],
   setViewNodes: (nodes) => set({ viewNodes: nodes }),
   viewFiles: [],
@@ -408,15 +384,10 @@ export const useTraceStore = create<TraceState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 }));
 
-// ---------------------------------------------------------------------------
-// Compatibility exports — drop-in replacements for context/TraceContext.tsx
-// ---------------------------------------------------------------------------
-
 export const useTrace = useTraceStore;
 
 export type TraceContextType = TraceState;
 
-// TraceProvider — initializes view context (replaces context/TraceContext.tsx)
 export const TraceProvider: React.FC<{
   repositoryId: number;
   currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';

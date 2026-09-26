@@ -2,13 +2,11 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
-
 class UserBase(BaseModel):
     github_id: int
     username: str
     email: Optional[str] = None
     avatar_url: Optional[str] = None
-
 
 class UserRead(UserBase):
     id: int
@@ -20,7 +18,6 @@ class UserRead(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
 
 class UserProfileResponse(BaseModel):
     id: int
@@ -37,7 +34,6 @@ class UserProfileResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class OpenAIKeyUpdate(BaseModel):
     api_key: str
 
@@ -51,17 +47,12 @@ class OpenAIKeyUpdate(BaseModel):
             raise ValueError("Invalid OpenAI API key format (length too short).")
         return cleaned
 
-
-# Alias for backward compatibility
 GeminiKeyUpdate = OpenAIKeyUpdate
 
-
 class OpenAIKeyStatusResponse(BaseModel):
-    status: str  # verified | invalid | missing | removed
+    status: str
     has_key: bool
     masked_key: Optional[str] = None
     message: Optional[str] = None
 
-
-# Alias for backward compatibility
 GeminiKeyStatusResponse = OpenAIKeyStatusResponse

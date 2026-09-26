@@ -8,7 +8,6 @@ import tree_sitter_typescript
 import tree_sitter_java
 import tree_sitter_go
 
-# Extension to language mapping
 EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
@@ -34,12 +33,9 @@ EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
     ".hpp": "cpp",
 }
 
-# Cache for initialized Tree-sitter Language and Parser instances
 _PARSER_CACHE: Dict[str, Parser] = {}
 
-
 def _init_parser(lang_name: str) -> Optional[Parser]:
-    """Initializes and caches a Tree-sitter parser for a specific language."""
     if lang_name in _PARSER_CACHE:
         return _PARSER_CACHE[lang_name]
 
@@ -66,18 +62,11 @@ def _init_parser(lang_name: str) -> Optional[Parser]:
         print(f"[!] Error loading parser for {lang_name}: {e}")
         return None
 
-
 def detect_language(file_path: str) -> str:
-    """Detects canonical programming language from file path extension."""
     ext = Path(file_path).suffix.lower()
     return EXTENSION_LANGUAGE_MAP.get(ext, "text")
 
-
 def parse_source_code(code: str, file_path: str) -> Tuple[Optional[Tree], str]:
-    """
-    Parses source code into a Tree-sitter AST.
-    Returns a tuple of (Tree-sitter Tree or None, language_name).
-    """
     language = detect_language(file_path)
     parser = _init_parser(language)
 

@@ -1,24 +1,5 @@
-"""
-Automated Test Suite for Lifecycle Extraction Engine.
-
-Verifies:
-1. Extraction of Repository Indexing finite state machine (NOT_INDEXED -> INDEXING -> INDEXED, FAILED, Retry).
-2. Extraction of Prisma enums and state models (WithdrawalStatus, BookingStatus).
-3. State classification into initial, intermediate, terminal_success, terminal_failure.
-4. Failure states and alternative rejection paths.
-5. Retry loops (e.g. FAILED -> INDEXING).
-6. Transition triggering events, conditions, and actions.
-7. Python Enum state machine extraction.
-8. Line-level traceable source evidence and serialization.
-"""
 import pytest
-from app.parser.lifecycle_extractor import (
-    LifecycleExtractor,
-    StateType,
-    EntityLifecycle,
-    LifecycleState,
-    LifecycleTransition,
-)
+from app.parser.lifecycle_extractor import LifecycleExtractor, StateType, EntityLifecycle, LifecycleState, LifecycleTransition
 from app.parser.knowledge_graph import build_knowledge_graph
 
 CODELENS_INDEXING_FIXTURE = [
@@ -120,7 +101,6 @@ class OrderStatus(str, Enum):
     }
 ]
 
-
 class TestLifecycleExtractor:
 
     def test_repository_indexing_lifecycle_extraction(self):
@@ -132,14 +112,12 @@ class TestLifecycleExtractor:
         repo_lc = next((lc for lc in lifecycles if "Repository" in lc.entity_name), None)
         assert repo_lc is not None
 
-        # Check states
         state_names = [s.name for s in repo_lc.states]
         assert "NOT_INDEXED" in state_names
         assert "INDEXING" in state_names
         assert "INDEXED" in state_names
         assert "FAILED" in state_names
 
-        # Check failure & retry properties
         assert repo_lc.has_failure_state is True
         assert repo_lc.has_retry_loop is True
 
@@ -151,20 +129,16 @@ class TestLifecycleExtractor:
 
         states_by_name = {s.name: s for s in repo_lc.states}
 
-        # NOT_INDEXED should be INITIAL
         assert states_by_name["NOT_INDEXED"].state_type == StateType.INITIAL
         assert states_by_name["NOT_INDEXED"].is_initial is True
 
-        # INDEXING should be INTERMEDIATE
         assert states_by_name["INDEXING"].state_type == StateType.INTERMEDIATE
         assert states_by_name["INDEXING"].is_terminal is False
 
-        # INDEXED should be TERMINAL_SUCCESS
         assert states_by_name["INDEXED"].state_type == StateType.TERMINAL_SUCCESS
         assert states_by_name["INDEXED"].is_terminal is True
         assert states_by_name["INDEXED"].is_failure is False
 
-        # FAILED should be TERMINAL_FAILURE
         assert states_by_name["FAILED"].state_type == StateType.TERMINAL_FAILURE
         assert states_by_name["FAILED"].is_terminal is True
         assert states_by_name["FAILED"].is_failure is True
@@ -175,11 +149,6 @@ class TestLifecycleExtractor:
         lifecycles = extractor.extract_all_lifecycles()
         repo_lc = next(lc for lc in lifecycles if "Repository" in lc.entity_name)
 
-        # Check transitions:
-        # NOT_INDEXED -> INDEXING
-        # INDEXING -> INDEXED
-        # INDEXING -> FAILED
-        # FAILED -> INDEXING (retry)
         trans_pairs = [(t.from_state, t.to_state) for t in repo_lc.transitions]
         assert ("state_not_indexed", "state_indexing") in trans_pairs
         assert ("state_indexing", "state_indexed") in trans_pairs
@@ -205,7 +174,6 @@ class TestLifecycleExtractor:
         assert "APPROVED" in state_names
         assert "REJECTED" in state_names
 
-        # PENDING -> APPROVED and PENDING -> REJECTED
         assert w_lc.has_failure_state is True
         assert any(t.to_state.endswith("approved") for t in w_lc.transitions)
         assert any(t.to_state.endswith("rejected") for t in w_lc.transitions)
@@ -224,7 +192,6 @@ class TestLifecycleExtractor:
         assert "CONFIRMED" in state_names
         assert "CANCELLED" in state_names
 
-        # CANCELLED should be failure
         states_by_name = {s.name: s for s in order_lc.states}
         assert states_by_name["CANCELLED"].is_failure is True
 

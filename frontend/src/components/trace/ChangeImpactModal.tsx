@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  X,
-  AlertTriangle,
-  FileCode2,
-  GitBranch,
-  Database,
-  Layers,
-  Activity,
-  ExternalLink,
-  ShieldAlert,
-} from 'lucide-react';
+import { X, AlertTriangle, FileCode2, GitBranch, Database, Layers, Activity, ExternalLink, ShieldAlert } from 'lucide-react';
 import type { ChangeImpactResponse } from '../../types';
 
 interface ChangeImpactModalProps {
@@ -62,7 +52,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-3xl bg-[#09090b] border border-[#27272a] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/90 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
@@ -89,7 +78,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
           </button>
         </div>
 
-        {/* Input Bar */}
         <form onSubmit={handleSubmit} className="p-4 border-b border-[#1f1f23] bg-[#121214] flex flex-wrap items-center gap-2.5">
           <div className="flex-1 min-w-[200px]">
             <select
@@ -125,7 +113,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
           </button>
         </form>
 
-        {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-5 font-mono text-xs">
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center gap-3 text-zinc-400">
@@ -134,7 +121,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
             </div>
           ) : data ? (
             <>
-              {/* Summary Scorecard */}
               <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">
@@ -170,9 +156,7 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
                 </div>
               </div>
 
-              {/* Grid of Potentially Affected Areas */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Affected APIs */}
                 <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -196,7 +180,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
                   )}
                 </div>
 
-                {/* Affected Services */}
                 <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" />
@@ -218,7 +201,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
                   )}
                 </div>
 
-                {/* Affected Workflows */}
                 <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                   <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                     <GitBranch className="w-3.5 h-3.5" />
@@ -240,7 +222,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
                   )}
                 </div>
 
-                {/* Affected Data Flows */}
                 <div className="p-4 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                   <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Database className="w-3.5 h-3.5" />
@@ -263,7 +244,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
                 </div>
               </div>
 
-              {/* Potentially Affected Files */}
               <div className="space-y-2">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Potentially Affected Source Files ({data.affected_files.length})
@@ -292,7 +272,6 @@ export const ChangeImpactModal: React.FC<ChangeImpactModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-3 border-t border-[#1f1f23] bg-[#0c0c0e] flex justify-end">
           <button
             onClick={onClose}

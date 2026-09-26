@@ -2,9 +2,7 @@ from datetime import datetime
 from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, ConfigDict, field_validator
 
-
 class Citation(BaseModel):
-    """Represents a verifiable code citation attached to an assistant answer."""
     file_path: str
     start_line: int
     end_line: int
@@ -13,12 +11,10 @@ class Citation(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class MessageBase(BaseModel):
-    role: str  # user | assistant | system
+    role: str
     content: str
     sources: Optional[List[Citation]] = None
-
 
 class MessageCreate(BaseModel):
     content: str
@@ -31,7 +27,6 @@ class MessageCreate(BaseModel):
             raise ValueError("Message content cannot be empty.")
         return cleaned
 
-
 class MessageRead(MessageBase):
     id: int
     conversation_id: int
@@ -39,14 +34,11 @@ class MessageRead(MessageBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class ConversationBase(BaseModel):
     title: str = "New Chat"
 
-
 class ConversationCreate(BaseModel):
     title: Optional[str] = "New Chat"
-
 
 class ConversationRead(ConversationBase):
     id: int
@@ -58,15 +50,12 @@ class ConversationRead(ConversationBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class ConversationDetailResponse(ConversationRead):
     messages: List[MessageRead] = []
-
 
 class ConversationListResponse(BaseModel):
     conversations: List[ConversationRead]
     total: int
-
 
 class ChatStreamRequest(BaseModel):
     message: str

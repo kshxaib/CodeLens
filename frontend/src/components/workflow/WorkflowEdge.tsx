@@ -1,10 +1,5 @@
 import React, { memo } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { getTransitionCfg } from './constants';
 import type { WorkflowTransitionType } from '../../types';
 

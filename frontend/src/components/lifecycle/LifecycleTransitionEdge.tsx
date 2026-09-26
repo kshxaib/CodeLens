@@ -1,10 +1,5 @@
 import React, { memo } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { RotateCcw, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { LifecycleTransition } from '../../types';
 
@@ -45,26 +40,26 @@ export const LifecycleTransitionEdge: React.FC<EdgeProps> = memo(({
   const isFailure = transition?.is_failure;
   const isInferred = transition?.is_inferred;
 
-  let strokeColor = '#6366f1'; // indigo
+  let strokeColor = '#6366f1'; 
   let strokeDasharray: string | undefined = undefined;
   let strokeWidth = 1.75;
 
   if (isFailure) {
-    strokeColor = '#f43f5e'; // rose
+    strokeColor = '#f43f5e'; 
   } else if (isRetry) {
-    strokeColor = '#f59e0b'; // amber
+    strokeColor = '#f59e0b'; 
     strokeDasharray = '5 3';
   } else if (isInferred) {
-    strokeColor = '#71717a'; // zinc
+    strokeColor = '#71717a'; 
     strokeDasharray = '3 3';
   }
 
   if (edgeData.isCurrentActive) {
-    strokeColor = '#38bdf8'; // sky
+    strokeColor = '#38bdf8'; 
     strokeWidth = 3;
     strokeDasharray = '6 3';
   } else if (edgeData.isHighlighted) {
-    strokeColor = '#a855f7'; // purple
+    strokeColor = '#a855f7'; 
     strokeWidth = 2.5;
   }
 

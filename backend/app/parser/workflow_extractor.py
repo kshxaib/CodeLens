@@ -1,26 +1,3 @@
-"""
-Workflow Extraction Engine for CodeLens.
-
-Extracts end-to-end execution processes (workflows) directly from the
-unified Architecture Knowledge Graph and repository source code.
-
-Answers: "What process does this system execute?"
-
-Supports:
-- Start nodes (entrypoints, API routes, triggers)
-- Normal execution steps (service methods, handlers)
-- Decision branches (conditionals, validation checks, status branches)
-- Parallel operations (concurrent tasks, fork-join)
-- Failure paths (exceptions, HTTP errors, rollback handlers)
-- Retry loops (transient error retry attempts)
-- External actions (third-party APIs like Stripe, SendGrid)
-- Human approval steps (manual approval or review workflows)
-- Async / background operations (queues, background tasks, Celery)
-- End nodes (completion, response return, confirmation)
-
-Every workflow step carries traceable source code evidence (file + line range).
-Uses deterministic AST analysis first, with semantic fallback.
-"""
 from __future__ import annotations
 
 import ast
@@ -29,13 +6,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import List, Dict, Any, Optional, Set
 
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    SourceEvidence,
-    EntityType,
-)
-
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, SourceEvidence, EntityType
 
 class StepType(str, Enum):
     START = "start"
@@ -49,14 +20,12 @@ class StepType(str, Enum):
     ASYNC_OP = "async_op"
     END = "end"
 
-
 class TransitionType(str, Enum):
     NORMAL = "normal"
     SUCCESS = "success"
     FAILURE = "failure"
     RETRY = "retry"
     ASYNC = "async"
-
 
 @dataclass
 class WorkflowStep:
@@ -79,7 +48,6 @@ class WorkflowStep:
             d["evidence"] = self.evidence.to_dict()
         return d
 
-
 @dataclass
 class WorkflowTransition:
     id: str
@@ -96,7 +64,6 @@ class WorkflowTransition:
         if self.evidence:
             d["evidence"] = self.evidence.to_dict()
         return d
-
 
 @dataclass
 class Workflow:
@@ -119,8 +86,6 @@ class Workflow:
             "metadata": self.metadata,
         }
 
-
-# Known external package markers
 EXTERNAL_PATTERNS = {
     "stripe": ("Stripe API", "Payment Processing"),
     "sendgrid": ("SendGrid API", "Transactional Email"),
@@ -134,11 +99,7 @@ EXTERNAL_PATTERNS = {
     "paypal": ("PayPal API", "Payment Gateway"),
 }
 
-
 class WorkflowExtractor:
-    """
-    Extracts structured workflows from repository files and KnowledgeGraph.
-    """
 
     def __init__(self, files: List[Dict[str, Any]], kg: Optional[KnowledgeGraph] = None):
         self.files = files
@@ -146,13 +107,9 @@ class WorkflowExtractor:
         self.file_map = {f["file_path"]: f for f in files}
 
     def extract_all_workflows(self) -> List[Workflow]:
-        """
-        Extract all business workflows discovered in the codebase.
-        """
         workflows: List[Workflow] = []
         seen_workflow_names: Set[str] = set()
 
-        # Step 1: Find workflow roots from API routes and major service methods
         for f in self.files:
             file_path = f.get("file_path", "")
             content = f.get("content", "")
@@ -161,7 +118,6 @@ class WorkflowExtractor:
             if not content:
                 continue
 
-            # Python files
             if language == "python" or file_path.endswith(".py"):
                 extracted = self._extract_python_workflows(file_path, content)
                 for wf in extracted:
@@ -169,7 +125,6 @@ class WorkflowExtractor:
                         seen_workflow_names.add(wf.name)
                         workflows.append(wf)
 
-            # JavaScript / TypeScript files
             elif language in ("javascript", "typescript") or file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
                 extracted = self._extract_js_ts_workflows(file_path, content)
                 for wf in extracted:
@@ -177,7 +132,6 @@ class WorkflowExtractor:
                         seen_workflow_names.add(wf.name)
                         workflows.append(wf)
 
-        # Step 2: If no workflows found via detailed routes, synthesize top-level workflow from KG
         if not workflows and self.kg:
             fallback_wf = self._synthesize_fallback_workflow()
             if fallback_wf:
@@ -196,7 +150,6 @@ class WorkflowExtractor:
 
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                # Check if this function looks like a workflow root (API endpoint or service workflow)
                 is_route = False
                 route_path = ""
                 http_method = "POST"
@@ -257,7 +210,6 @@ class WorkflowExtractor:
             step_counter += 1
             return f"{wf_id}_{prefix}_{step_counter}"
 
-        # 1. START STEP
         inputs = [arg.arg for arg in func_node.args.args if arg.arg != "self"]
         start_snippet = lines[func_node.lineno - 1] if func_node.lineno <= len(lines) else ""
         start_step = WorkflowStep(
@@ -277,9 +229,7 @@ class WorkflowExtractor:
         steps.append(start_step)
         prev_step_id = start_step.id
 
-        # 2. Inspect Body Statements
         for stmt in func_node.body:
-            # Check for docstring
             if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
                 continue
 
@@ -294,7 +244,6 @@ class WorkflowExtractor:
             end_l = getattr(stmt, "end_lineno", start_l)
             snippet = "\n".join(lines[start_l - 1: min(end_l, len(lines))]) if start_l <= len(lines) else ""
 
-            # Check Conditionals (DECISION + FAILURE branch)
             if isinstance(stmt, ast.If):
                 test_src = ast.unparse(stmt.test) if hasattr(ast, "unparse") else "check_condition"
                 decision_name = f"Check: {test_src[:35]}"
@@ -311,7 +260,6 @@ class WorkflowExtractor:
                 )
                 steps.append(decision_step)
 
-                # Connect previous step to decision
                 transitions.append(
                     WorkflowTransition(
                         id=f"trans_{prev_step_id}_to_{decision_step.id}",
@@ -322,7 +270,6 @@ class WorkflowExtractor:
                     )
                 )
 
-                # Check if this If block raises an error or returns early (Failure Path)
                 has_raise_or_error = any(isinstance(sub, (ast.Raise, ast.Return)) for sub in ast.walk(stmt))
                 if has_raise_or_error:
                     fail_step = WorkflowStep(
@@ -347,7 +294,6 @@ class WorkflowExtractor:
                 prev_step_id = decision_step.id
                 continue
 
-            # Check Try/Except (DECISION + FAILURE / RETRY branch)
             if isinstance(stmt, ast.Try):
                 try_step = WorkflowStep(
                     id=make_step_id("step"),
@@ -367,14 +313,12 @@ class WorkflowExtractor:
                     )
                 )
 
-                # Check for handlers
                 for handler in stmt.handlers:
                     h_start = getattr(handler, "lineno", start_l)
                     h_end = getattr(handler, "end_lineno", h_start)
                     h_snippet = "\n".join(lines[h_start - 1: min(h_end, len(lines))]) if h_start <= len(lines) else ""
                     ex_name = ast.unparse(handler.type) if (handler.type and hasattr(ast, "unparse")) else "Exception"
 
-                    # Check if handler retries
                     is_retry = any("retry" in ast.unparse(s).lower() for s in handler.body if hasattr(ast, "unparse"))
 
                     err_step = WorkflowStep(
@@ -399,7 +343,6 @@ class WorkflowExtractor:
                 prev_step_id = try_step.id
                 continue
 
-            # Check Loops (Retry / Batch processing)
             if isinstance(stmt, (ast.For, ast.While)):
                 loop_src = stmt_src.lower()
                 is_retry_loop = "retry" in loop_src or "attempt" in loop_src
@@ -424,7 +367,6 @@ class WorkflowExtractor:
                 prev_step_id = loop_step.id
                 continue
 
-            # Check Function / Method calls
             call_nodes = [n for n in ast.walk(stmt) if isinstance(n, ast.Call)]
             if call_nodes:
                 for call in call_nodes:
@@ -437,7 +379,6 @@ class WorkflowExtractor:
                     call_lower = call_name.lower()
                     stmt_lower = stmt_src.lower()
 
-                    # Check External Service Call
                     external_match = None
                     for pkg_key, (svc_name, role) in EXTERNAL_PATTERNS.items():
                         if pkg_key in stmt_lower:
@@ -467,7 +408,6 @@ class WorkflowExtractor:
                         prev_step_id = ext_step.id
                         break
 
-                    # Check Background / Async Task
                     if any(k in stmt_lower for k in ("background_tasks.add_task", "delay", "apply_async", "emit", "dispatch")):
                         async_step = WorkflowStep(
                             id=make_step_id("async"),
@@ -491,7 +431,6 @@ class WorkflowExtractor:
                         prev_step_id = async_step.id
                         break
 
-                    # Check Database Persistence
                     if any(k in stmt_lower for k in ("db.add", "db.commit", "save", "session.commit", "db.query")):
                         db_step = WorkflowStep(
                             id=make_step_id("db"),
@@ -515,7 +454,6 @@ class WorkflowExtractor:
                         prev_step_id = db_step.id
                         break
 
-                    # Normal Service Step (if substantive call)
                     if call_lower not in ("print", "len", "str", "int", "isinstance", "dict", "list", "get"):
                         step_label = call_name.replace("_", " ").title()
                         norm_step = WorkflowStep(
@@ -539,7 +477,6 @@ class WorkflowExtractor:
                         prev_step_id = norm_step.id
                         break
 
-        # 3. END STEP
         end_step = WorkflowStep(
             id=make_step_id("end"),
             workflow_id=wf_id,
@@ -586,9 +523,6 @@ class WorkflowExtractor:
         workflows: List[Workflow] = []
         lines = content.splitlines()
 
-        # Regex for Express routes or controller functions:
-        # 1. router.post('/path', ...)
-        # 2. export const createBooking = async (req, res) => ...
         route_matches = []
         for m in re.finditer(
             r"(?:router|app|\w+Routes)\.(post|get|put|delete)\s*\(\s*['\"]([^'\"]+)['\"]",
@@ -602,7 +536,6 @@ class WorkflowExtractor:
             content,
         ):
             func_name = m.group(1)
-            # Ignore minor helpers
             if any(kw in func_name.lower() for kw in ("booking", "payment", "order", "hotel", "auth", "create", "process", "cancel", "verify", "checkout")):
                 route_matches.append(("POST", f"/{func_name}", m.start(), func_name))
 
@@ -625,7 +558,6 @@ class WorkflowExtractor:
                 step_counter += 1
                 return f"{wf_id}_{prefix}_{step_counter}"
 
-            # Start step
             start_step = WorkflowStep(
                 id=make_step_id("start"),
                 workflow_id=wf_id,
@@ -643,11 +575,9 @@ class WorkflowExtractor:
             steps.append(start_step)
             prev_id = start_step.id
 
-            # Parse sub-actions in surrounding 80 lines
             body_lines = lines[start_line - 1: min(start_line + 80, len(lines))]
             body_text = "\n".join(body_lines)
 
-            # Check validation
             if "if (!" in body_text or "validate" in body_text:
                 decision_step = WorkflowStep(
                     id=make_step_id("decision"),
@@ -672,7 +602,6 @@ class WorkflowExtractor:
                 transitions.append(WorkflowTransition(id=f"t_fail_{decision_step.id}", source=decision_step.id, target=fail_step.id, transition_type=TransitionType.FAILURE, label="invalid payload"))
                 prev_id = decision_step.id
 
-            # Check external API
             for pkg_key, (svc_name, role) in EXTERNAL_PATTERNS.items():
                 if pkg_key in body_text.lower():
                     ext_step = WorkflowStep(
@@ -688,7 +617,6 @@ class WorkflowExtractor:
                     prev_id = ext_step.id
                     break
 
-            # Check DB / Model save
             if any(k in body_text for k in ("await ", "create(", "save(", "find", "update")):
                 db_step = WorkflowStep(
                     id=make_step_id("step"),
@@ -702,7 +630,6 @@ class WorkflowExtractor:
                 transitions.append(WorkflowTransition(id=f"t_{prev_id}_{db_step.id}", source=prev_id, target=db_step.id, transition_type=TransitionType.NORMAL))
                 prev_id = db_step.id
 
-            # End Step
             end_step = WorkflowStep(
                 id=make_step_id("end"),
                 workflow_id=wf_id,
@@ -734,14 +661,9 @@ class WorkflowExtractor:
         return workflows
 
     def _synthesize_fallback_workflow(self) -> Optional[Workflow]:
-        """
-        Synthesizes a representative end-to-end system workflow from the
-        canonical Architecture Knowledge Graph if no explicit route files exist.
-        """
         if not self.kg or not self.kg.nodes:
             return None
 
-        # Order nodes by architectural layer: Presentation -> API -> Service -> Domain -> Infrastructure -> External
         layer_priority = {
             "presentation": 0,
             "api_gateway": 1,
@@ -774,7 +696,6 @@ class WorkflowExtractor:
         steps.append(start_step)
         prev_id = start_step.id
 
-        # Pick key middle nodes (service, database, external)
         sampled_nodes = [n for n in sorted_nodes if n.id != start_node.id and n.type in (
             EntityType.SERVICE,
             EntityType.API_ENDPOINT,
@@ -810,7 +731,6 @@ class WorkflowExtractor:
             )
             prev_id = step.id
 
-        # End Step
         end_step = WorkflowStep(
             id=f"{wf_id}_end",
             workflow_id=wf_id,

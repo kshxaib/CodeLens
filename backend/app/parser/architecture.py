@@ -1,21 +1,9 @@
-"""
-Legacy Architecture Parser compatibility layer.
-
-Unified with the canonical Architecture Knowledge Graph (AKG).
-Ensures zero duplicate or competing heuristic graph engines exist.
-All architecture generation is powered by build_knowledge_graph.
-"""
 from typing import Dict, List, Any, Optional
 from app.parser.symbols import Symbol
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.parser.entity_classifier import classify_file
 
-
 def classify_layer(file_path: str, symbols: Optional[List[Symbol]] = None) -> str:
-    """
-    Classifies a file into an architectural tier using the unified entity classifier.
-    Maps canonical ArchLayer to legacy 4-tier naming for backwards compatibility.
-    """
     _, layer, _, _ = classify_file(file_path, symbols or [], "", "")
     val = layer.value
     if val == "presentation":
@@ -26,12 +14,7 @@ def classify_layer(file_path: str, symbols: Optional[List[Symbol]] = None) -> st
         return "data"
     return val
 
-
 def generate_architecture_graph(files: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Generates architecture graph using the canonical Architecture Knowledge Graph builder.
-    Eliminates the obsolete heuristic graph generator in favor of AKG.
-    """
     kg = build_knowledge_graph(files)
     kg_dict = kg.to_dict()
 

@@ -1,17 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import {
-  Database,
-  ArrowDownRight,
-  ArrowUpRight,
-  Sparkles,
-  Lock,
-  Layers,
-  HardDrive,
-  Paperclip,
-  FileCode2,
-  Box,
-} from 'lucide-react';
+import { Database, ArrowDownRight, ArrowUpRight, Sparkles, Lock, Layers, HardDrive, Paperclip, FileCode2, Box } from 'lucide-react';
 import { getDataClassificationCfg } from './constants';
 import type { DataClassificationType } from '../../types';
 
@@ -74,7 +63,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
   const isDimmed = !!data.isDimmed;
   const isTrans = !!data.is_transformation;
 
-  // Source evidence label (e.g. checkout.controller.js:14)
   const sourceLabel = data.evidence?.file_path
     ? `${data.evidence.file_path.split(/[/\\]/).pop()}:${data.evidence.start_line}`
     : null;
@@ -94,7 +82,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
         backgroundColor: '#0c0c0e',
       }}
     >
-      {/* Glow highlight for active lineage */}
       {(isLineageActive || isSelected || isCurrentExecutionStep) && (
         <div
           className="absolute -inset-0.5 rounded-2xl pointer-events-none opacity-40 blur-sm transition"
@@ -102,7 +89,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
         />
       )}
 
-      {/* Main Card Container */}
       <div
         className={`relative z-10 p-3.5 rounded-2xl border backdrop-blur-xl flex flex-col justify-between h-full ${
           isTrans
@@ -110,7 +96,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
             : 'border-[#1f1f23] bg-[#0c0c0e]'
         }`}
       >
-        {/* Top Header: Badge + Source line */}
         <div className="flex items-center justify-between gap-1.5 mb-2">
           <div
             className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border ${cfg.badgeBg}`}
@@ -132,7 +117,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
           )}
         </div>
 
-        {/* Center: Entity Name & Icon */}
         <div className="flex items-start gap-2 mb-2 min-h-[38px]">
           <div
             className="p-1.5 rounded-lg border shrink-0 mt-0.5 transition-colors"
@@ -155,7 +139,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
           </div>
         </div>
 
-        {/* Bottom Details Bar: Format, Storage, Fields */}
         <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-[#1f1f23] text-[9px] font-mono">
           <div className="flex items-center gap-1.5 truncate">
             {data.format && (
@@ -181,7 +164,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
         </div>
       </div>
 
-      {/* ReactFlow Handles (both Top/Bottom & Left/Right for TB or LR layouts) */}
       <Handle
         type="target"
         position={Position.Top}

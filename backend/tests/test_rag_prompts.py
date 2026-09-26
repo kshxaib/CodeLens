@@ -1,19 +1,13 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from app.rag.prompts import (
-    build_system_prompt,
-    build_user_prompt,
-    parse_citations_from_response,
-)
+from app.rag.prompts import build_system_prompt, build_user_prompt, parse_citations_from_response
 from app.rag.retriever import retrieve_context
-
 
 def test_build_system_prompt():
     prompt = build_system_prompt("kshxaib/CodeLens")
     assert "kshxaib/CodeLens" in prompt
     assert "[cite:file_path:start_line-end_line]" in prompt
     assert "CRITICAL GROUNDING" in prompt
-
 
 def test_build_user_prompt_with_history_and_chunks():
     history = [
@@ -42,12 +36,10 @@ def test_build_user_prompt_with_history_and_chunks():
     assert "### USER QUERY:" in prompt
     assert "Where is token expiration defined?" in prompt
 
-
 def test_build_user_prompt_empty_chunks():
     prompt = build_user_prompt("What is this repo?", [], None)
     assert "_No directly matching code chunks found" in prompt
     assert "What is this repo?" in prompt
-
 
 def test_parse_citations_explicit_tags():
     response = (
@@ -78,7 +70,6 @@ def test_parse_citations_explicit_tags():
     assert citations[1]["end_line"] == 42
     assert citations[1]["symbol"] == "login"
 
-
 def test_parse_citations_fallback_chunks():
     response = "This repository uses FastAPI with SQLAlchemy."
     chunks = [
@@ -97,7 +88,6 @@ def test_parse_citations_fallback_chunks():
     assert citations[0]["start_line"] == 1
     assert citations[0]["end_line"] == 20
     assert citations[0]["symbol"] == "app"
-
 
 @patch("app.rag.retriever.generate_embedding")
 @patch("app.rag.retriever.search_code")
@@ -127,7 +117,6 @@ def test_retrieve_context(mock_search_code, mock_generate_embedding):
         query_vector=[0.1] * 768,
         limit=5,
     )
-
 
 def test_retrieve_context_empty_query():
     res = retrieve_context(1, "   ", "AIzaFakeKey123")

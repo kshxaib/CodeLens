@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  FolderGit2,
-  GitBranch,
-  Network,
-  MessageSquare,
-  RefreshCw,
-  Search,
-  FileCode2,
-  ExternalLink,
-  ChevronRight,
-  Layers,
-  AlertCircle,
-  X,
-} from 'lucide-react';
+import { FolderGit2, GitBranch, Network, MessageSquare, RefreshCw, Search, FileCode2, ExternalLink, ChevronRight, Layers, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { api } from '../api/client';
@@ -107,7 +94,6 @@ export const RepositoryOverviewPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Header Card */}
       <Card className="rounded-xl p-6 sm:p-7 bg-card border-border shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-start gap-4 min-w-0">
@@ -131,7 +117,6 @@ export const RepositoryOverviewPage: React.FC = () => {
                 {repo.description || 'GitHub repository synchronized for CodeLens intelligence.'}
               </p>
 
-              {/* Status & Metadata Badges */}
               <div className="flex flex-wrap items-center gap-2 mt-3.5 text-xs font-mono">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border">
                   <GitBranch className="size-3 text-primary" />
@@ -153,7 +138,6 @@ export const RepositoryOverviewPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Action CTAs */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link to={`/repository/${repo.id}/architecture`}>
               <Button
@@ -186,7 +170,6 @@ export const RepositoryOverviewPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Ingested Files Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -206,7 +189,6 @@ export const RepositoryOverviewPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Files Grid */}
         {filteredFiles.length === 0 ? (
           <div className="rounded-xl p-8 text-center text-xs text-muted-foreground bg-card border border-border">
             {files.length === 0 ? "No source files found or indexed yet." : "No files matched your filter query."}
@@ -239,7 +221,6 @@ export const RepositoryOverviewPage: React.FC = () => {
         )}
       </div>
 
-      {/* Code Viewer Modal */}
       <CodeViewerModal
         isOpen={selectedFileId !== null}
         onClose={() => setSelectedFileId(null)}
@@ -247,7 +228,6 @@ export const RepositoryOverviewPage: React.FC = () => {
         fileId={selectedFileId || undefined}
       />
 
-      {/* Floating Error Toast */}
       {indexError && (
         <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-border text-foreground px-3.5 py-2.5 rounded-lg animate-fadeIn shadow-lg">
           <AlertCircle className="size-4 text-destructive shrink-0" />
@@ -261,7 +241,6 @@ export const RepositoryOverviewPage: React.FC = () => {
         </div>
       )}
 
-      {/* Add OpenAI Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}

@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  MessageSquare,
-  Plus,
-  Send,
-  Sparkles,
-  Trash2,
-  FileCode2,
-  Loader2,
-  User as UserIcon,
-} from 'lucide-react';
+import { MessageSquare, Plus, Send, Sparkles, Trash2, FileCode2, Loader2, User as UserIcon } from 'lucide-react';
 import { api, API_BASE_URL } from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
@@ -40,16 +31,13 @@ export const CodeLensChatPage: React.FC = () => {
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const [streamingTokens, setStreamingTokens] = useState<string>('');
 
-  // Code Viewer state
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerTarget, setViewerTarget] = useState<{ filePath: string; lines?: { start: number; end: number } } | null>(null);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
 
-  // Chat deletion state
   const [chatToDelete, setChatToDelete] = useState<ConversationItem | null>(null);
   const [isDeletingChat, setIsDeletingChat] = useState(false);
 
-  // Create chat modal state
   const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
@@ -62,7 +50,6 @@ export const CodeLensChatPage: React.FC = () => {
     }
   }, [repositories, activeRepoId]);
 
-  // Load conversations when active repository changes
   const fetchConversations = async (targetRepoId: number) => {
     if (!targetRepoId) return;
     try {
@@ -158,14 +145,12 @@ export const CodeLensChatPage: React.FC = () => {
 
     let targetChatId = overrideChatId || activeChatId;
 
-    // Prompt user for thread name if no chat is active
     if (!targetChatId) {
       setPendingMessage(question);
       setIsCreateChatModalOpen(true);
       return;
     }
 
-    // Optimistically push user message
     const tempUserMsg: MessageItem = {
       id: Date.now(),
       conversation_id: targetChatId,
@@ -223,12 +208,9 @@ export const CodeLensChatPage: React.FC = () => {
           if (done) break;
 
           sseBuffer += decoder.decode(value, { stream: true });
-          // Normalize line breaks
           sseBuffer = sseBuffer.replace(/\r\n/g, '\n');
 
-          // SSE blocks are separated by double newlines
           const blocks = sseBuffer.split('\n\n');
-          // Keep the last (potentially incomplete) block in the buffer
           sseBuffer = blocks.pop() || '';
 
           for (const block of blocks) {
@@ -294,13 +276,11 @@ export const CodeLensChatPage: React.FC = () => {
                 );
               }
             } catch {
-              // JSON parse error — skip
             }
           }
         }
       }
 
-      // Reload full conversation history from DB to sync authoritative database IDs
       await fetchConversations(activeRepoId);
       if (targetChatId) {
         await loadChatDetail(activeRepoId, targetChatId);
@@ -352,10 +332,8 @@ export const CodeLensChatPage: React.FC = () => {
   return (
     <WorkspaceLayout>
       <div className="relative w-full h-[calc(100vh-10rem)] flex rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000]">
-        {/* Left Sidebar: Threads History */}
         <div className="w-72 sm:w-80 h-full bg-[#050505] border-r border-[#1f1f23] flex flex-col justify-between shrink-0">
           <div className="p-4 space-y-4">
-            {/* Repository Selector */}
             <div>
               <label className="text-[10px] uppercase font-mono font-bold text-slate-400 block mb-1.5">
                 Active Repository
@@ -378,7 +356,6 @@ export const CodeLensChatPage: React.FC = () => {
               </select>
             </div>
 
-            {/* New Chat Button */}
             <Button
               onClick={handleNewChat}
               className="w-full h-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs transition cursor-pointer shadow-sm"
@@ -387,7 +364,6 @@ export const CodeLensChatPage: React.FC = () => {
               <span>New Chat Thread</span>
             </Button>
 
-            {/* Thread List */}
             <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-22rem)] pr-1">
               <span className="text-[10px] font-mono uppercase text-slate-500 block mb-1 px-1">
                 Conversations ({conversations.length})
@@ -431,15 +407,11 @@ export const CodeLensChatPage: React.FC = () => {
             </div>
           </div>
 
-
         </div>
 
-        {/* Main Chat Center Pane */}
         <div className="flex-1 h-full flex flex-col justify-between overflow-hidden bg-[#000000]">
-          {/* Chat Messages List */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             {(!currentConversation || currentConversation.messages.length === 0) && !isStreaming ? (
-              /* Empty Chat State */
               <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center py-10">
                 <div className="w-12 h-12 flex items-center justify-center text-amber-400 mb-4">
                   <Sparkles className="w-8 h-8 text-amber-400" />
@@ -449,7 +421,6 @@ export const CodeLensChatPage: React.FC = () => {
                   Ask architectural questions about <span className="text-amber-400 font-mono">{currentRepoObj?.name}</span>. Answers include verifiable file citations.
                 </p>
 
-                {/* Prompt Suggestions */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
                   {promptSuggestions.map((prompt, idx) => (
                     <div
@@ -466,14 +437,12 @@ export const CodeLensChatPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* Message Thread */
               <>
                 {currentConversation?.messages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex gap-3 max-w-3xl ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
                   >
-                    {/* Avatar - No background, clean modern icons */}
                     {msg.role === 'user' ? (
                       <div className="size-6 flex items-center justify-center shrink-0 mt-1 text-zinc-400">
                         <UserIcon className="size-4" />
@@ -484,7 +453,6 @@ export const CodeLensChatPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Message Bubble */}
                     <div className="space-y-3 min-w-0 flex-1">
                       <div
                         className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${msg.role === 'user'
@@ -499,7 +467,6 @@ export const CodeLensChatPage: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Verifiable Citations Pills */}
                       {msg.sources && msg.sources.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-1">
                           <span className="text-[10px] font-mono text-slate-500 self-center">Citations:</span>
@@ -522,7 +489,6 @@ export const CodeLensChatPage: React.FC = () => {
                   </div>
                 ))}
 
-                {/* Streaming Assistant In-Progress Bubble */}
                 {isStreaming && (
                   <div className="flex gap-3 max-w-3xl">
                     <div className="size-6 flex items-center justify-center shrink-0 mt-1 text-amber-400">
@@ -550,7 +516,6 @@ export const CodeLensChatPage: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Query Input Bar */}
           <div className="p-4 pb-6 bg-transparent">
             <form
               onSubmit={(e) => {
@@ -578,7 +543,6 @@ export const CodeLensChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Code Viewer Modal for Citation Clicks */}
         {viewerTarget && (
           <CodeViewerModal
             isOpen={viewerModalOpen}
@@ -589,7 +553,6 @@ export const CodeLensChatPage: React.FC = () => {
           />
         )}
 
-        {/* Add OpenAI Key Modal */}
         {isKeyModalOpen && (
           <AddGeminiKeyModal
             isOpen={isKeyModalOpen}
@@ -600,7 +563,6 @@ export const CodeLensChatPage: React.FC = () => {
           />
         )}
 
-        {/* Delete Chat Confirmation Modal */}
         <DeleteChatConfirmModal
           isOpen={chatToDelete !== null}
           onClose={() => setChatToDelete(null)}
@@ -609,7 +571,6 @@ export const CodeLensChatPage: React.FC = () => {
           isLoading={isDeletingChat}
         />
 
-        {/* Create Chat Thread Modal */}
         <CreateChatModal
           isOpen={isCreateChatModalOpen}
           onClose={() => {

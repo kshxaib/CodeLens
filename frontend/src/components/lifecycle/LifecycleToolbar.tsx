@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  Search,
-  Play,
-  Pause,
-  RotateCcw,
-  Compass,
-  ArrowUpDown,
-  ArrowLeftRight,
-  Maximize2,
-  Minimize2,
-  Download,
-} from 'lucide-react';
+import { Search, Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download } from 'lucide-react';
 import { LIFECYCLE_FILTERS, type LifecycleFilterType } from './constants';
 import type { EntityLifecycle } from '../../types';
 
@@ -24,13 +13,11 @@ interface LifecycleToolbarProps {
   onSearchChange: (q: string) => void;
   activeFilter: LifecycleFilterType;
   onFilterChange: (f: LifecycleFilterType) => void;
-  // Simulator props
   isPlaying: boolean;
   onTogglePlay: () => void;
   onResetSimulator: () => void;
   currentSimIndex: number;
   totalSimSteps: number;
-  // Layout & View props
   layoutDirection: 'LR' | 'TB';
   onToggleLayoutDirection: () => void;
   onFitView: () => void;
@@ -63,9 +50,7 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
 }) => {
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-      {/* LEFT: View Selector & Entity Selector */}
       <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl flex-wrap">
-        {/* VIEW SELECTOR */}
         <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[11px] font-mono">
           <button
             onClick={() => onViewChange('architecture')}
@@ -119,7 +104,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           </button>
         </div>
 
-        {/* ENTITY LIFECYCLE DROPDOWN */}
         {lifecycles.length > 0 && (
           <select
             value={selectedLifecycleId}
@@ -134,7 +118,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           </select>
         )}
 
-        {/* SEARCH INPUT */}
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
           <input
@@ -146,7 +129,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           />
         </div>
 
-        {/* FILTER CHIPS */}
         <div className="flex items-center gap-1 bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[10px] font-mono">
           {LIFECYCLE_FILTERS.map((f) => (
             <button
@@ -164,9 +146,7 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
         </div>
       </div>
 
-      {/* RIGHT: Simulator Controls, Layout & Action Buttons */}
       <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl">
-        {/* SIMULATOR CONTROLS */}
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#141416] border border-[#27272a]">
           <button
             onClick={onTogglePlay}
@@ -201,7 +181,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           </button>
         </div>
 
-        {/* LAYOUT DIRECTION TOGGLE */}
         <button
           onClick={onToggleLayoutDirection}
           className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
@@ -214,7 +193,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           )}
         </button>
 
-        {/* FIT VIEW */}
         <button
           onClick={onFitView}
           className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
@@ -223,7 +201,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           <Compass className="w-4 h-4" />
         </button>
 
-        {/* EXPORT JSON */}
         <button
           onClick={onExport}
           className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
@@ -232,7 +209,6 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           <Download className="w-4 h-4" />
         </button>
 
-        {/* FULLSCREEN */}
         <button
           onClick={onToggleFullscreen}
           className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"

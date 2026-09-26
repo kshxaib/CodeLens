@@ -1,18 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  X,
-  FolderGit2,
-  Loader2,
-  Plus,
-  AlertCircle,
-  CheckCircle2,
-  ArrowRight,
-  RefreshCw,
-  GitBranch,
-  Cpu,
-  Layers,
-  KeyRound,
-} from 'lucide-react';
+import { X, FolderGit2, Loader2, Plus, AlertCircle, CheckCircle2, ArrowRight, RefreshCw, GitBranch, Cpu, Layers, KeyRound } from 'lucide-react';
 import { GithubIcon } from '../common/Icons';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -127,21 +114,17 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
       setCurrentStepIndex(0);
       setElapsedSeconds(0);
 
-      // Start elapsed timer
       timerIntervalRef.current = setInterval(() => {
         setElapsedSeconds((prev) => prev + 1);
       }, 1000);
 
-      // Step 1: Add repository to database
       setCurrentStepIndex(0);
       const newRepo = await addRepository(cleanUrl);
       setActiveRepo(newRepo);
 
-      // Step 2: Trigger backend indexing
       setCurrentStepIndex(1);
       await triggerIndexing(newRepo.id);
 
-      // Simulated step visuals while background executes
       const stepProgression = setTimeout(() => {
         setCurrentStepIndex(2);
       }, 3000);
@@ -150,7 +133,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         setCurrentStepIndex(3);
       }, 6000);
 
-      // Poll repository index status
       pollIntervalRef.current = setInterval(async () => {
         try {
           const updated = await api.getRepository(newRepo.id);
@@ -199,7 +181,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="w-full max-w-lg bg-[#09090b] rounded-2xl p-6 sm:p-7 border border-[#1f1f23] shadow-2xl relative flex flex-col transition-all">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute right-5 top-5 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#18181b] transition cursor-pointer"
@@ -207,7 +188,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header */}
         <div className="flex items-center gap-3.5 mb-5">
           <div className="w-10 h-10 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300">
             {stage === 'completed' ? (
@@ -234,7 +214,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           </div>
         </div>
 
-        {/* STAGE 1: INPUT FORM */}
         {stage === 'input' && (
           <>
             {!(user?.has_openai_key ?? user?.has_gemini_key) && (
@@ -282,7 +261,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                 </p>
               </div>
 
-              {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
                 <button
                   type="button"
@@ -304,10 +282,8 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           </>
         )}
 
-        {/* STAGE 2: LIVE INDEXING PROGRESS */}
         {stage === 'indexing' && (
           <div className="space-y-4 py-1">
-            {/* Timer Bar */}
             <div className="p-3 rounded-xl bg-[#121214] border border-[#1f1f23] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
@@ -320,7 +296,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               </span>
             </div>
 
-            {/* Step Progression List */}
             <div className="space-y-2.5">
               {INDEXING_STEPS.map((step, idx) => {
                 const isDone = idx < currentStepIndex;
@@ -367,7 +342,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               })}
             </div>
 
-            {/* Footer with Background dismissal option */}
             <div className="flex items-center justify-between pt-3 border-t border-[#1f1f23]">
               <span className="text-[11px] text-slate-500">
                 You can close this modal; indexing will continue.
@@ -383,7 +357,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           </div>
         )}
 
-        {/* STAGE 3: COMPLETED SUCCESS */}
         {stage === 'completed' && (
           <div className="space-y-4 py-1 animate-fadeIn">
             <div className="p-4 rounded-xl bg-[#121214] border border-[#1f1f23] space-y-3">
@@ -409,7 +382,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
               <button
                 type="button"
@@ -430,7 +402,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
           </div>
         )}
 
-        {/* STAGE 4: ERROR / FAILED */}
         {stage === 'error' && (
           <div className="space-y-4 py-1 animate-fadeIn">
             <div className="p-4 rounded-xl bg-[#121214] border border-[#1f1f23] text-xs flex items-start gap-3">
@@ -441,7 +412,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f1f23]">
               <button
                 type="button"
@@ -463,7 +433,6 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         )}
       </div>
 
-      {/* Add Gemini Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}

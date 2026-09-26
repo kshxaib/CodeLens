@@ -8,7 +8,6 @@ from app.parser.knowledge_graph import build_knowledge_graph
 from app.rag.embeddings import generate_batch_embeddings
 from app.rag.vector_store import delete_repository_vectors, upsert_chunks
 
-
 def index_repository(
     repository_id: int,
     db: Session,
@@ -17,17 +16,6 @@ def index_repository(
     github_token: Optional[str] = None,
     custom_files: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
-    """
-    Executes the complete end-to-end repository indexing pipeline:
-    1. Sets index_status = 'indexing'
-    2. Ephemerally clones and scans repo (or uses custom_files in testing)
-    3. Persists source files in PostgreSQL 'files' table
-    4. Generates & caches architecture topology graph in PostgreSQL
-    5. Splits code into AST structure-aware chunks
-    6. Generates 768-dim embeddings with user's OpenAI key
-    7. Idempotently upserts vectors into Qdrant collection
-    8. Updates repository record with index_status = 'indexed' and metadata
-    """
     repo = db.query(Repository).filter(Repository.id == repository_id).first()
     if not repo:
         raise ValueError(f"Repository {repository_id} not found.")
@@ -36,12 +24,10 @@ def index_repository(
     if not active_key:
         raise ValueError("An OpenAI API key is required to index the repository.")
 
-    # 1. Update status to indexing
     repo.index_status = "indexing"
     db.commit()
 
     try:
-        # 2. Ingest files
         if custom_files is not None:
             scanned_files = custom_files
             commit_sha = "test_commit_sha_123"
@@ -51,12 +37,10 @@ def index_repository(
                 github_token=github_token,
             )
 
-        # 3. Clean up previous files in PostgreSQL
         db.query(File).filter(File.repository_id == repository_id).delete()
         db.query(ArchitectureGraph).filter(ArchitectureGraph.repository_id == repository_id).delete()
         db.commit()
 
-        # Insert new files
         total_symbols = 0
         for f in scanned_files:
             file_record = File(
@@ -72,7 +56,6 @@ def index_repository(
 
         db.commit()
 
-        # 4. Generate Unified Architecture Knowledge Graph, save to PostgreSQL
         try:
             kg = build_knowledge_graph(scanned_files)
             kg_dict = kg.to_dict()
@@ -94,7 +77,6 @@ def index_repository(
         db.add(arch_record)
         db.commit()
 
-        # 5. Structure-Aware Chunking across all files
         all_chunks: List[CodeChunk] = []
         for f in scanned_files:
             file_chunks = chunk_file(
@@ -106,7 +88,6 @@ def index_repository(
                 total_symbols += len(c.symbols)
             all_chunks.extend(file_chunks)
 
-        # 6. Generate Embeddings using User's OpenAI Key (768 dimensions)
         chunk_texts = [c.augmented_content for c in all_chunks]
         embeddings = generate_batch_embeddings(
             texts=chunk_texts,
@@ -114,7 +95,6 @@ def index_repository(
             batch_size=50,
         )
 
-        # 7. Qdrant Vector Store Upsert
         delete_repository_vectors(repository_id)
         upserted_count = upsert_chunks(
             repository_id=repository_id,
@@ -122,7 +102,6 @@ def index_repository(
             embeddings=embeddings,
         )
 
-        # 8. Mark repository as indexed
         now = datetime.now(timezone.utc)
         repo.index_status = "indexed"
         repo.last_indexed_at = now

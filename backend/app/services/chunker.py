@@ -5,22 +5,19 @@ from app.parser.symbols import extract_symbols, Symbol
 DEFAULT_CHUNK_SIZE = 80
 DEFAULT_CHUNK_OVERLAP = 10
 
-
 @dataclass
 class CodeChunk:
-    """Represents an AST-correlated structure-aware code chunk."""
     chunk_index: int
     file_path: str
     language: str
-    start_line: int  # 1-indexed
-    end_line: int    # 1-indexed
+    start_line: int
+    end_line: int
     symbols: List[Dict[str, Any]]
     raw_content: str
     augmented_content: str
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
 
 def chunk_file(
     file_path: str,
@@ -29,11 +26,6 @@ def chunk_file(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     overlap: int = DEFAULT_CHUNK_OVERLAP,
 ) -> List[CodeChunk]:
-    """
-    Splits a source file into logical structure-aware chunks.
-    Correlates each chunk with intersecting AST symbols and prefixes
-    an augmentation header for rich vector embeddings.
-    """
     if not content or not content.strip():
         return []
 
@@ -43,7 +35,6 @@ def chunk_file(
     if total_lines == 0:
         return []
 
-    # 1. Extract all AST symbols in this file
     extracted_symbols = extract_symbols(content, file_path)
 
     chunks: List[CodeChunk] = []
@@ -58,10 +49,8 @@ def chunk_file(
         start_line = start + 1
         end_line = end
 
-        # 2. Find intersecting symbols
         intersecting_symbols: List[Dict[str, Any]] = []
         for sym in extracted_symbols:
-            # Check for range overlap: max(start1, start2) <= min(end1, end2)
             if max(start_line, sym.start_line) <= min(end_line, sym.end_line):
                 intersecting_symbols.append({
                     "name": sym.name,
@@ -71,7 +60,6 @@ def chunk_file(
                     "parent": sym.parent,
                 })
 
-        # 3. Create context header for embedding optimization
         symbol_summary = ", ".join([f"{s['kind']}:{s['name']}" for s in intersecting_symbols[:5]])
         if not symbol_summary:
             symbol_summary = "none"

@@ -1,20 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import {
-  Server,
-  Database,
-  Cloud,
-  Layers,
-  Globe,
-  HardDrive,
-  Cpu,
-  FileCode,
-  Box,
-  Terminal,
-  Activity,
-  CheckCircle2,
-  Sparkles,
-} from 'lucide-react';
+import { Server, Database, Cloud, Layers, Globe, HardDrive, Cpu, FileCode, Box, Terminal, Activity, CheckCircle2, Sparkles } from 'lucide-react';
 import { ARCH_TIERS, getNodeTier } from './constants';
 import type { ArchKGNode } from '../../types';
 
@@ -88,7 +74,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
     <div
       className={`relative w-[260px] rounded-xl bg-[#09090b]/95 backdrop-blur-md border p-3 shadow-xl transition-all duration-200 cursor-pointer select-none group ${ringClass} ${opacityClass}`}
     >
-      {/* Handles */}
       <Handle
         type="target"
         position={Position.Top}
@@ -100,7 +85,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         className="!w-2 !h-2 !bg-[#27272a] !border !border-[#3f3f46] hover:!bg-amber-400 transition"
       />
 
-      {/* Top Bar: Tier Badge + Confidence */}
       <div className="flex items-center justify-between gap-1 mb-2">
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border ${tierCfg.badgeBg}`}
@@ -130,7 +114,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         </div>
       </div>
 
-      {/* Main Node Identity */}
       <div className="flex items-start gap-2.5">
         <div
           className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${tierCfg.bg} ${tierCfg.border} ${tierCfg.color}`}
@@ -159,7 +142,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         </div>
       </div>
 
-      {/* Primary Source File Hint */}
       {data.source_files && data.source_files.length > 0 && (
         <div className="mt-2 pt-1.5 border-t border-[#18181b] flex items-center justify-between text-[10px] text-zinc-500 font-mono">
           <span className="truncate max-w-[190px]" title={data.source_files[0]}>

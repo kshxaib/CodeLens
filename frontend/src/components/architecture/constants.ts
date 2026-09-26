@@ -90,7 +90,6 @@ export const getNodeTier = (type: ArchNodeType, layer?: ArchLayerType): string =
   if (type === 'component') return 'presentation';
   if (type === 'application') return 'api_gateway';
 
-  // Fallback to layer
   if (layer === 'presentation') return 'presentation';
   if (layer === 'api_gateway') return 'api_gateway';
   if (layer === 'application') return 'application';

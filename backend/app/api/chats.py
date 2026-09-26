@@ -10,19 +10,10 @@ from app.db.models import User, Repository, Conversation, Message
 from app.api.auth import get_current_user
 from app.api.repositories import get_user_repository_access
 from app.core.security import decrypt_api_key
-from app.schemas.chat import (
-    MessageCreate,
-    MessageRead,
-    ConversationRead,
-    ConversationDetailResponse,
-    ConversationListResponse,
-    ConversationCreate,
-    ChatStreamRequest,
-)
+from app.schemas.chat import MessageCreate, MessageRead, ConversationRead, ConversationDetailResponse, ConversationListResponse, ConversationCreate, ChatStreamRequest
 from app.rag.service import stream_chat_response
 
 router = APIRouter(prefix="/repositories/{repository_id}/chats", tags=["Chat & Copilot"])
-
 
 @router.get("", response_model=ConversationListResponse, summary="List Repository Chat Threads")
 async def list_conversations(
@@ -30,7 +21,6 @@ async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Lists all active chat threads for the specified repository and user."""
     repo = get_user_repository_access(repository_id, current_user, db)
 
     conversations = (
@@ -60,7 +50,6 @@ async def list_conversations(
 
     return {"conversations": conv_list, "total": len(conv_list)}
 
-
 @router.post("", response_model=ConversationRead, summary="Create New Chat Thread")
 async def create_conversation(
     repository_id: int,
@@ -68,7 +57,6 @@ async def create_conversation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Creates a new threaded conversation for the repository."""
     repo = get_user_repository_access(repository_id, current_user, db)
 
     title = (payload.title or "New Chat").strip()
@@ -94,7 +82,6 @@ async def create_conversation(
         updated_at=conv.updated_at,
     )
 
-
 @router.get("/{chat_id}", response_model=ConversationDetailResponse, summary="Get Chat Thread Details")
 async def get_conversation(
     repository_id: int,
@@ -102,7 +89,6 @@ async def get_conversation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Fetches a specific conversation thread along with its message history and citations."""
     repo = get_user_repository_access(repository_id, current_user, db)
 
     conv = (
@@ -147,7 +133,6 @@ async def get_conversation(
         messages=msg_reads,
     )
 
-
 @router.delete("/{chat_id}", summary="Delete Chat Thread")
 async def delete_conversation(
     repository_id: int,
@@ -155,7 +140,6 @@ async def delete_conversation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Deletes a conversation thread and all its messages."""
     repo = get_user_repository_access(repository_id, current_user, db)
 
     conv = (
@@ -175,7 +159,6 @@ async def delete_conversation(
 
     return {"detail": "Conversation deleted successfully."}
 
-
 @router.post("/{chat_id}/stream", summary="Stream Real-Time SSE Chat Response")
 async def stream_chat(
     repository_id: int,
@@ -184,13 +167,8 @@ async def stream_chat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Submits a developer prompt to a specific chat thread and streams the
-    grounded Gemini Copilot response via Server-Sent Events (SSE).
-    """
     repo = get_user_repository_access(repository_id, current_user, db)
 
-    # 1. Verify BYOK OpenAI API key
     encrypted_key = getattr(current_user, "openai_api_key", None) or current_user.gemini_api_key
     if not encrypted_key:
         raise HTTPException(
@@ -206,7 +184,6 @@ async def stream_chat(
             detail="Failed to decrypt API key. Please re-enter your key in Settings.",
         )
 
-    # 2. Verify conversation
     conv = (
         db.query(Conversation)
         .filter(
@@ -219,14 +196,12 @@ async def stream_chat(
     if not conv:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found.")
 
-    # 3. If conversation is default titled, update with first query words
     question_text = payload.content.strip()
     if conv.title == "New Chat":
         auto_title = question_text[:40] + ("..." if len(question_text) > 40 else "")
         conv.title = auto_title
         db.add(conv)
 
-    # 4. Save User Message
     user_msg = Message(
         conversation_id=conv.id,
         role="user",
@@ -236,7 +211,6 @@ async def stream_chat(
     db.add(user_msg)
     db.commit()
 
-    # 5. Fetch prior conversation history for context continuity (excluding current message)
     past_messages = (
         db.query(Message)
         .filter(Message.conversation_id == conv.id, Message.id != user_msg.id)
@@ -245,7 +219,6 @@ async def stream_chat(
     )
     history = [{"role": m.role, "content": m.content} for m in past_messages]
 
-    # 6. Stream generator wrapper that persists assistant message on completion
     async def sse_event_generator():
         saved = False
         async for sse_chunk in stream_chat_response(
@@ -257,7 +230,6 @@ async def stream_chat(
         ):
             yield sse_chunk
 
-            # Check if event is 'done' to save assistant message
             if "event: done" in sse_chunk and not saved:
                 try:
                     idx = sse_chunk.find("data: ")
@@ -267,7 +239,6 @@ async def stream_chat(
                         full_resp = payload_data.get("full_response", "")
                         citations = payload_data.get("citations", [])
 
-                        # Persist assistant response
                         with SessionLocal() as write_db:
                             assistant_msg = Message(
                                 conversation_id=conv.id,

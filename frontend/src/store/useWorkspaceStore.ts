@@ -55,7 +55,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   triggerIndexing: async (repoId: number) => {
-    // 1. Optimistically set repository status to 'indexing'
     set((state) => ({
       repositories: state.repositories.map((r) =>
         r.id === repoId ? { ...r, index_status: 'indexing' } : r
@@ -65,25 +64,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       await api.indexRepository(repoId);
     } catch (err) {
-      // Revert if API call itself failed
       await get().fetchRepositories(true);
       throw err;
     }
 
-    // 2. Clear any existing active poll
     if (indexingPollTimer) {
       clearInterval(indexingPollTimer);
       indexingPollTimer = null;
     }
 
-    // 3. Smart poll every 2.5s until repo is finished indexing
     let pollCount = 0;
     indexingPollTimer = setInterval(async () => {
       pollCount++;
       await get().fetchRepositories(true);
       const current = get().repositories.find((r) => r.id === repoId);
 
-      // Stop polling when indexing completes or after 50 attempts (~2 minutes)
       if (!current || current.index_status !== 'indexing' || pollCount > 50) {
         if (indexingPollTimer) {
           clearInterval(indexingPollTimer);
@@ -94,5 +89,4 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 }));
 
-// Compatibility Hook export
 export const useWorkspace = useWorkspaceStore;

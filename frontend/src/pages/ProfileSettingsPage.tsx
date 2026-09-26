@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import {
-  KeyRound,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  ExternalLink,
-  Shield,
-  Trash2,
-  Loader2,
-  Save,
-  LogOut,
-} from 'lucide-react';
+import { KeyRound, CheckCircle2, AlertCircle, Eye, EyeOff, ExternalLink, Shield, Trash2, Loader2, Save, LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { LogoutConfirmModal } from '../components/common/LogoutConfirmModal';
@@ -95,7 +83,6 @@ export const ProfileSettingsPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Header */}
       <div>
         <div className="text-muted-foreground text-xs font-mono mb-1">
           Profile & Settings
@@ -106,9 +93,7 @@ export const ProfileSettingsPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Grid: Profile Card & API Key Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: GitHub Profile Info */}
         <div className="rounded-xl p-6 bg-[#09090b] border border-[#1f1f23] flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-4 mb-6">
@@ -162,7 +147,6 @@ export const ProfileSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: BYOK OpenAI Key Management */}
         <div className="rounded-xl p-6 sm:p-8 lg:col-span-2 bg-[#09090b] border border-[#1f1f23] shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -185,7 +169,6 @@ export const ProfileSettingsPage: React.FC = () => {
             </a>
           </div>
 
-          {/* Feedback Banner */}
           {feedback && (
             <div
               className={`mb-6 p-3.5 rounded-xl text-xs sm:text-sm flex items-start gap-2.5 border transition-all ${
@@ -203,7 +186,6 @@ export const ProfileSettingsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Current Key Status */}
           {hasKey ? (
             <div className="mb-6 p-4 rounded-xl bg-[#121214] border border-[#1f1f23] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -231,7 +213,6 @@ export const ProfileSettingsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Input Form */}
           <form onSubmit={handleSaveKey} className="space-y-4">
             <div>
               <label htmlFor="apiKey" className="block text-xs font-medium text-slate-300 mb-1.5">

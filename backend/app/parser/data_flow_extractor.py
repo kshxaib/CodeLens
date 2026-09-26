@@ -1,33 +1,3 @@
-"""
-Data Flow Extraction Engine for CodeLens.
-
-Extracts data lineage, transformations, models, schemas, and storage destinations
-directly from source code and links them to the unified Architecture Knowledge Graph.
-
-Answers: "What data moves through the system, where does it originate,
-how is it transformed, and where is it stored or consumed?"
-
-Supports:
-- Request bodies (API request payloads, DTOs, parameters)
-- Response models (API return models, serializers, HTTP payloads)
-- Schemas & DTOs (Pydantic models, TypeScript interfaces, Prisma/Mongoose schemas)
-- Database models (ORM entities, SQL tables, database collections)
-- Explicit transformation steps (validation, calculation, hashing, serialization, transcoding)
-- Files & Binary assets (multipart uploads, images, video, documents)
-- Object storage & Buckets (S3, Cloudinary, local storage)
-- Queues & Messages (Celery, Kafka, RabbitMQ, pub/sub, async tasks)
-- Tokens & Secrets (JWT tokens, password hashes, API credentials)
-
-Every data flow edge carries:
-- data type
-- source
-- destination
-- transformation
-- storage
-- direction
-- evidence (file path + line range + code snippet)
-- confidence (deterministic / high / medium)
-"""
 from __future__ import annotations
 
 import ast
@@ -37,28 +7,19 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set, Tuple
 
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    SourceEvidence,
-    EntityType,
-    ConfidenceLevel,
-    CONFIDENCE_VALUES,
-)
-
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, SourceEvidence, EntityType, ConfidenceLevel, CONFIDENCE_VALUES
 
 class DataClassification(str, Enum):
-    REQUEST_PAYLOAD = "request_payload"         # Inbound HTTP Request body / Params
-    RESPONSE_PAYLOAD = "response_payload"       # Outbound HTTP Response JSON / DTO
-    DTO_SCHEMA = "dto_schema"                   # Pydantic BaseModel, TS Interface, DTO
-    TRANSFORMATION_STEP = "transformation_step" # Processing, validation, calculation, hash
-    DATABASE_MODEL = "database_model"           # ORM Model / DB Table / Entity
-    FILE_BINARY = "file_binary"                 # Binary file, media, multipart upload
-    STORAGE_OBJECT = "storage_object"           # S3 Object, Cloudinary asset, disk storage
-    QUEUE_MESSAGE = "queue_message"             # Event / Queue message / Task payload
-    TOKEN_SECRET = "token_secret"               # Auth token, JWT, hashed password
-    CACHE_ENTRY = "cache_entry"                 # Redis key-value / Cache payload
-
+    REQUEST_PAYLOAD = "request_payload"
+    RESPONSE_PAYLOAD = "response_payload"
+    DTO_SCHEMA = "dto_schema"
+    TRANSFORMATION_STEP = "transformation_step"
+    DATABASE_MODEL = "database_model"
+    FILE_BINARY = "file_binary"
+    STORAGE_OBJECT = "storage_object"
+    QUEUE_MESSAGE = "queue_message"
+    TOKEN_SECRET = "token_secret"
+    CACHE_ENTRY = "cache_entry"
 
 class DataFormat(str, Enum):
     JSON = "json"
@@ -68,7 +29,6 @@ class DataFormat(str, Enum):
     JWT = "jwt_token"
     HASH = "hash/digest"
     PRIMITIVE = "primitive"
-
 
 @dataclass
 class DataNode:
@@ -103,7 +63,6 @@ class DataNode:
             "metadata": self.metadata,
         }
 
-
 @dataclass
 class DataFlowEdge:
     id: str
@@ -131,7 +90,6 @@ class DataFlowEdge:
             "evidence": self.evidence,
         }
 
-
 @dataclass
 class DataPipeline:
     id: str
@@ -153,19 +111,13 @@ class DataPipeline:
             "metadata": self.metadata,
         }
 
-
 class DataFlowExtractor:
-    """
-    Analyzes repository files and extracts explicit, evidence-backed data flows
-    integrated with the unified KnowledgeGraph.
-    """
 
     def __init__(self, files: List[Dict[str, Any]], kg: KnowledgeGraph):
         self.files = files
         self.kg = kg
         self.file_map = {f["file_path"]: f for f in files}
 
-        # Index database models and external services in the KnowledgeGraph
         self.kg_models = {
             node.name.lower(): node
             for node in kg.nodes
@@ -182,24 +134,17 @@ class DataFlowExtractor:
             if node.type == EntityType.EXTERNAL_SERVICE
         }
 
-        # Prisma models map if prisma exists
         self.prisma_models = self._parse_prisma_models()
 
     def extract_all_pipelines(self) -> List[DataPipeline]:
-        """
-        Extracts all business data flow pipelines from repository files.
-        """
         pipelines: List[DataPipeline] = []
 
-        # 1. Extract JS/TS data pipelines (Express controllers, route handlers)
         js_pipelines = self._extract_js_pipelines()
         pipelines.extend(js_pipelines)
 
-        # 2. Extract Python data pipelines (FastAPI, Flask, Django handlers)
         py_pipelines = self._extract_python_pipelines()
         pipelines.extend(py_pipelines)
 
-        # 3. If no specific pipelines detected, synthesize from Knowledge Graph models & API routes
         if not pipelines:
             fallback = self._synthesize_from_kg()
             if fallback:
@@ -208,9 +153,6 @@ class DataFlowExtractor:
         return pipelines
 
     def extract_consolidated_graph(self, pipelines: List[DataPipeline]) -> Dict[str, Any]:
-        """
-        Consolidates all pipelines into a global repository-wide data graph.
-        """
         all_nodes: Dict[str, Dict[str, Any]] = {}
         all_edges: Dict[str, Dict[str, Any]] = {}
 
@@ -219,7 +161,6 @@ class DataFlowExtractor:
                 if n.id not in all_nodes:
                     all_nodes[n.id] = n.to_dict()
                 else:
-                    # Merge fields
                     existing = all_nodes[n.id]
                     merged_fields = list(set(existing.get("fields", []) + n.fields))
                     existing["fields"] = merged_fields
@@ -235,16 +176,11 @@ class DataFlowExtractor:
             "total_transitions": len(all_edges),
         }
 
-    # -------------------------------------------------------------------------
-    # Prisma Schema Parser
-    # -------------------------------------------------------------------------
     def _parse_prisma_models(self) -> Dict[str, Dict[str, Any]]:
-        """Extracts Prisma models and their fields if schema.prisma exists."""
         models: Dict[str, Dict[str, Any]] = {}
         for f in self.files:
             if "schema.prisma" in f["file_path"].lower():
                 content = f.get("content", "")
-                # Match model Name { ... }
                 pattern = r"model\s+([A-Za-z0-9_]+)\s*\{([^}]+)\}"
                 for m in re.finditer(pattern, content):
                     model_name = m.group(1)
@@ -268,9 +204,6 @@ class DataFlowExtractor:
                     }
         return models
 
-    # -------------------------------------------------------------------------
-    # JavaScript / TypeScript Data Flow Extraction
-    # -------------------------------------------------------------------------
     def _extract_js_pipelines(self) -> List[DataPipeline]:
         pipelines: List[DataPipeline] = []
 
@@ -298,7 +231,6 @@ class DataFlowExtractor:
                     start_char = match.start()
                     func_start_line = content[:start_char].count("\n") + 1
 
-                    # Extract controller function block (rough approximation up to 120 lines)
                     block_lines = lines[func_start_line - 1 : min(func_start_line + 119, len(lines))]
                     block_content = "\n".join(block_lines)
 
@@ -354,7 +286,6 @@ class DataFlowExtractor:
                 },
             )
 
-        # 1. Detect Inbound Request Payload (req.body, req.file, req.query)
         req_fields: List[str] = []
         body_match = re.search(r"const\s*\{([^}]+)\}\s*=\s*(?:req|request)\.body", block_content)
         if body_match:
@@ -407,7 +338,6 @@ class DataFlowExtractor:
         current_data_node_id = origin_node_id
         current_data_name = origin_node.name
 
-        # 2. Explicit Validation Step
         has_validation = bool(
             re.search(
                 r"if\s*\([^)]*(?:some|trim|!|null|undefined)[^)]*\)|schema\.parse|zod|joi|express-validator",
@@ -444,7 +374,6 @@ class DataFlowExtractor:
                 )
             )
 
-            # Validated DTO
             dto_node_id = f"{pipeline_id}_validated_dto"
             dto_node = DataNode(
                 id=dto_node_id,
@@ -476,7 +405,6 @@ class DataFlowExtractor:
             current_data_node_id = dto_node_id
             current_data_name = dto_node.name
 
-        # 3. Detect Cryptographic / Hashing / Token Transformations
         bcrypt_match = re.search(r"bcrypt\.(?:hash|hashSync)\(([^,]+)", block_content)
         if bcrypt_match:
             hash_trans_id = f"{pipeline_id}_transform_bcrypt"
@@ -537,7 +465,6 @@ class DataFlowExtractor:
             )
             current_data_node_id = hashed_token_id
 
-        # 4. Detect Business Calculations / Price / Fee Transformations
         calc_match = re.search(
             r"(totalAmount|totalDays|adminAmount|partnerAmount|discount|tax|fee)\s*=\s*([^;\n]+)",
             block_content,
@@ -601,7 +528,6 @@ class DataFlowExtractor:
             )
             current_data_node_id = computed_dto_id
 
-        # 5. Detect External Service Dispatch (Razorpay / Stripe / Mail)
         ext_match = re.search(
             r"(razorpayInstance|stripe|sendEmail|transporter|s3|cloudinary)\.([a-zA-Z0-9_\.]+)",
             block_content,
@@ -640,7 +566,6 @@ class DataFlowExtractor:
                 )
             )
 
-        # 6. Detect Database Persistence (Prisma / Mongoose / Sequelize / PostgreSQL)
         db_match = re.search(
             r"(?:db|prisma)\.([a-zA-Z0-9_]+)\.(create|update|upsert|save)|new\s+([A-Z][a-zA-Z0-9_]+)\([^)]*\)\.save\(\)",
             block_content,
@@ -693,7 +618,6 @@ class DataFlowExtractor:
             )
             current_data_node_id = db_node_id
 
-        # 7. Detect JWT Token Generation
         jwt_match = re.search(r"jwt\.sign\(([^,]+)", block_content)
         if jwt_match:
             jwt_trans_id = f"{pipeline_id}_transform_jwt_sign"
@@ -756,7 +680,6 @@ class DataFlowExtractor:
             )
             current_data_node_id = jwt_node_id
 
-        # 8. Outbound Response Payload (res.json, res.send)
         res_match = re.search(r"res(?:\.status\([0-9]+\))?\.json\(([^)]*)\)", block_content)
         res_fields = ["success", "message"]
         if res_match:
@@ -809,9 +732,6 @@ class DataFlowExtractor:
             },
         )
 
-    # -------------------------------------------------------------------------
-    # Python Data Flow Extraction (FastAPI / Pydantic / SQLAlchemy / Flask)
-    # -------------------------------------------------------------------------
     def _extract_python_pipelines(self) -> List[DataPipeline]:
         pipelines: List[DataPipeline] = []
 
@@ -829,7 +749,6 @@ class DataFlowExtractor:
             except Exception:
                 continue
 
-            # Check for FastAPI / Flask routes or service methods
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     is_route = any(
@@ -890,7 +809,6 @@ class DataFlowExtractor:
                 },
             )
 
-        # 1. Inbound Request Schema (Pydantic / DTO)
         req_type_name = "RequestPayload"
         req_fields = []
         for arg in func_node.args.args:
@@ -919,7 +837,6 @@ class DataFlowExtractor:
         nodes.append(origin_node)
         current_data_node_id = origin_node_id
 
-        # 2. Pydantic Validation & Sanitization Step
         val_node_id = f"{pipeline_id}_transform_pydantic"
         val_node = DataNode(
             id=val_node_id,
@@ -975,7 +892,6 @@ class DataFlowExtractor:
         )
         current_data_node_id = sanitized_dto_id
 
-        # 3. Detect Database ORM Operations (SQLAlchemy / db.add / session.commit)
         func_text = "\n".join(content.splitlines()[start_line - 1 : end_line])
         db_match = re.search(r"(?:db|session)\.add\(([a-zA-Z0-9_]+)\)", func_text)
         model_name = "Record"
@@ -1017,7 +933,6 @@ class DataFlowExtractor:
         )
         current_data_node_id = db_model_node_id
 
-        # 4. Outbound Response Schema
         res_type_name = "ResponsePayload"
         for d in func_node.decorator_list:
             if isinstance(d, ast.Call):
@@ -1067,11 +982,7 @@ class DataFlowExtractor:
             },
         )
 
-    # -------------------------------------------------------------------------
-    # Fallback Synthesis from Knowledge Graph Nodes
-    # -------------------------------------------------------------------------
     def _synthesize_from_kg(self) -> Optional[DataPipeline]:
-        """Synthesizes a holistic data pipeline from existing Knowledge Graph nodes."""
         if not self.kg.nodes:
             return None
 
@@ -1085,7 +996,6 @@ class DataFlowExtractor:
         if not api_nodes and not model_nodes:
             return None
 
-        # Create Client Input
         inbound = DataNode(
             id="dp_syn_client_request",
             name="Client API Request Payload",
@@ -1096,7 +1006,6 @@ class DataFlowExtractor:
         )
         nodes.append(inbound)
 
-        # Transformation
         trans = DataNode(
             id="dp_syn_transform_process",
             name="Request Normalization & Validation",
@@ -1116,7 +1025,6 @@ class DataFlowExtractor:
             )
         )
 
-        # Connect to Database Models
         for i, m in enumerate(model_nodes[:3]):
             mnode_id = f"dp_syn_model_{m.id}"
             dnode = DataNode(
@@ -1141,7 +1049,6 @@ class DataFlowExtractor:
                 )
             )
 
-        # Connect to Response
         outbound = DataNode(
             id="dp_syn_response_payload",
             name="API Response Payload",

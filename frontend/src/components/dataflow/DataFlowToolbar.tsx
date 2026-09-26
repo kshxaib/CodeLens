@@ -1,19 +1,5 @@
 import React from 'react';
-import {
-  Search,
-  Play,
-  Pause,
-  RotateCcw,
-  Compass,
-  ArrowUpDown,
-  ArrowLeftRight,
-  Maximize2,
-  Minimize2,
-  Download,
-  Database,
-  Sparkles,
-  Layers,
-} from 'lucide-react';
+import { Search, Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download, Database, Sparkles, Layers } from 'lucide-react';
 import type { DataPipeline } from '../../types';
 
 interface DataFlowToolbarProps {
@@ -26,13 +12,11 @@ interface DataFlowToolbarProps {
   onSearchChange: (q: string) => void;
   classificationFilter: string;
   onClassificationFilterChange: (f: string) => void;
-  // Simulator props
   isPlaying: boolean;
   onTogglePlay: () => void;
   onResetSimulator: () => void;
   currentStepIndex: number;
   totalSteps: number;
-  // Layout & View props
   layoutDirection: 'TB' | 'LR';
   onToggleLayoutDirection: () => void;
   onFitView: () => void;
@@ -65,9 +49,7 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
 }) => {
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-      {/* LEFT: View Selector & Pipeline Selector & Filters */}
       <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl flex-wrap">
-        {/* VIEW SELECTOR */}
         <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[11px] font-mono">
           <button
             onClick={() => onViewChange('architecture')}
@@ -121,7 +103,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           </button>
         </div>
 
-        {/* PIPELINE DROPDOWN SELECTOR */}
         {pipelines.length > 0 && (
           <select
             value={selectedPipelineId}
@@ -136,7 +117,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           </select>
         )}
 
-        {/* SEARCH INPUT */}
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
           <input
@@ -148,7 +128,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           />
         </div>
 
-        {/* CLASSIFICATION FILTERS */}
         <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[10px] font-mono hidden lg:flex">
           <button
             onClick={() => onClassificationFilterChange('all')}
@@ -196,9 +175,7 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
         </div>
       </div>
 
-      {/* RIGHT: Lineage Simulator Controls + Layout + Export */}
       <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl">
-        {/* LINEAGE FLOW SIMULATOR */}
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#141416] border border-[#27272a]">
           <button
             onClick={onTogglePlay}
@@ -236,7 +213,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           )}
         </div>
 
-        {/* Layout direction */}
         <button
           onClick={onToggleLayoutDirection}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-500 transition cursor-pointer flex items-center gap-1 text-xs font-mono"
@@ -249,7 +225,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           )}
         </button>
 
-        {/* Fit to View */}
         <button
           onClick={onFitView}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-500 transition cursor-pointer"
@@ -258,7 +233,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           <Compass className="w-3.5 h-3.5 text-sky-400" />
         </button>
 
-        {/* Export JSON */}
         <button
           onClick={onExport}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-500 transition cursor-pointer"
@@ -267,7 +241,6 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
           <Download className="w-3.5 h-3.5 text-sky-400" />
         </button>
 
-        {/* Fullscreen */}
         <button
           onClick={onToggleFullscreen}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-500 transition cursor-pointer"

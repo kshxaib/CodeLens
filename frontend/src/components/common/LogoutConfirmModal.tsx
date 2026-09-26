@@ -30,7 +30,6 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({ isOpen, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="w-full max-w-md bg-card rounded-xl p-6 border border-border relative flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent transition cursor-pointer"
@@ -38,7 +37,6 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({ isOpen, 
           <X className="size-4" />
         </button>
 
-        {/* Modal Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="size-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-foreground shrink-0">
             <LogOut className="size-4" />
@@ -49,7 +47,6 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({ isOpen, 
           </div>
         </div>
 
-        {/* Modal Body */}
         <div className="p-3.5 rounded-lg bg-secondary border border-border mb-5">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Are you sure you want to log out, <span className="font-semibold text-foreground">{user?.username || 'Developer'}</span>? 
@@ -57,7 +54,6 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({ isOpen, 
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
           <Button
             type="button"

@@ -1,24 +1,12 @@
-"""
-Blast Radius computation for CodeLens.
-
-Unified with the canonical Architecture Knowledge Graph and TraceService.
-Eliminates duplicate AST call-graph crawlers in favor of the single graph engine.
-"""
 from typing import Dict, List, Any
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.services.trace_service import TraceService
-
 
 def compute_blast_radius(
     target_symbol: str,
     files: List[Dict[str, Any]],
     max_depth: int = 3,
 ) -> Dict[str, Any]:
-    """
-    Computes the impact blast radius (upstream callers and downstream callees)
-    for a specific function, class, or symbol across the codebase using the
-    unified Architecture Knowledge Graph.
-    """
     if not target_symbol or not files:
         return {
             "target_symbol": target_symbol or "",

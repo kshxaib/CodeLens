@@ -23,19 +23,16 @@ function AppContent() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const processedCodeRef = useRef<string | null>(null);
 
-  // Bootstrap: refresh user session on mount
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
 
-  // Bootstrap: auto-fetch repos when user is logged in
   useEffect(() => {
     if (user) {
       fetchRepositories();
     }
   }, [user, fetchRepositories]);
 
-  // OAuth callback handling
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');

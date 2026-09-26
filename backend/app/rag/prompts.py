@@ -1,13 +1,7 @@
 import re
 from typing import List, Dict, Any, Optional
 
-
 def is_conversational_query(text: str) -> bool:
-    """
-    Determines if the user query is a greeting, polite pleasantry, identity question,
-    or general check-in (e.g. 'hello', 'how are you', 'which model are you using').
-    In these cases, the AI should respond naturally and politely instead of dumping code.
-    """
     if not text:
         return True
 
@@ -51,13 +45,7 @@ def is_conversational_query(text: str) -> bool:
 
     return False
 
-
 def build_system_prompt(repo_full_name: str, is_conversational: bool = False) -> str:
-    """
-    Builds the system prompt for CodeLens Copilot.
-    - If conversational: natural, concise, human tone without robotic boilerplate intros.
-    - If technical: strict grounding, exact file & line citations, code snippets.
-    """
     repo_name = repo_full_name.split("/")[-1] if "/" in repo_full_name else repo_full_name
 
     if is_conversational:
@@ -81,20 +69,14 @@ INSTRUCTIONS:
 5. **TONE:** Concise, precise, direct engineering tone without unnecessary filler.
 """
 
-
 def build_user_prompt(
     question: str,
     context_chunks: List[Dict[str, Any]],
     conversation_history: Optional[List[Dict[str, Any]]] = None,
     is_conversational: bool = False,
 ) -> str:
-    """
-    Builds the user prompt combining conversation history, relevant codebase
-    context chunks (if technical), and the user's question.
-    """
     prompt_parts: List[str] = []
 
-    # 1. Include recent conversation history (if any)
     if conversation_history:
         prompt_parts.append("### PREVIOUS CONVERSATION HISTORY:")
         for msg in conversation_history[-6:]:
@@ -103,7 +85,6 @@ def build_user_prompt(
             prompt_parts.append(f"**{role}:** {content}\n")
         prompt_parts.append("---\n")
 
-    # 2. If technical question, include retrieved codebase context chunks
     if not is_conversational:
         prompt_parts.append("### RELEVANT CODEBASE CONTEXT CHUNKS:\n")
         if not context_chunks:
@@ -122,25 +103,18 @@ def build_user_prompt(
                 prompt_parts.append(f"```{language}\n{content}\n```\n")
         prompt_parts.append("---\n")
 
-    # 3. User Question
     prompt_parts.append(f"### USER QUERY:\n{question.strip()}\n\nProvide your response:")
 
     return "\n".join(prompt_parts)
-
 
 def parse_citations_from_response(
     response_text: str,
     context_chunks: List[Dict[str, Any]],
     is_conversational: bool = False,
 ) -> List[Dict[str, Any]]:
-    """
-    Extracts `[cite:file_path:start_line-end_line]` tags from the assistant response
-    and enriches them with matching symbol information from the retrieved context.
-    """
     if not response_text or is_conversational:
         return []
 
-    # Pattern: [cite:src/api/auth.py:10-25] or [cite:src/auth.js:15]
     pattern = r"\[cite:([^:\]]+):(\d+)(?:-(\d+))?\]"
     matches = re.findall(pattern, response_text)
 
@@ -157,7 +131,6 @@ def parse_citations_from_response(
             continue
         seen.add(key)
 
-        # Match with context chunks to extract symbol/snippet
         matched_symbol = None
         snippet = None
 
@@ -178,7 +151,6 @@ def parse_citations_from_response(
             "snippet": snippet,
         })
 
-    # If no explicit tags were generated, fallback to top context chunk sources
     if not citations and context_chunks:
         for chunk in context_chunks[:3]:
             file_path = chunk.get("file_path", "")

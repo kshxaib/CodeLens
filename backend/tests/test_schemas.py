@@ -2,44 +2,31 @@ from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
 from app.schemas.user import UserRead, UserProfileResponse, GeminiKeyUpdate, GeminiKeyStatusResponse
-from app.schemas.repository import (
-    RepositoryRead,
-    RepositorySummary,
-    RepositoryListResponse,
-    AddRepositoryRequest,
-)
+from app.schemas.repository import RepositoryRead, RepositorySummary, RepositoryListResponse, AddRepositoryRequest
 from app.schemas.auth import GitHubOAuthURLResponse, TokenResponse
 
-
 def test_gemini_key_update_validation():
-    # Valid key
     valid = GeminiKeyUpdate(api_key="AIzaSyA1B2C3D4E5F6G7H8I9J0")
     assert valid.api_key == "AIzaSyA1B2C3D4E5F6G7H8I9J0"
 
-    # Too short key raises ValueError
     with pytest.raises(ValidationError):
         GeminiKeyUpdate(api_key="too_short")
 
-    # Empty key raises ValueError
     with pytest.raises(ValidationError):
         GeminiKeyUpdate(api_key="   ")
 
-
 def test_add_repository_url_validation():
-    # Valid URLs
     req1 = AddRepositoryRequest(url="https://github.com/kshxaib/CodeLens")
     assert req1.url == "https://github.com/kshxaib/CodeLens"
 
     req2 = AddRepositoryRequest(url="https://github.com/facebook/react.git")
     assert req2.url == "https://github.com/facebook/react.git"
 
-    # Invalid URLs
     with pytest.raises(ValidationError):
         AddRepositoryRequest(url="https://gitlab.com/owner/repo")
 
     with pytest.raises(ValidationError):
         AddRepositoryRequest(url="not_a_url")
-
 
 def test_user_read_schema():
     now = datetime.now(timezone.utc)
@@ -57,7 +44,6 @@ def test_user_read_schema():
     assert user.username == "shoaib"
     assert user.has_gemini_key is True
     assert user.masked_gemini_key == "AIzaSy••••••••AbCd"
-
 
 def test_repository_read_schema():
     now = datetime.now(timezone.utc)

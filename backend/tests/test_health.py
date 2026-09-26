@@ -3,14 +3,12 @@ from app.main import app
 
 client = TestClient(app)
 
-
 def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
     assert data["app"] == "CodeLens"
     assert data["status"] == "online"
-
 
 def test_api_health_endpoint():
     response = client.get("/api/health")
@@ -26,14 +24,11 @@ def test_api_health_endpoint():
     assert data["vector_db"]["status"] == "connected"
     assert data["vector_db"]["engine"] == "Qdrant"
 
-
 def test_api_health_subroutes():
-    # Test /api/health/db
     db_resp = client.get("/api/health/db")
     assert db_resp.status_code == 200
     assert db_resp.json()["status"] == "connected"
 
-    # Test /api/health/qdrant
     qdrant_resp = client.get("/api/health/qdrant")
     assert qdrant_resp.status_code == 200
     assert qdrant_resp.json()["status"] == "connected"

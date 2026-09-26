@@ -1,16 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  useReactFlow,
-  type Node,
-  type Edge,
-} from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { WorkflowNode } from './WorkflowNode';
 import { WorkflowEdge } from './WorkflowEdge';
 import { WorkflowInspector } from './WorkflowInspector';
@@ -51,25 +40,20 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Inspector & Selection
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [hoveredStepId, setHoveredStepId] = useState<string | null>(null);
 
-  // Toolbar & Simulator
   const [searchQuery, setSearchQuery] = useState('');
   const [pathFilter, setPathFilter] = useState<'all' | 'happy' | 'failure'>('all');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Animation Simulator state
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
 
-  // React Flow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // 1. Fetch workflows
   const fetchWorkflows = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,12 +75,10 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     fetchWorkflows();
   }, [fetchWorkflows]);
 
-  // Current active workflow
   const activeWorkflow = useMemo(() => {
     return workflows.find((w) => w.id === selectedWorkflowId) || workflows[0] || null;
   }, [workflows, selectedWorkflowId]);
 
-  // Sync workflow steps with TraceContext
   useEffect(() => {
     if (activeWorkflow?.steps) {
       setViewNodes(
@@ -110,7 +92,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     }
   }, [activeWorkflow, setViewNodes]);
 
-  // 2. Simulator Timer Loop
   useEffect(() => {
     if (!isPlaying || !activeWorkflow || !activeWorkflow.steps.length) return;
 
@@ -128,14 +109,12 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     return () => clearInterval(timer);
   }, [isPlaying, activeWorkflow]);
 
-  // 3. Transform Workflow into React Flow Nodes and Edges
   useEffect(() => {
     if (!activeWorkflow) return;
 
     const rawSteps = activeWorkflow.steps || [];
     const rawTransitions = activeWorkflow.transitions || [];
 
-    // Filter steps based on pathFilter
     const filteredSteps = rawSteps.filter((s) => {
       if (pathFilter === 'happy' && s.step_type === 'failure') return false;
       if (pathFilter === 'failure' && s.step_type === 'end') return false;
@@ -151,7 +130,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
 
     const visibleStepIds = new Set(filteredSteps.map((s) => s.id));
 
-    // Filter transitions
     const filteredTransitions = rawTransitions.filter((t) => {
       if (!visibleStepIds.has(t.source) || !visibleStepIds.has(t.target)) return false;
       if (pathFilter === 'happy' && t.transition_type === 'failure') return false;
@@ -164,7 +142,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         ? rawSteps[simulationIndex].id
         : null;
 
-    // Convert to React Flow Nodes
     const flowNodes: Node[] = filteredSteps.map((s) => {
       const isSelected = s.id === selectedStepId;
       const isHovered = s.id === hoveredStepId;
@@ -186,7 +163,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
       };
     });
 
-    // Convert to React Flow Edges
     const flowEdges: Edge[] = filteredTransitions.map((t) => {
       const isConnected = t.source === selectedStepId || t.target === selectedStepId;
       const hasFocus = !!selectedStepId || !!hoveredStepId;
@@ -219,7 +195,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
       };
     });
 
-    // Compute Dagre layout
     const layouted = getWorkflowLayoutedElements(flowNodes, flowEdges, {
       direction: layoutDirection,
     });
@@ -238,7 +213,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     setEdges,
   ]);
 
-  // Fit to screen on initial load
   useEffect(() => {
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
@@ -248,7 +222,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     }
   }, [nodes.length, selectedWorkflowId, layoutDirection, reactFlowInstance]);
 
-  // Node Click
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedStepId((prev) => (prev === node.id ? null : node.id));
@@ -257,7 +230,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     [selectTraceNode]
   );
 
-  // Edge Click -> Feature 4: Why?
   const handleEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
       openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
@@ -340,7 +312,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         .wf-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
       `}</style>
 
-      {/* TOP WORKFLOW TOOLBAR */}
       <WorkflowToolbar
         currentView={currentView}
         onViewChange={onViewChange}
@@ -374,7 +345,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         onExport={handleExport}
       />
 
-      {/* REACT FLOW CANVAS */}
       <div className="flex-1 h-full">
         <ReactFlow
           nodes={nodes}
@@ -416,7 +386,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         </ReactFlow>
       </div>
 
-      {/* RIGHT WORKFLOW INSPECTOR */}
       <div
         className={`wf-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
           selectedStepData ? 'open' : 'closed'

@@ -1,17 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import {
-  Play,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  Cloud,
-  UserCheck,
-  Zap,
-  ArrowRight,
-  Split,
-  Layers,
-} from 'lucide-react';
+import { Play, CheckCircle2, AlertTriangle, RotateCcw, Cloud, UserCheck, Zap, ArrowRight, Split, Layers } from 'lucide-react';
 import { getStepTypeCfg } from './constants';
 import type { WorkflowStep } from '../../types';
 
@@ -79,7 +68,6 @@ export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected 
         className="!w-2 !h-2 !bg-[#27272a] !border !border-[#3f3f46] hover:!bg-amber-400 transition"
       />
 
-      {/* Top Header Badge */}
       <div className="flex items-center justify-between gap-1 mb-2">
         <span
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border ${cfg.badgeBg}`}
@@ -95,7 +83,6 @@ export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected 
         )}
       </div>
 
-      {/* Main Identity */}
       <div className="flex items-start gap-2.5">
         <div
           className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${cfg.bg} ${cfg.border} ${cfg.color}`}
@@ -113,7 +100,6 @@ export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected 
         </div>
       </div>
 
-      {/* Footer Info (Calls or I/O) */}
       {(data.calls?.length > 0 || data.inputs?.length > 0) && (
         <div className="mt-2 pt-1.5 border-t border-[#18181b] flex items-center justify-between text-[9px] text-zinc-500 font-mono">
           {data.calls?.length > 0 ? (

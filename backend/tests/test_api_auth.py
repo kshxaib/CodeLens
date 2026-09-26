@@ -9,7 +9,6 @@ from app.core.security import create_access_token, encrypt_api_key
 client = TestClient(app)
 TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
 @pytest.fixture
 def test_user():
     session = TestSession()
@@ -28,11 +27,9 @@ def test_user():
 
     yield user
 
-    # Cleanup
     session.delete(user)
     session.commit()
     session.close()
-
 
 def test_get_github_oauth_url():
     response = client.get("/api/auth/github")
@@ -43,17 +40,14 @@ def test_get_github_oauth_url():
     assert "https://github.com/login/oauth/authorize" in data["url"]
     assert "scope=read:user%20repo" in data["url"]
 
-
 def test_get_me_unauthorized():
     response = client.get("/api/auth/me")
     assert response.status_code == 401
     assert "detail" in response.json()
 
-
 def test_get_me_with_cookie(test_user):
     token = create_access_token({"sub": str(test_user.id), "username": test_user.username})
 
-    # Set cookie in TestClient
     client.cookies.set("session_token", token)
     response = client.get("/api/auth/me")
 
@@ -64,7 +58,6 @@ def test_get_me_with_cookie(test_user):
     assert data["masked_gemini_key"].startswith("AIzaSy")
     assert "TestingAuthToken" not in data["masked_gemini_key"]
 
-
 def test_get_me_with_bearer_header(test_user):
     token = create_access_token({"sub": str(test_user.id), "username": test_user.username})
     client.cookies.clear()
@@ -74,10 +67,8 @@ def test_get_me_with_bearer_header(test_user):
     data = response.json()
     assert data["username"] == "shoaib_auth_tester"
 
-
 def test_logout():
     response = client.post("/api/auth/logout")
     assert response.status_code == 200
     assert response.json()["status"] == "success"
-    # Verify cookie was deleted / set to expire
     assert 'session_token=""' in response.headers.get("set-cookie", "") or "session_token=;" in response.headers.get("set-cookie", "")

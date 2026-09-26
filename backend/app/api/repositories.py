@@ -7,13 +7,7 @@ from app.db.session import get_db
 from app.db.models import User, Repository, RepositoryAccess, File, ArchitectureGraph
 from app.api.auth import get_current_user
 from app.core.security import decrypt_api_key
-from app.schemas.repository import (
-    RepositoryRead,
-    RepositoryListResponse,
-    AddRepositoryRequest,
-    RepositorySummary,
-    ExplainComponentRequest,
-)
+from app.schemas.repository import RepositoryRead, RepositoryListResponse, AddRepositoryRequest, RepositorySummary, ExplainComponentRequest
 from app.services.indexer import index_repository
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.parser.workflow_extractor import WorkflowExtractor
@@ -25,15 +19,10 @@ from app.services.evidence_service import EvidenceService
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
-
 @router.get("/github/user-repos", summary="Fetch GitHub Repositories for Authenticated User")
 async def get_github_user_repos(
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Fetches the authenticated user's repositories (public, personal private, and accessible collaborator/org repos)
-    directly from GitHub REST API.
-    """
     if not current_user.github_access_token:
         return {"repositories": []}
 
@@ -69,20 +58,17 @@ async def get_github_user_repos(
 
     return {"repositories": []}
 
-
 def get_user_repository_access(
     repo_id: int,
     user: User,
     db: Session,
 ) -> Repository:
-    """Helper to verify user has access to specified repository."""
     access = db.query(RepositoryAccess).filter(
         RepositoryAccess.repository_id == repo_id,
         RepositoryAccess.user_id == user.id,
     ).first()
 
     if not access:
-        # Check if user is owner
         repo = db.query(Repository).filter(Repository.id == repo_id).first()
         if not repo:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found.")
@@ -90,19 +76,16 @@ def get_user_repository_access(
 
     return access.repository
 
-
 @router.get("", response_model=RepositoryListResponse, summary="List Accessible Repositories")
 async def list_repositories(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Returns list of repositories accessible to the current user."""
     accesses = db.query(RepositoryAccess).filter(RepositoryAccess.user_id == current_user.id).all()
     repo_ids = [a.repository_id for a in accesses]
     repos = db.query(Repository).filter(Repository.id.in_(repo_ids)).order_by(Repository.updated_at.desc()).all()
 
     return {"repositories": repos, "total": len(repos)}
-
 
 @router.post("", response_model=RepositoryRead, summary="Add Repository by GitHub URL")
 async def add_repository(
@@ -110,10 +93,6 @@ async def add_repository(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Adds a new GitHub repository to CodeLens workspace.
-    Parses owner and name from URL and registers repository in database.
-    """
     clean_url = payload.url.strip().rstrip("/")
     if clean_url.endswith(".git"):
         clean_url = clean_url[:-4].rstrip("/")
@@ -125,10 +104,8 @@ async def add_repository(
     owner, repo_name = match.group(1).strip(), match.group(2).strip()
     full_name = f"{owner}/{repo_name}"
 
-    # Check if repo already exists in DB
     existing_repo = db.query(Repository).filter(Repository.full_name == full_name).first()
     if not existing_repo:
-        # Create deterministic pseudo github_id if offline/mock
         pseudo_github_id = abs(hash(full_name)) % (10**9)
         existing_repo = Repository(
             github_id=pseudo_github_id,
@@ -144,7 +121,6 @@ async def add_repository(
         db.commit()
         db.refresh(existing_repo)
 
-    # Ensure current user has access record
     access = db.query(RepositoryAccess).filter(
         RepositoryAccess.user_id == current_user.id,
         RepositoryAccess.repository_id == existing_repo.id,
@@ -161,16 +137,13 @@ async def add_repository(
 
     return existing_repo
 
-
 @router.get("/{id}", response_model=RepositoryRead, summary="Get Repository Details")
 async def get_repository(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Returns metadata, file count, and indexing status for a repository."""
     return get_user_repository_access(id, current_user, db)
-
 
 @router.post("/{id}/index", summary="Trigger Repository Indexing")
 async def trigger_repository_indexing(
@@ -179,13 +152,8 @@ async def trigger_repository_indexing(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Triggers code parsing, AST extraction, and vector embedding for repository.
-    Requires user to have configured their Google Gemini API Key in Profile Settings.
-    """
     repo = get_user_repository_access(id, current_user, db)
 
-    # Verify user has configured their BYOK OpenAI key
     encrypted_key = getattr(current_user, "openai_api_key", None) or current_user.gemini_api_key
     if not encrypted_key:
         raise HTTPException(
@@ -200,7 +168,6 @@ async def trigger_repository_indexing(
             detail="Failed to decrypt API key. Please re-enter your key in Settings.",
         )
 
-    # Run indexing in background
     def run_indexer_task(repo_id: int, api_key: str, gh_token: Optional[str]):
         from app.db.session import SessionLocal
         task_db = SessionLocal()
@@ -231,14 +198,12 @@ async def trigger_repository_indexing(
         "message": f"Indexing started for {repo.full_name}",
     }
 
-
 @router.get("/{id}/files", summary="List Indexed Repository Files")
 async def list_repository_files(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Returns list of indexed source files in the repository."""
     get_user_repository_access(id, current_user, db)
     files = db.query(File.id, File.file_path, File.language, File.line_count, File.file_size).filter(
         File.repository_id == id
@@ -255,7 +220,6 @@ async def list_repository_files(
         for f in files
     ]
 
-
 @router.get("/{id}/files/{file_id}", summary="Get File Content for In-App Code Viewer")
 async def get_file_content(
     id: int,
@@ -263,9 +227,6 @@ async def get_file_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Fetches raw source code content for citation highlighting and in-app code viewing.
-    """
     get_user_repository_access(id, current_user, db)
     file_record = db.query(File).filter(File.id == file_id, File.repository_id == id).first()
 
@@ -281,19 +242,13 @@ async def get_file_content(
         "content": file_record.content,
     }
 
-
 @router.get("/{id}/architecture", summary="Get Architecture Topology Map")
 async def get_repository_architecture(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns the canonical Architecture Knowledge Graph for the repository.
-    Ensures /{id}/architecture and /{id}/knowledge-graph return the same unified schema.
-    """
     return await get_knowledge_graph(id=id, current_user=current_user, db=db)
-
 
 @router.get("/{id}/blast-radius", summary="Compute Symbol Blast Radius")
 async def get_symbol_blast_radius(
@@ -302,10 +257,8 @@ async def get_symbol_blast_radius(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Computes caller-callee dependency blast radius using the Architecture Knowledge Graph."""
     service = _get_trace_service(id, current_user, db)
     return service.compute_symbol_blast_radius(symbol)
-
 
 @router.get("/{id}/knowledge-graph", summary="Get Architecture Knowledge Graph")
 async def get_knowledge_graph(
@@ -313,19 +266,6 @@ async def get_knowledge_graph(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns the Architecture Knowledge Graph for the repository.
-
-    The KG is built during indexing and stored inside the architecture_graphs
-    table. It contains:
-    - Semantically typed nodes (service, api_endpoint, database_model, etc.)
-    - Typed edges with relationship types (IMPORTS, CALLS, READS, WRITES, etc.)
-    - Source evidence for every edge (file path + line range + code snippet)
-    - Confidence scores distinguishing deterministic facts from inferences
-
-    If the repository was indexed before the KG feature was added, use
-    GET /{id}/knowledge-graph/build to generate it on demand.
-    """
     get_user_repository_access(id, current_user, db)
     arch = (
         db.query(ArchitectureGraph)
@@ -338,7 +278,6 @@ async def get_knowledge_graph(
     if kg_data:
         return kg_data
 
-    # Auto-generate if missing but files exist
     files = (
         db.query(File.file_path, File.content, File.language, File.line_count)
         .filter(File.repository_id == id)
@@ -378,24 +317,12 @@ async def get_knowledge_graph(
 
     return kg_dict
 
-
 @router.post("/{id}/knowledge-graph/build", summary="Build Knowledge Graph On-Demand")
 async def build_knowledge_graph_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Builds (or rebuilds) the Architecture Knowledge Graph on demand.
-
-    Useful when:
-    - The repository was indexed before the KG feature was added.
-    - A quick refresh is needed without full re-indexing.
-
-    Reads file contents from the database (no GitHub clone needed).
-    Stores the result in the latest ArchitectureGraph record.
-    Returns the generated Knowledge Graph immediately.
-    """
     get_user_repository_access(id, current_user, db)
 
     files = (
@@ -422,7 +349,6 @@ async def build_knowledge_graph_endpoint(
     kg = build_knowledge_graph(file_dicts)
     kg_dict = kg.to_dict()
 
-    # Persist into the latest arch record if one exists
     arch = (
         db.query(ArchitectureGraph)
         .filter(ArchitectureGraph.repository_id == id)
@@ -437,18 +363,12 @@ async def build_knowledge_graph_endpoint(
 
     return kg_dict
 
-
 @router.get("/{id}/workflows", summary="Get Extracted Workflows")
 async def get_workflows_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns extracted business workflows for the repository.
-    Answers: "What process does this system execute?"
-    Supports start, step, decision, failure, retry, external, and async nodes.
-    """
     get_user_repository_access(id, current_user, db)
     arch = (
         db.query(ArchitectureGraph)
@@ -461,7 +381,6 @@ async def get_workflows_endpoint(
     if workflows_data:
         return {"workflows": workflows_data}
 
-    # Generate on demand
     files = (
         db.query(File.file_path, File.content, File.language, File.line_count)
         .filter(File.repository_id == id)
@@ -503,16 +422,12 @@ async def get_workflows_endpoint(
 
     return {"workflows": serialized_workflows}
 
-
 @router.post("/{id}/workflows/build", summary="Rebuild Extracted Workflows On-Demand")
 async def build_workflows_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Re-extracts and persists all business workflows from source files and KnowledgeGraph.
-    """
     get_user_repository_access(id, current_user, db)
 
     files = (
@@ -555,18 +470,12 @@ async def build_workflows_endpoint(
 
     return {"workflows": serialized_workflows}
 
-
 @router.get("/{id}/data-flows", summary="Get Extracted Data Flows")
 async def get_data_flows_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns extracted data flow pipelines and consolidated data lineage graph.
-    Answers: "What data moves through the system, where does it originate,
-    how is it transformed, and where is it stored or consumed?"
-    """
     get_user_repository_access(id, current_user, db)
     arch = (
         db.query(ArchitectureGraph)
@@ -631,16 +540,12 @@ async def get_data_flows_endpoint(
 
     return result
 
-
 @router.post("/{id}/data-flows/build", summary="Rebuild Extracted Data Flows On-Demand")
 async def build_data_flows_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Re-extracts and persists all data flow pipelines and lineages from source files.
-    """
     get_user_repository_access(id, current_user, db)
 
     files = (
@@ -694,18 +599,12 @@ async def build_data_flows_endpoint(
 
     return result
 
-
 @router.get("/{id}/sequences", summary="Get Extracted Runtime Sequences")
 async def get_sequences_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns extracted chronological runtime sequence diagrams for the repository.
-    Answers: "What is the runtime interaction order between actors, services,
-    and components when executing a specific action?"
-    """
     get_user_repository_access(id, current_user, db)
     arch = (
         db.query(ArchitectureGraph)
@@ -769,16 +668,12 @@ async def get_sequences_endpoint(
 
     return result
 
-
 @router.post("/{id}/sequences/build", summary="Rebuild Extracted Runtime Sequences On-Demand")
 async def build_sequences_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Re-extracts and persists all chronological runtime sequence diagrams from source files.
-    """
     get_user_repository_access(id, current_user, db)
 
     files = (
@@ -831,18 +726,12 @@ async def build_sequences_endpoint(
 
     return result
 
-
 @router.get("/{id}/lifecycles", summary="Get Extracted Entity Lifecycles")
 async def get_lifecycles_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns finite state machine lifecycles for entities in the repository.
-    Answers: "What states can an entity occupy, what events cause transitions,
-    and what are the terminal/failure states?"
-    """
     get_user_repository_access(id, current_user, db)
     arch = (
         db.query(ArchitectureGraph)
@@ -907,16 +796,12 @@ async def get_lifecycles_endpoint(
 
     return result
 
-
 @router.post("/{id}/lifecycles/build", summary="Rebuild Extracted Entity Lifecycles On-Demand")
 async def build_lifecycles_endpoint(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Re-extracts and persists all finite state machine lifecycles from source files.
-    """
     get_user_repository_access(id, current_user, db)
 
     files = (
@@ -968,7 +853,6 @@ async def build_lifecycles_endpoint(
         arch.graph_data = graph_data
     return result
 
-
 def _get_trace_service(id: int, current_user: User, db: Session) -> TraceService:
     get_user_repository_access(id, current_user, db)
     arch = (
@@ -1000,7 +884,6 @@ def _get_trace_service(id: int, current_user: User, db: Session) -> TraceService
 
     return TraceService(kg, file_dicts, wf_data, df_data, lc_data, seq_data)
 
-
 @router.get("/{id}/trace/node", summary="Trace Node Upstream and Downstream")
 async def trace_node_endpoint(
     id: int,
@@ -1010,10 +893,8 @@ async def trace_node_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Calculates Upstream (callers/sources), Current, and Downstream (callees/targets) for a node."""
     service = _get_trace_service(id, current_user, db)
     return service.trace_node(node_id, view=view, depth=depth)
-
 
 @router.get("/{id}/trace/path", summary="Find Path Between Two Nodes")
 async def find_path_endpoint(
@@ -1025,10 +906,8 @@ async def find_path_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Calculates the relevant direct or indirect path between two nodes."""
     service = _get_trace_service(id, current_user, db)
     return service.find_path(start_node, end_node, view=view, max_hops=max_hops)
-
 
 @router.get("/{id}/trace/why", summary="Why Does This Relationship Exist?")
 async def why_relationship_endpoint(
@@ -1040,10 +919,8 @@ async def why_relationship_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Explains why CodeLens believes a relationship exists, with exact code and AST evidence."""
     service = _get_trace_service(id, current_user, db)
     return service.why_relationship(edge_id=edge_id, source_id=source, target_id=target, view=view)
-
 
 @router.post("/{id}/trace/explain", summary="Explain Architecture Component")
 async def explain_component_endpoint(
@@ -1052,7 +929,6 @@ async def explain_component_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Explains a component using evidence-first analysis (Gemini / OpenAI / Deterministic)."""
     service = _get_trace_service(id, current_user, db)
     gemini_key = decrypt_api_key(current_user.gemini_api_key) if current_user.gemini_api_key else None
     openai_key = decrypt_api_key(current_user.openai_api_key) if current_user.openai_api_key else None
@@ -1063,7 +939,6 @@ async def explain_component_endpoint(
         openai_api_key=openai_key,
     )
 
-
 @router.get("/{id}/trace/impact", summary="Calculate Dependent Impact")
 async def calculate_impact_endpoint(
     id: int,
@@ -1073,10 +948,8 @@ async def calculate_impact_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Calculates direct dependents, indirect dependents, dependency depth, and risk level."""
     service = _get_trace_service(id, current_user, db)
     return service.calculate_impact(node_id, view=view, max_depth=max_depth)
-
 
 @router.get("/{id}/trace/change-impact", summary="Calculate File or Symbol Change Impact")
 async def change_impact_endpoint(
@@ -1086,13 +959,10 @@ async def change_impact_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Calculates potentially affected files, modules, services, APIs, workflows, and data pipelines."""
     service = _get_trace_service(id, current_user, db)
     return service.change_impact(file_path=file_path, symbol_name=symbol)
 
-
 def _get_evidence_service(id: int, current_user: User, db: Session) -> EvidenceService:
-    """Build an EvidenceService for the repository."""
     get_user_repository_access(id, current_user, db)
     files = (
         db.query(File.file_path, File.content, File.language, File.line_count)
@@ -1111,7 +981,6 @@ def _get_evidence_service(id: int, current_user: User, db: Session) -> EvidenceS
     kg = build_knowledge_graph(file_dicts)
     return EvidenceService(kg, file_dicts)
 
-
 @router.get("/{id}/evidence/node", summary="Get Evidence for a Node Classification")
 async def get_node_evidence(
     id: int,
@@ -1119,15 +988,8 @@ async def get_node_evidence(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns the full source evidence for a node's architectural classification.
-
-    If the node has no direct code evidence, the response is explicitly marked
-    is_inferred=True with a clear warning. Claims are NEVER overstated.
-    """
     svc = _get_evidence_service(id, current_user, db)
     return svc.get_node_evidence(node_id)
-
 
 @router.get("/{id}/evidence/edge", summary="Get Evidence for a Relationship")
 async def get_edge_evidence(
@@ -1138,12 +1000,6 @@ async def get_edge_evidence(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns full provenance for an edge/relationship.
-
-    If no direct code evidence exists, the relationship is clearly labeled
-    as an inferred connection with confidence=medium and a warning message.
-    """
     svc = _get_evidence_service(id, current_user, db)
     return svc.get_edge_evidence(
         edge_id=edge_id,
@@ -1151,22 +1007,14 @@ async def get_edge_evidence(
         target_id=target,
     )
 
-
 @router.get("/{id}/evidence/stats", summary="Repository Evidence Quality Statistics")
 async def get_evidence_stats(
     id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Returns evidence coverage and quality statistics for the repository:
-    - Total edges with direct evidence vs inferred
-    - Evidence type breakdown (AST, import, function_call, route, db_access, etc.)
-    - Average confidence
-    """
     svc = _get_evidence_service(id, current_user, db)
     return svc.get_repository_evidence_stats()
-
 
 @router.get("/{id}/evidence/verify", summary="Verify a Specific Architecture Claim")
 async def verify_claim(
@@ -1177,15 +1025,6 @@ async def verify_claim(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Verifies whether a claimed relationship (source → target via relationship type)
-    has actual source code evidence.
-
-    Returns:
-    - VERIFIED: Direct AST/import/call evidence found
-    - INFERRED: No direct evidence; heuristic guess only
-    - NOT_FOUND: Edge does not exist in the graph
-    """
     svc = _get_evidence_service(id, current_user, db)
     return svc.verify_claim(
         source_id=source,

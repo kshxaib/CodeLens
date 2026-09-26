@@ -1,6 +1,5 @@
 from app.parser.blast_radius import compute_blast_radius
 
-
 def test_compute_blast_radius_high_impact():
     sample_files = [
         {
@@ -29,14 +28,12 @@ def test_compute_blast_radius_high_impact():
     assert blast is not None
     assert blast["target_symbol"] == "verify_token"
     assert blast["upstream_count"] >= 3
-    assert blast["downstream_count"] >= 1  # check_jwt
+    assert blast["downstream_count"] >= 1
     assert blast["risk_level"] in ("medium", "high")
 
-    # Check node structure
     target_node = next(n for n in blast["nodes"] if n["id"] == "target_node")
     assert target_node["data"]["label"] == "verify_token"
     assert target_node["data"]["isTarget"] is True
-
 
 def test_compute_blast_radius_isolated_symbol():
     sample_files = [
@@ -53,7 +50,6 @@ def test_compute_blast_radius_isolated_symbol():
     assert blast["downstream_count"] == 0
     assert blast["risk_level"] == "low"
     assert len(blast["nodes"]) == 1
-
 
 def test_compute_blast_radius_empty():
     blast = compute_blast_radius("", [])

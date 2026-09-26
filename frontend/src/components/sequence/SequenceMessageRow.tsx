@@ -1,10 +1,4 @@
-import {
-  FileCode2,
-  AlertTriangle,
-  Zap,
-  ArrowRight,
-  ArrowLeft,
-} from 'lucide-react';
+import { FileCode2, AlertTriangle, Zap, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { SequenceMessage } from '../../types';
 import { getInteractionConfig } from './constants';
 
@@ -44,7 +38,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
 
   const yCenter = rowHeight / 2;
 
-  // Source evidence label (e.g. auth.controllers.js:14)
   const sourceLabel = message.evidence?.file_path
     ? `${message.evidence.file_path.split(/[/\\]/).pop()}:${message.evidence.start_line}`
     : null;
@@ -61,7 +54,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
           : 'hover:bg-white/[0.02]'
       }`}
     >
-      {/* 1. UML Activation Bars on Caller and Callee lifelines */}
       <div
         style={{ left: `${callerX - 5}px`, top: '10px', height: `${rowHeight - 20}px` }}
         className={`absolute w-2.5 rounded-sm transition-all z-10 ${
@@ -81,13 +73,11 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
         />
       )}
 
-      {/* 2. SVG Message Connector Arrow */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-10"
         style={{ height: `${rowHeight}px` }}
       >
         <defs>
-          {/* Normal End Marker */}
           <marker
             id={`arrow-${message.id}`}
             viewBox="0 0 10 10"
@@ -105,7 +95,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
         </defs>
 
         {isSelf ? (
-          /* Loopback arc for self-calls */
           <path
             d={`M ${startX + 5} ${yCenter - 10} C ${startX + 45} ${yCenter - 25}, ${startX + 45} ${
               yCenter + 25
@@ -118,7 +107,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             className="transition-all"
           />
         ) : (
-          /* Horizontal connector line */
           <line
             x1={isLeftToRight ? startX + 5 : startX - 5}
             y1={yCenter}
@@ -133,7 +121,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
         )}
       </svg>
 
-      {/* 3. Centered Interactive Message Badge along the arrow */}
       <div
         style={{
           left: isSelf ? `${startX + 45}px` : `${midX}px`,
@@ -151,7 +138,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
               : 'bg-[#0e0e11]/90 border-[#27272a] text-zinc-300 hover:border-zinc-500'
           }`}
         >
-          {/* Step Number Badge */}
           <span
             className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
               isActiveSimulationStep
@@ -164,19 +150,16 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             {message.step_number}
           </span>
 
-          {/* Direction indicator */}
           {!isSelf && (
             <span className="text-[10px] text-zinc-500">
               {isLeftToRight ? <ArrowRight className="w-3 h-3 inline" /> : <ArrowLeft className="w-3 h-3 inline" />}
             </span>
           )}
 
-          {/* Method / Action Label */}
           <span className="font-semibold truncate max-w-[220px]" title={message.method}>
             {message.method}
           </span>
 
-          {/* Payload Preview */}
           {message.payload && (
             <span
               className="px-1.5 py-0.5 rounded bg-zinc-800/80 text-[10px] text-zinc-400 border border-zinc-700/50 truncate max-w-[120px]"
@@ -186,7 +169,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             </span>
           )}
 
-          {/* Async Indicator */}
           {message.is_async && (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
               <Zap className="w-2.5 h-2.5" />
@@ -194,7 +176,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             </span>
           )}
 
-          {/* Error Indicator */}
           {message.is_error && (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
               <AlertTriangle className="w-2.5 h-2.5" />
@@ -202,7 +183,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             </span>
           )}
 
-          {/* Inferred vs Deterministic */}
           {message.is_inferred && (
             <span
               className="text-[9px] text-zinc-500 italic"
@@ -212,7 +192,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             </span>
           )}
 
-          {/* Source Link Quick Action */}
           {sourceLabel && (
             <button
               onClick={(e) => {

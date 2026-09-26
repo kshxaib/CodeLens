@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  X,
-  ExternalLink,
-  FileCode2,
-  ArrowRight,
-  Zap,
-  AlertTriangle,
-  ShieldCheck,
-  Code2,
-  HelpCircle,
-  Compass,
-} from 'lucide-react';
+import { X, ExternalLink, FileCode2, ArrowRight, Zap, AlertTriangle, ShieldCheck, Code2, HelpCircle, Compass } from 'lucide-react';
 import type { SequenceMessage, SequenceParticipant } from '../../types';
 import { getInteractionConfig, getParticipantConfig } from './constants';
 import { useTrace } from '../../store/useTraceStore';
@@ -42,16 +31,13 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[420px] z-30 select-text">
-      {/* Top Header */}
       <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            {/* Step Number */}
             <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-800 text-zinc-200 border border-zinc-700">
               Step {message.step_number}
             </span>
 
-            {/* Interaction Type Badge */}
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold border ${cfg.badgeBg}`}
             >
@@ -59,7 +45,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
               {cfg.label}
             </span>
 
-            {/* Confidence */}
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold border ${
                 message.confidence_level === 'deterministic'
@@ -86,9 +71,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
         </button>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
-        {/* Quick Action: Open Source */}
         {message.evidence && (
           <button
             onClick={() =>
@@ -112,7 +95,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </button>
         )}
 
-        {/* Feature 4: Why Does CodeLens Believe This Relationship Exists? */}
         <button
           onClick={() =>
             openWhy({
@@ -129,14 +111,12 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           <span className="text-[10px] text-amber-400/80 font-mono">Verify AST & Evidence</span>
         </button>
 
-        {/* Interaction Participants (Caller -> Callee) */}
         <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-3">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             Interaction Participants
           </span>
 
           <div className="flex items-center gap-2.5">
-            {/* Caller */}
             <div
               onClick={() => selectTraceNode(caller?.id || message.caller_id)}
               className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-sky-500/10 border border-[#27272a] hover:border-sky-500/40 text-center cursor-pointer transition group"
@@ -154,7 +134,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
 
             <ArrowRight className="w-4 h-4 text-zinc-500 shrink-0" />
 
-            {/* Callee */}
             <div
               onClick={() => selectTraceNode(callee?.id || message.callee_id)}
               className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-emerald-500/10 border border-[#27272a] hover:border-emerald-500/40 text-center cursor-pointer transition group"
@@ -172,7 +151,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </div>
         </div>
 
-        {/* Action Description */}
         {message.description && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
@@ -182,7 +160,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </div>
         )}
 
-        {/* Request Payload / Arguments */}
         {message.payload && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
@@ -195,7 +172,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </div>
         )}
 
-        {/* Response Payload */}
         {message.response_payload && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
@@ -208,7 +184,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </div>
         )}
 
-        {/* Special Flags */}
         {(message.is_async || message.is_error) && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
@@ -231,7 +206,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </div>
         )}
 
-        {/* Traceable Source Code Evidence */}
         {message.evidence && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <div className="flex items-center justify-between">

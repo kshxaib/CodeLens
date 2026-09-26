@@ -1,23 +1,3 @@
-"""
-Lifecycle Extraction Engine for CodeLens.
-
-Extracts finite state machine lifecycles (states, transitions, events, conditions,
-failure states, and retry loops) directly from source code and links them to the
-unified Architecture Knowledge Graph.
-
-Answers: "What states can an entity occupy, what events cause transitions,
-and what are the terminal/failure states?"
-
-Supports:
-- Enums & status fields (Python Enum, TypeScript/Prisma enum, Mongoose status)
-- State machines & status transitions (conditional updates, state guards)
-- Database state updates (Prisma update, SQLAlchemy assignments, ORM saves)
-- API endpoint triggers & event handlers
-- Failure states & alternative rejection paths
-- Retry loops (e.g. FAILED -> RETRY -> IN_PROGRESS)
-- Traceable source code evidence (file + line range + snippet)
-- Direct linkage to KnowledgeGraph nodes via `associated_node_id`
-"""
 from __future__ import annotations
 
 import ast
@@ -27,25 +7,16 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set, Tuple
 
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    SourceEvidence,
-    EntityType,
-    ConfidenceLevel,
-)
-
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, SourceEvidence, EntityType, ConfidenceLevel
 
 class StateType(str, Enum):
-    INITIAL = "initial"                     # Starting state (e.g. NOT_INDEXED, DRAFT, PENDING)
-    INTERMEDIATE = "intermediate"           # Active / in-progress state (e.g. INDEXING, REVIEW_REQUESTED, BOOKED)
-    TERMINAL_SUCCESS = "terminal_success"   # Terminal completed state (e.g. INDEXED, APPROVED, MERGED, COMPLETED)
-    TERMINAL_FAILURE = "terminal_failure"   # Terminal failed/rejected state (e.g. FAILED, REJECTED, CANCELLED)
-
+    INITIAL = "initial"
+    INTERMEDIATE = "intermediate"
+    TERMINAL_SUCCESS = "terminal_success"
+    TERMINAL_FAILURE = "terminal_failure"
 
 @dataclass
 class LifecycleState:
-    """A distinct state in an entity's lifecycle."""
     id: str
     name: str
     state_type: StateType
@@ -71,10 +42,8 @@ class LifecycleState:
             "evidence": self.evidence.to_dict() if self.evidence else None,
         }
 
-
 @dataclass
 class LifecycleTransition:
-    """A directed transition from one state to another triggered by an event."""
     id: str
     from_state: str
     to_state: str
@@ -102,10 +71,8 @@ class LifecycleTransition:
             "evidence": self.evidence.to_dict() if self.evidence else None,
         }
 
-
 @dataclass
 class EntityLifecycle:
-    """The complete finite state machine for a business entity."""
     id: str
     entity_name: str
     description: str
@@ -137,32 +104,22 @@ class EntityLifecycle:
             "total_transitions": len(self.transitions),
         }
 
-
 class LifecycleExtractor:
-    """
-    Extracts entity lifecycles and state transitions from source files,
-    grounded in the canonical Architecture Knowledge Graph.
-    """
 
     def __init__(self, file_dicts: List[Dict[str, Any]], knowledge_graph: KnowledgeGraph):
         self.file_dicts = file_dicts
         self.kg = knowledge_graph
         self.files_by_path = {f["file_path"]: f for f in file_dicts}
 
-        # Index KG nodes for associated_node_id linking
         self.kg_models = {
             n.name.lower(): n for n in self.kg.nodes
             if n.type in (EntityType.DATABASE_MODEL, EntityType.LIFECYCLE_ENTITY, EntityType.SERVICE)
         }
 
     def extract_all_lifecycles(self) -> List[EntityLifecycle]:
-        """
-        Extracts all entity state machines and lifecycles across the repository.
-        """
         lifecycles: List[EntityLifecycle] = []
         seen_entities: Set[str] = set()
 
-        # 1. First, check for Prisma schema enums & models (TypeScript/Node repositories)
         for f in self.file_dicts:
             path = f.get("file_path", "")
             content = f.get("content", "")
@@ -173,7 +130,6 @@ class LifecycleExtractor:
                         seen_entities.add(lc.entity_name)
                         lifecycles.append(lc)
 
-        # 2. Check for Python Enum and status models (FastAPI / SQLAlchemy)
         for f in self.file_dicts:
             path = f.get("file_path", "")
             content = f.get("content", "")
@@ -184,19 +140,15 @@ class LifecycleExtractor:
                         seen_entities.add(lc.entity_name)
                         lifecycles.append(lc)
 
-        # 3. Check for CodeLens repository indexing lifecycle if present
         repo_lc = self._detect_repository_indexing_lifecycle()
         if repo_lc and repo_lc.entity_name not in seen_entities:
             seen_entities.add(repo_lc.entity_name)
             lifecycles.insert(0, repo_lc)
 
-        # 4. Fallback: If no lifecycles were discovered, check KnowledgeGraph nodes
-        # with LIFECYCLE_ENTITY or models with status
         if not lifecycles:
             fb = self._build_fallback_lifecycles()
             lifecycles.extend(fb)
 
-        # Sort lifecycles: entities with retry loops and failure states first
         lifecycles.sort(
             key=lambda lc: (
                 1 if lc.has_retry_loop else 0,
@@ -209,17 +161,7 @@ class LifecycleExtractor:
 
         return lifecycles
 
-    # -------------------------------------------------------------------------
-    # CodeLens Repository Indexing Lifecycle Detector
-    # -------------------------------------------------------------------------
-
     def _detect_repository_indexing_lifecycle(self) -> Optional[EntityLifecycle]:
-        """
-        Detects the Repository Indexing lifecycle:
-        NOT_INDEXED -> INDEXING -> INDEXED
-        Failure: INDEXING -> FAILED
-        Retry: FAILED -> INDEXING
-        """
         has_index_status = False
         evidence_file = ""
         evidence_line = 1
@@ -244,7 +186,6 @@ class LifecycleExtractor:
             evidence_line = 25
             snippet = "index_status = Column(String(50), default='NOT_INDEXED', nullable=False)"
 
-        # Build Repository Lifecycle FSM
         kg_node = self.kg_models.get("repository") or next(
             (n for n in self.kg.nodes if "repo" in n.name.lower()), None
         )
@@ -403,14 +344,9 @@ class LifecycleExtractor:
             has_retry_loop=True,
         )
 
-    # -------------------------------------------------------------------------
-    # Prisma / TypeScript Enum & State Extraction
-    # -------------------------------------------------------------------------
-
     def _extract_prisma_lifecycles(self, file_path: str, content: str) -> List[EntityLifecycle]:
         lifecycles: List[EntityLifecycle] = []
 
-        # Find enums ending in Status or containing stateful keywords
         enum_pattern = re.compile(
             r'enum\s+([A-Za-z0-9_]+)\s*\{([^}]+)\}',
             re.MULTILINE
@@ -428,7 +364,6 @@ class LifecycleExtractor:
                 if re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', v):
                     raw_values.append(v)
 
-            # Check if this enum represents a lifecycle (Status, State, Stage)
             if not any(term in enum_name.lower() for term in ("status", "state", "stage", "phase", "lifecycle", "booking", "withdrawal", "payment", "order")):
                 continue
 
@@ -444,13 +379,11 @@ class LifecycleExtractor:
             kg_node = self.kg_models.get(entity_name.lower())
             assoc_id = kg_node.id if kg_node else None
 
-            # 1. Build States
             states: List[LifecycleState] = []
             for val in raw_values:
                 val_upper = val.upper()
                 val_id = f"state_{entity_name.lower()}_{val.lower()}"
 
-                # Categorize state type
                 stype = StateType.INTERMEDIATE
                 is_init = False
                 is_term = False
@@ -493,7 +426,6 @@ class LifecycleExtractor:
                     ),
                 ))
 
-            # 2. Build Transitions from controller updates or heuristic order
             transitions = self._trace_entity_transitions(entity_name, states, file_path)
 
             if len(states) >= 2:
@@ -516,15 +448,9 @@ class LifecycleExtractor:
         states: List[LifecycleState],
         enum_file: str,
     ) -> List[LifecycleTransition]:
-        """
-        Traces actual controller and route handlers for state transitions on this entity.
-        Looks for `prisma.<entity>.update({ data: { status: '...' } })`
-        or `status === '...'` guards.
-        """
         transitions: List[LifecycleTransition] = []
         state_by_name = {s.name.upper(): s for s in states}
 
-        # Search across codebase for updates to this entity
         entity_pattern = re.compile(
             rf'(?:prisma|db)\.{entity_name.lower()}\.update\s*\(\s*\{{([^}}]+)\}}\s*\)',
             re.MULTILINE | re.IGNORECASE
@@ -534,18 +460,14 @@ class LifecycleExtractor:
             fpath = f.get("file_path", "")
             fcontent = f.get("content", "")
 
-            # Look for updates
             for m in entity_pattern.finditer(fcontent):
                 chunk = m.group(1)
-                # Check what status was set: status: 'APPROVED' or status: 'REJECTED'
                 status_set = re.search(r'status:\s*[\'"`]([A-Za-z0-9_]+)[\'"`]', chunk)
                 if status_set:
                     tgt_name = status_set.group(1).upper()
                     tgt_state = state_by_name.get(tgt_name)
                     if tgt_state:
-                        # Find prior condition or initial state
                         src_state = next((s for s in states if s.is_initial), states[0])
-                        # Check if file has a check like `if (item.status !== 'PENDING')`
                         guard_match = re.search(rf'status\s*(?:===|!==|==)\s*[\'"`]([A-Za-z0-9_]+)[\'"`]', fcontent)
                         if guard_match:
                             g_name = guard_match.group(1).upper()
@@ -555,7 +477,6 @@ class LifecycleExtractor:
                         t_line = fcontent[:m.start()].count('\n') + 1
                         t_snippet = "\n".join(fcontent.splitlines()[max(0, t_line - 2):min(len(fcontent.splitlines()), t_line + 3)])
 
-                        # Extract handler function name
                         fn_match = re.search(r'(?:const|function|async)\s+([A-Za-z0-9_]+)', fcontent[:m.start()].splitlines()[-1] if fcontent[:m.start()] else "")
                         event_label = f"{fn_match.group(1)}()" if fn_match else f"Update {entity_name} Status"
 
@@ -579,8 +500,6 @@ class LifecycleExtractor:
                             ),
                         ))
 
-        # Fallback Heuristic Connections if AST didn't capture every edge:
-        # Connect initial -> intermediate -> terminal_success, and intermediate -> terminal_failure
         if not transitions:
             init_state = next((s for s in states if s.is_initial), states[0])
             intermediate_states = [s for s in states if not s.is_initial and not s.is_terminal]
@@ -588,7 +507,6 @@ class LifecycleExtractor:
             fail_states = [s for s in states if s.state_type == StateType.TERMINAL_FAILURE]
 
             curr = init_state
-            # Path through intermediate states
             for inter in intermediate_states:
                 transitions.append(LifecycleTransition(
                     id=f"trans_{curr.name.lower()}_{inter.name.lower()}",
@@ -609,7 +527,6 @@ class LifecycleExtractor:
                 ))
                 curr = inter
 
-            # Success terminals
             for succ in success_states:
                 transitions.append(LifecycleTransition(
                     id=f"trans_{curr.name.lower()}_{succ.name.lower()}",
@@ -629,7 +546,6 @@ class LifecycleExtractor:
                     ),
                 ))
 
-            # Failure terminals
             for fail in fail_states:
                 transitions.append(LifecycleTransition(
                     id=f"trans_{curr.name.lower()}_{fail.name.lower()}",
@@ -651,10 +567,6 @@ class LifecycleExtractor:
 
         return transitions
 
-    # -------------------------------------------------------------------------
-    # Python Enum & State Machine Extraction
-    # -------------------------------------------------------------------------
-
     def _extract_python_lifecycles(self, file_path: str, content: str) -> List[EntityLifecycle]:
         lifecycles: List[EntityLifecycle] = []
         try:
@@ -666,7 +578,6 @@ class LifecycleExtractor:
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                # Check if inherits from Enum or has Status/State in name
                 is_enum = any(
                     (isinstance(b, ast.Name) and "enum" in b.id.lower()) or
                     (isinstance(b, ast.Attribute) and "enum" in b.attr.lower())
@@ -741,14 +652,7 @@ class LifecycleExtractor:
 
         return lifecycles
 
-    # -------------------------------------------------------------------------
-    # Fallback Lifecycles
-    # -------------------------------------------------------------------------
-
     def _build_fallback_lifecycles(self) -> List[EntityLifecycle]:
-        """
-        Builds a canonical Pull Request / Task lifecycle when no custom enums exist.
-        """
         states = [
             LifecycleState(
                 id="state_draft",

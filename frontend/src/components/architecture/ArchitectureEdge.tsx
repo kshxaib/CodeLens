@@ -1,10 +1,5 @@
 import React, { memo } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { getRelationshipCfg } from './constants';
 import type { RelationshipType } from '../../types';
 
@@ -48,7 +43,6 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
     curvature: 0.25,
   });
 
-  // Calculate stroke color & width based on state
   let strokeColor = cfg.stroke;
   let strokeWidth = cfg.width;
 
@@ -84,7 +78,6 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
         }}
       />
 
-      {/* Relationship Label Badge */}
       <EdgeLabelRenderer>
         <div
           style={{

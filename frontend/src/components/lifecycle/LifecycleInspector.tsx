@@ -1,15 +1,5 @@
 import React from 'react';
-import {
-  X,
-  ExternalLink,
-  ChevronRight,
-  FileCode2,
-  Sparkles,
-  ArrowRight,
-  RotateCcw,
-  AlertTriangle,
-  Zap,
-} from 'lucide-react';
+import { X, ExternalLink, ChevronRight, FileCode2, Sparkles, ArrowRight, RotateCcw, AlertTriangle, Zap } from 'lucide-react';
 import { getStateTypeCfg } from './constants';
 import type { LifecycleState, LifecycleTransition } from '../../types';
 
@@ -36,12 +26,10 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
 }) => {
   if (!selectedState && !selectedTransition) return null;
 
-  // Render Transition Inspector
   if (selectedTransition) {
 
     return (
       <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[400px] z-30 select-text">
-        {/* Header */}
         <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -86,9 +74,7 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs font-mono">
-          {/* Quick Action: Open Source */}
           {selectedTransition.evidence && (
             <button
               onClick={() =>
@@ -113,7 +99,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
             </button>
           )}
 
-          {/* Transition Specifications */}
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-3">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
               Transition Details
@@ -158,7 +143,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
             </div>
           </div>
 
-          {/* Connected States Navigation */}
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2.5">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
               Connected States
@@ -193,7 +177,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
             </div>
           </div>
 
-          {/* Evidence Code Snippet */}
           {(selectedTransition.evidence?.code_snippet || selectedTransition.evidence?.snippet) && (
             <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
@@ -209,7 +192,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
     );
   }
 
-  // Render State Inspector
   const cfg = getStateTypeCfg(selectedState!.state_type);
   const incoming = transitions.filter(
     (t) => t.to_state === selectedState!.id || t.to_state === selectedState!.name
@@ -220,7 +202,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[400px] z-30 select-text">
-      {/* Top Header */}
       <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -259,9 +240,7 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
         </button>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs font-mono">
-        {/* Quick Action: Open Source */}
         {selectedState!.evidence && (
           <button
             onClick={() =>
@@ -286,7 +265,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           </button>
         )}
 
-        {/* State Description */}
         <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             State Description
@@ -296,7 +274,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           </p>
         </div>
 
-        {/* Canonical Knowledge Graph Node Link */}
         {selectedState!.associated_node_id && (
           <div className="p-3.5 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-1.5">
             <div className="flex items-center gap-1.5 text-indigo-400 font-bold text-[11px]">
@@ -309,7 +286,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           </div>
         )}
 
-        {/* Outgoing Transitions */}
         <div className="space-y-2">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             Outgoing Transitions ({outgoing.length})
@@ -355,7 +331,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           )}
         </div>
 
-        {/* Incoming Transitions */}
         <div className="space-y-2">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             Incoming Transitions ({incoming.length})
@@ -390,7 +365,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           )}
         </div>
 
-        {/* Evidence Snippet */}
         {(selectedState!.evidence?.code_snippet || selectedState!.evidence?.snippet) && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">

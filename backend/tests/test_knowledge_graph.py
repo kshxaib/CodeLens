@@ -1,79 +1,12 @@
-"""
-Tests for the Architecture Knowledge Graph builder.
-
-Uses a self-contained payment application fixture — no file I/O,
-no database, no external dependencies. All files are supplied as
-in-memory dicts matching the indexer format.
-
-Fixture represents:
-
-    PaymentPage (React) → usePayment hook → frontend/api/client
-    PaymentPage → PaymentForm component
-
-    POST /payments → PaymentService → Stripe (external)
-                   → Payment model (WRITES)
-                   → PaymentRepository (READS via query)
-
-    PaymentRepository → Payment model (READS)
-
-    db/session.py → PostgreSQL (detected via connection string)
-    db/models.py  → Payment model (SQLAlchemy Base)
-                  → User model   (SQLAlchemy Base)
-
-Expected KG for this system:
-
-Nodes:
-  cmp_payment_page          COMPONENT    presentation
-  fn_use_payment            FUNCTION     presentation
-  cmp_payment_form          COMPONENT    presentation
-  api_payments              API_ENDPOINT api_gateway
-  svc_payment_service       SERVICE      application
-  mdl_payment_repository    DATABASE_MODEL  infrastructure (repo/ dir)
-  mdl_models                DATABASE_MODEL  infrastructure (Base classes)
-  mod_session               MODULE       infrastructure
-  ext_stripe                EXTERNAL_SERVICE  infrastructure
-  db_postgresql             DATABASE     infrastructure
-
-Key edges (types may include IMPORTS, CALLS, READS, WRITES, CONSUMES, DEPENDS_ON):
-  api_payments   → svc_payment_service   (IMPORTS)
-  svc_payment_service → mdl_models        (READS/WRITES via db.query/db.add)
-  svc_payment_service → ext_stripe        (CONSUMES)
-  svc_payment_service → mdl_payment_repository (IMPORTS)
-  mdl_payment_repository → mdl_models     (IMPORTS + READS)
-  mod_session    → db_postgresql          (DEPENDS_ON)
-"""
 import pytest
 from typing import List, Dict, Any
 
 from app.parser.knowledge_graph import build_knowledge_graph
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    EntityType,
-    ArchLayer,
-    RelationshipType,
-    ConfidenceLevel,
-)
-from app.parser.dependency_resolver import (
-    FileIndex,
-    resolve_python_import,
-    resolve_js_ts_import,
-    extract_python_import_statements,
-    extract_js_import_paths,
-)
-from app.parser.entity_classifier import (
-    classify_file,
-    detect_external_service_imports,
-    extract_base_classes,
-    extract_route_decorators,
-)
-
-
-# ===========================================================================
-# Fixture: Payment Application
-# ===========================================================================
+from app.parser.graph_schema import KnowledgeGraph, EntityType, ArchLayer, RelationshipType, ConfidenceLevel
+from app.parser.dependency_resolver import FileIndex, resolve_python_import, resolve_js_ts_import, extract_python_import_statements, extract_js_import_paths
+from app.parser.entity_classifier import classify_file, detect_external_service_imports, extract_base_classes, extract_route_decorators
 
 PAYMENT_APP: List[Dict[str, Any]] = [
-    # --- Frontend ---
     {
         "file_path": "frontend/src/pages/PaymentPage.tsx",
         "language": "tsx",
@@ -170,7 +103,6 @@ export const api = axios.create({
 """,
     },
 
-    # --- Backend API Layer ---
     {
         "file_path": "backend/app/api/payments.py",
         "language": "python",
@@ -185,7 +117,6 @@ from app.schemas.payment import PaymentCreate, PaymentResponse
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
-
 @router.post("/", response_model=PaymentResponse)
 async def create_payment(
     payload: PaymentCreate,
@@ -194,7 +125,6 @@ async def create_payment(
     \"\"\"Create and process a new payment via Stripe.\"\"\"
     service = PaymentService(db)
     return await service.process_payment(payload)
-
 
 @router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(
@@ -207,7 +137,6 @@ async def get_payment(
 """,
     },
 
-    # --- Backend Service Layer ---
     {
         "file_path": "backend/app/services/payment_service.py",
         "language": "python",
@@ -218,7 +147,6 @@ import stripe
 from sqlalchemy.orm import Session
 from app.db.models import Payment
 from app.repositories.payment_repository import PaymentRepository
-
 
 class PaymentService:
     def __init__(self, db: Session):
@@ -254,7 +182,6 @@ class PaymentService:
 """,
     },
 
-    # --- Repository Layer ---
     {
         "file_path": "backend/app/repositories/payment_repository.py",
         "language": "python",
@@ -263,7 +190,6 @@ class PaymentService:
         "content": """\
 from sqlalchemy.orm import Session
 from app.db.models import Payment
-
 
 class PaymentRepository:
     def __init__(self, db: Session):
@@ -291,7 +217,6 @@ class PaymentRepository:
 """,
     },
 
-    # --- Database Layer ---
     {
         "file_path": "backend/app/db/models.py",
         "language": "python",
@@ -303,7 +228,6 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
-
 class Payment(Base):
     __tablename__ = "payments"
 
@@ -312,7 +236,6 @@ class Payment(Base):
     amount = Column(Float, nullable=False)
     currency = Column(String(3), default="usd", nullable=False)
     status = Column(String(50), default="pending", nullable=False)
-
 
 class User(Base):
     __tablename__ = "users"
@@ -337,7 +260,6 @@ DATABASE_URL = "postgresql://payuser:secret@localhost:5432/paydb"
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
 def get_db():
     db = SessionLocal()
     try:
@@ -348,22 +270,14 @@ def get_db():
     },
 ]
 
-
-# ===========================================================================
-# Helper
-# ===========================================================================
-
 def _node_ids(kg: KnowledgeGraph) -> set:
     return {n.id for n in kg.nodes}
 
-
 def _find_node(kg: KnowledgeGraph, **kwargs) -> Any:
-    """Return the first node matching all kwargs as attribute filters."""
     for node in kg.nodes:
         if all(getattr(node, k, None) == v for k, v in kwargs.items()):
             return node
     return None
-
 
 def _edges_between(kg: KnowledgeGraph, src_id: str, tgt_id: str) -> list:
     return [
@@ -371,23 +285,16 @@ def _edges_between(kg: KnowledgeGraph, src_id: str, tgt_id: str) -> list:
         if e.source == src_id and e.target == tgt_id
     ]
 
-
 def _edge_exists(kg: KnowledgeGraph, src_id: str, tgt_id: str, rel: RelationshipType) -> bool:
     return any(
         e.source == src_id and e.target == tgt_id and e.relationship_type == rel
         for e in kg.edges
     )
 
-
-# ===========================================================================
-# Tests: KnowledgeGraph construction
-# ===========================================================================
-
 class TestKnowledgeGraphBuild:
 
     @pytest.fixture(scope="class")
     def kg(self) -> KnowledgeGraph:
-        """Build once for the entire test class — expensive operation."""
         return build_knowledge_graph(PAYMENT_APP)
 
     def test_kg_is_not_empty(self, kg):
@@ -408,18 +315,12 @@ class TestKnowledgeGraphBuild:
         assert "inferred_edges" in summary
 
     def test_kg_serializable(self, kg):
-        """to_dict() must produce a JSON-compatible dict."""
         import json
         d = kg.to_dict()
-        serialized = json.dumps(d)  # must not raise
+        serialized = json.dumps(d)
         assert len(serialized) > 100
         assert "nodes" in d
         assert "edges" in d
-
-
-# ===========================================================================
-# Tests: Node classification
-# ===========================================================================
 
 class TestNodeClassification:
 
@@ -438,10 +339,8 @@ class TestNodeClassification:
         assert node.layer == ArchLayer.PRESENTATION
 
     def test_use_payment_hook_is_function(self, kg):
-        # hooks/ → FUNCTION layer
         node = _find_node(kg, display_name="usePayment")
         assert node is not None, "usePayment hook should be in graph"
-        # Either FUNCTION or COMPONENT is acceptable (hook is in hooks/)
         assert node.type in (EntityType.FUNCTION, EntityType.COMPONENT, EntityType.MODULE)
 
     def test_payments_api_is_api_endpoint(self, kg):
@@ -464,16 +363,13 @@ class TestNodeClassification:
         assert node.layer == ArchLayer.APPLICATION
 
     def test_payment_repository_is_database_model(self, kg):
-        # repositories/ dir → DATABASE_MODEL
         node = _find_node(kg, display_name="payment_repository")
         assert node is not None, "payment_repository.py should be in graph"
-        # Either DATABASE_MODEL or SERVICE is reasonable (it's a repository pattern)
         assert node.type in (EntityType.DATABASE_MODEL, EntityType.SERVICE, EntityType.MODULE)
 
     def test_db_models_is_database_model(self, kg):
         node = _find_node(kg, display_name="models")
         assert node is not None, "db/models.py should be in graph"
-        # Should be classified as DATABASE_MODEL (has SQLAlchemy Base classes)
         assert node.type == EntityType.DATABASE_MODEL, (
             f"db/models.py should be DATABASE_MODEL but got {node.type}"
         )
@@ -488,11 +384,6 @@ class TestNodeClassification:
         pg_node = _find_node(kg, type=EntityType.DATABASE, name="PostgreSQL")
         assert pg_node is not None, "PostgreSQL should be detected from connection string"
         assert pg_node.layer == ArchLayer.INFRASTRUCTURE
-
-
-# ===========================================================================
-# Tests: Edge detection and evidence
-# ===========================================================================
 
 class TestEdgeDetection:
 
@@ -599,11 +490,6 @@ class TestEdgeDetection:
             )
             seen.add(key)
 
-
-# ===========================================================================
-# Tests: Dependency resolver
-# ===========================================================================
-
 class TestDependencyResolver:
 
     @pytest.fixture(scope="class")
@@ -635,7 +521,6 @@ class TestDependencyResolver:
         results = resolve_python_import(
             import_text, "backend/app/services/payment_service.py", file_index
         )
-        # stripe is an external package — should not resolve to any repo file
         assert results == [], f"External package 'stripe' should not resolve; got {results}"
 
     def test_resolves_js_relative_import(self, file_index):
@@ -669,7 +554,7 @@ class TestDependencyResolver:
         assert result is None, "External npm 'react' should not resolve"
 
     def test_python_import_statement_extraction(self):
-        content = PAYMENT_APP[4]["content"]  # payments.py (index 4: API layer)
+        content = PAYMENT_APP[4]["content"]
         stmts = extract_python_import_statements(content)
         assert len(stmts) >= 4, f"Expected >=4 imports in payments.py, got {len(stmts)}"
         texts = [s[0] for s in stmts]
@@ -677,16 +562,11 @@ class TestDependencyResolver:
         assert any("get_db" in t for t in texts)
 
     def test_js_import_path_extraction(self):
-        content = PAYMENT_APP[0]["content"]  # PaymentPage.tsx (index 0)
+        content = PAYMENT_APP[0]["content"]
         imports = extract_js_import_paths(content)
         paths = [i[0] for i in imports]
         assert "../hooks/usePayment" in paths
         assert "../components/PaymentForm" in paths
-
-
-# ===========================================================================
-# Tests: Entity classifier
-# ===========================================================================
 
 class TestEntityClassifier:
 
@@ -696,11 +576,11 @@ class TestEntityClassifier:
         )
         assert etype == EntityType.COMPONENT
         assert layer == ArchLayer.PRESENTATION
-        assert conf == 1.0  # DETERMINISTIC by extension
+        assert conf == 1.0
         assert clevel == ConfidenceLevel.DETERMINISTIC
 
     def test_api_file_with_router_decorator(self):
-        content = PAYMENT_APP[4]["content"]  # payments.py with @router.post
+        content = PAYMENT_APP[4]["content"]
         etype, layer, conf, clevel = classify_file(
             "backend/app/api/payments.py", [], content, "python"
         )
@@ -708,7 +588,7 @@ class TestEntityClassifier:
         assert layer == ArchLayer.API_GATEWAY
 
     def test_db_models_with_base_class(self):
-        content = PAYMENT_APP[7]["content"]  # db/models.py (index 7)
+        content = PAYMENT_APP[7]["content"]
         etype, layer, conf, clevel = classify_file(
             "backend/app/db/models.py", [], content, "python"
         )
@@ -722,38 +602,32 @@ class TestEntityClassifier:
         assert layer == ArchLayer.APPLICATION
 
     def test_detect_stripe_external_service(self):
-        content = PAYMENT_APP[5]["content"]  # payment_service.py (index 5)
+        content = PAYMENT_APP[5]["content"]
         detected = detect_external_service_imports(content, "python")
         packages = [d[0] for d in detected]
         assert "stripe" in packages, f"Should detect 'stripe', got {packages}"
 
     def test_no_false_positive_external_for_sqlalchemy(self):
-        content = PAYMENT_APP[8]["content"]  # db/session.py (index 8) — imports sqlalchemy
+        content = PAYMENT_APP[8]["content"]
         detected = detect_external_service_imports(content, "python")
         packages = [d[0] for d in detected]
-        # sqlalchemy is not in EXTERNAL_SERVICE_PACKAGES (intentionally)
         assert "sqlalchemy" not in packages
 
     def test_extract_base_classes(self):
-        content = PAYMENT_APP[7]["content"]  # db/models.py (index 7)
+        content = PAYMENT_APP[7]["content"]
         bases = extract_base_classes(content, "Payment")
         assert "Base" in bases, f"Payment class should inherit from Base, got {bases}"
 
     def test_extract_route_decorators(self):
-        content = PAYMENT_APP[4]["content"]  # payments.py
+        content = PAYMENT_APP[4]["content"]
         routes = extract_route_decorators(content)
         assert len(routes) >= 2
         methods = {r["method"] for r in routes}
         assert "POST" in methods
         assert "GET" in methods
         paths_found = {r["path"] for r in routes}
-        assert "/" in paths_found  # POST /
+        assert "/" in paths_found
         assert any("{payment_id}" in p for p in paths_found)
-
-
-# ===========================================================================
-# Tests: Graph query helpers
-# ===========================================================================
 
 class TestGraphQueryHelpers:
 
@@ -771,7 +645,7 @@ class TestGraphQueryHelpers:
 
     def test_get_nodes_by_type(self, kg):
         components = kg.get_nodes_by_type(EntityType.COMPONENT)
-        assert len(components) >= 2  # PaymentPage + PaymentForm
+        assert len(components) >= 2
 
     def test_get_nodes_by_layer(self, kg):
         infra_nodes = kg.get_nodes_by_layer(ArchLayer.INFRASTRUCTURE)
@@ -796,12 +670,7 @@ class TestGraphQueryHelpers:
         if not pg_node:
             pytest.skip("PostgreSQL node not found")
         edges_in = kg.get_edges_to(pg_node.id)
-        assert len(edges_in) >= 1  # session.py → PostgreSQL
-
-
-# ===========================================================================
-# Tests: Edge evidence integrity
-# ===========================================================================
+        assert len(edges_in) >= 1
 
 class TestEvidenceIntegrity:
 
@@ -825,7 +694,6 @@ class TestEvidenceIntegrity:
         for edge in writes:
             if edge.evidence:
                 ev = edge.evidence[0]
-                # WRITES evidence spans multiple lines (context window)
                 assert ev.end_line >= ev.start_line
 
     def test_external_service_edge_has_import_snippet(self, kg):

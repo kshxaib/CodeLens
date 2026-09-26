@@ -12,7 +12,6 @@ from app.core.security import create_access_token, encrypt_api_key
 client = TestClient(app)
 TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
 @pytest.fixture
 def chat_context():
     session = TestSession()
@@ -60,7 +59,6 @@ def chat_context():
 
     yield {"user": user, "repo": repo, "token": token, "session": session}
 
-    # Cleanup
     session.query(Message).filter(Message.conversation_id.in_(
         session.query(Conversation.id).filter(Conversation.repository_id == repo.id)
     )).delete(synchronize_session=False)
@@ -71,11 +69,9 @@ def chat_context():
     session.commit()
     session.close()
 
-
 def test_create_and_list_conversations(chat_context):
     repo = chat_context["repo"]
 
-    # 1. Create conversation
     res = client.post(f"/api/repositories/{repo.id}/chats", json={"title": "Auth Architecture Discussion"})
     assert res.status_code == 200
     data = res.json()
@@ -83,13 +79,11 @@ def test_create_and_list_conversations(chat_context):
     assert data["repository_id"] == repo.id
     conv_id = data["id"]
 
-    # 2. List conversations
     res = client.get(f"/api/repositories/{repo.id}/chats")
     assert res.status_code == 200
     list_data = res.json()
     assert list_data["total"] == 1
     assert list_data["conversations"][0]["id"] == conv_id
-
 
 def test_get_conversation_detail(chat_context):
     repo = chat_context["repo"]
@@ -119,7 +113,6 @@ def test_get_conversation_detail(chat_context):
     assert detail["messages"][1]["role"] == "assistant"
     assert len(detail["messages"][1]["sources"]) == 1
 
-
 def test_delete_conversation(chat_context):
     repo = chat_context["repo"]
     user = chat_context["user"]
@@ -133,10 +126,8 @@ def test_delete_conversation(chat_context):
     assert res.status_code == 200
     assert res.json()["detail"] == "Conversation deleted successfully."
 
-    # Verify 404 after deletion
     res_get = client.get(f"/api/repositories/{repo.id}/chats/{conv.id}")
     assert res_get.status_code == 404
-
 
 @patch("app.rag.service.retrieve_context")
 def test_stream_chat_endpoint(mock_retrieve, chat_context):
@@ -151,11 +142,9 @@ def test_stream_chat_endpoint(mock_retrieve, chat_context):
         }
     ]
 
-    # Create conversation first
     res = client.post(f"/api/repositories/{repo.id}/chats", json={"title": "New Chat"})
     conv_id = res.json()["id"]
 
-    # Stream message
     res = client.post(
         f"/api/repositories/{repo.id}/chats/{conv_id}/stream",
         json={"content": "How does login work?"},
@@ -167,12 +156,10 @@ def test_stream_chat_endpoint(mock_retrieve, chat_context):
     assert "event: token" in text
     assert "event: done" in text
 
-
 def test_stream_chat_missing_gemini_key(chat_context):
     repo = chat_context["repo"]
     session = chat_context["session"]
 
-    # Create user without key
     user_no_key = User(
         github_id=666612,
         username="nokeyuser",
@@ -197,7 +184,6 @@ def test_stream_chat_missing_gemini_key(chat_context):
     assert res.status_code == 400
     assert "API key is required" in res.json()["detail"]
 
-    # Cleanup user_no_key
     session.query(Conversation).filter_by(id=conv.id).delete()
     session.query(RepositoryAccess).filter_by(user_id=user_no_key.id).delete()
     session.query(User).filter_by(id=user_no_key.id).delete()

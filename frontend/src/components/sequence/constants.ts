@@ -1,14 +1,4 @@
-import {
-  User,
-  Monitor,
-  Globe,
-  FileCode2,
-  Cpu,
-  Database,
-  Cloud,
-  Layers,
-  Zap,
-} from 'lucide-react';
+import { User, Monitor, Globe, FileCode2, Cpu, Database, Cloud, Layers, Zap } from 'lucide-react';
 import type { ParticipantType, InteractionType } from '../../types';
 
 export interface ParticipantConfig {

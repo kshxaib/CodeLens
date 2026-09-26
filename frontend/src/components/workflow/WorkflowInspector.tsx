@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  X,
-  ExternalLink,
-  ChevronRight,
-  FileCode2,
-  Cpu,
-  ArrowDownRight,
-  ArrowUpRight,
-} from 'lucide-react';
+import { X, ExternalLink, ChevronRight, FileCode2, Cpu, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { getStepTypeCfg } from './constants';
 import type { WorkflowStep, WorkflowTransition } from '../../types';
 
@@ -35,7 +27,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[400px] z-30 select-text">
-      {/* Top Header */}
       <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -64,9 +55,7 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
         </button>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
-        {/* Quick Action: Open Source */}
         {step.evidence && (
           <button
             onClick={() =>
@@ -90,7 +79,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </button>
         )}
 
-        {/* Description */}
         <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
             Step Description
@@ -100,7 +88,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </p>
         </div>
 
-        {/* Inputs & Outputs */}
         <div className="space-y-3">
           <div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
@@ -143,7 +130,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </div>
         </div>
 
-        {/* Service Calls */}
         {step.calls && step.calls.length > 0 && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
@@ -160,7 +146,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </div>
         )}
 
-        {/* Source Evidence Code Snippet */}
         {step.evidence && (
           <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
             <div className="flex items-center justify-between">
@@ -179,7 +164,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </div>
         )}
 
-        {/* Incoming Steps */}
         {incomingTransitions.length > 0 && (
           <div className="space-y-2 border-t border-[#1f1f23] pt-4">
             <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
@@ -212,7 +196,6 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({
           </div>
         )}
 
-        {/* Next Steps / Branch Transitions */}
         <div className="space-y-3 border-t border-[#1f1f23] pt-4">
           <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
             <ArrowUpRight className="w-3.5 h-3.5 text-amber-500" />

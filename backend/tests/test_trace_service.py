@@ -1,22 +1,11 @@
 import pytest
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    ArchEdge,
-    EntityType,
-    ArchLayer,
-    RelationshipType,
-    ConfidenceLevel,
-    SourceEvidence,
-)
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, ArchEdge, EntityType, ArchLayer, RelationshipType, ConfidenceLevel, SourceEvidence
 from app.services.trace_service import TraceService
-
 
 @pytest.fixture
 def sample_graph():
     kg = KnowledgeGraph()
 
-    # Nodes: LoginPage -> AuthAPI -> AuthService -> UserRepository -> PostgreSQL
     login = ArchNode(
         id="cmp_login",
         name="LoginPage",
@@ -60,7 +49,6 @@ def sample_graph():
 
     kg.nodes.extend([login, api, svc, repo, db])
 
-    # Edges
     e1 = ArchEdge(
         id="edge_1",
         source="cmp_login",
@@ -109,12 +97,10 @@ def sample_graph():
 
     return kg, files
 
-
 def test_trace_node_upstream_downstream(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 1: Trace AuthService
     res = service.trace_node("svc_auth")
     assert res["current"]["name"] == "AuthService"
     assert len(res["upstream"]) == 1
@@ -122,12 +108,10 @@ def test_trace_node_upstream_downstream(sample_graph):
     assert len(res["downstream"]) == 1
     assert res["downstream"][0]["node"]["name"] == "UserRepository"
 
-
 def test_find_path_between_two_nodes(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 2: Path from LoginPage to PostgreSQL
     path_res = service.find_path("cmp_login", "db_postgres")
     assert path_res["found"] is True
     assert path_res["hop_count"] == 4
@@ -135,12 +119,10 @@ def test_find_path_between_two_nodes(sample_graph):
     assert names == ["LoginPage", "AuthAPI", "AuthService", "UserRepository", "PostgreSQL"]
     assert len(path_res["path_edges"]) == 4
 
-
 def test_why_edge_relationship(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 4: Why does edge_3 exist? (AuthService CALLS UserRepository)
     why = service.why_relationship(edge_id="edge_3")
     assert why["source"]["name"] == "AuthService"
     assert why["target"]["name"] == "UserRepository"
@@ -149,25 +131,21 @@ def test_why_edge_relationship(sample_graph):
     assert why["evidence"][0]["file_path"] == "backend/app/services/auth_service.py"
     assert why["evidence"][0]["start_line"] == 81
 
-
 @pytest.mark.asyncio
 async def test_explain_component_deterministic_grounding(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 5: Explain without external LLM (deterministic grounded brief)
     exp = await service.explain_component("svc_auth")
     assert exp["component_name"] == "AuthService"
     assert "AuthAPI" in exp["explanation"] or "AuthAPI" in exp["deterministic_brief"]
     assert "UserRepository" in exp["explanation"] or "UserRepository" in exp["deterministic_brief"]
     assert exp["confidence"] in ("deterministic", "high")
 
-
 def test_calculate_impact_dependents(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 6: Show what depends on PostgreSQL (everything upstream)
     impact = service.calculate_impact("db_postgres")
     assert impact["total_dependents_count"] == 4
     assert len(impact["direct_dependents"]) == 1
@@ -175,12 +153,10 @@ def test_calculate_impact_dependents(sample_graph):
     assert len(impact["indirect_dependents"]) == 3
     assert impact["dependency_depth"] == 4
 
-
 def test_change_impact_propagation(sample_graph):
     kg, files = sample_graph
     service = TraceService(kg, files)
 
-    # Feature 7: Change user_repo.py
     change = service.change_impact(file_path="backend/app/db/repositories/user_repo.py")
     assert "backend/app/services/auth_service.py" in change["affected_files"]
     assert "backend/app/api/auth.py" in change["affected_files"]

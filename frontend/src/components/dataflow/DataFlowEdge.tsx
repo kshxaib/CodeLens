@@ -1,10 +1,5 @@
 import React, { memo } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 
 export const DataFlowEdge: React.FC<EdgeProps> = memo(({
   id,
@@ -51,7 +46,6 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
         }}
       />
 
-      {/* Pill Badge at Center of Edge */}
       <EdgeLabelRenderer>
         <div
           style={{
@@ -74,7 +68,6 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
             <span>{dataType}</span>
           </div>
 
-          {/* Optional Transformation Tooltip Snippet if highlighted */}
           {(isLineageActive || isHighlighted) && transformation && (
             <span className="mt-1 px-1.5 py-0.2 rounded bg-black/80 text-[8px] font-mono text-zinc-400 border border-zinc-800 max-w-[140px] truncate">
               {transformation}

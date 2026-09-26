@@ -1,14 +1,7 @@
 from datetime import datetime, timezone
 import pytest
 from pydantic import ValidationError
-from app.schemas.chat import (
-    Citation,
-    MessageCreate,
-    MessageRead,
-    ConversationRead,
-    ConversationDetailResponse,
-)
-
+from app.schemas.chat import Citation, MessageCreate, MessageRead, ConversationRead, ConversationDetailResponse
 
 def test_citation_schema():
     cite = Citation(
@@ -22,14 +15,12 @@ def test_citation_schema():
     assert cite.start_line == 12
     assert cite.symbol == "loginUser"
 
-
 def test_message_create_validation():
     msg = MessageCreate(content="How does authentication work?")
     assert msg.content == "How does authentication work?"
 
     with pytest.raises(ValidationError):
         MessageCreate(content="   ")
-
 
 def test_conversation_detail_schema():
     now = datetime.now(timezone.utc)

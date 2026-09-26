@@ -8,14 +8,10 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 CANDIDATE_MODELS = ["text-embedding-3-small", "text-embedding-3-large"]
 EMBEDDING_DIMENSION = 768
 
-
 def get_embedding_dimension() -> int:
-    """Returns the vector embedding dimension."""
     return EMBEDDING_DIMENSION
 
-
 def _normalize_vector(vec: List[float], target_dim: int = EMBEDDING_DIMENSION) -> List[float]:
-    """Ensures vector is exactly target_dim length and normalized."""
     if len(vec) > target_dim:
         vec = vec[:target_dim]
     elif len(vec) < target_dim:
@@ -26,12 +22,7 @@ def _normalize_vector(vec: List[float], target_dim: int = EMBEDDING_DIMENSION) -
         return [x / norm for x in vec]
     return vec
 
-
 def _generate_fallback_embedding(text: str) -> List[float]:
-    """
-    Generates a deterministic 768-dimensional semantic hash embedding
-    when external OpenAI API quota/rate limits are temporarily exhausted.
-    """
     if not text:
         return [0.0] * EMBEDDING_DIMENSION
     
@@ -43,16 +34,10 @@ def _generate_fallback_embedding(text: str) -> List[float]:
     
     return _normalize_vector(vec, EMBEDDING_DIMENSION)
 
-
 def generate_embedding(text: str, api_key: str) -> List[float]:
-    """
-    Generates a single 768-dimensional vector embedding for text
-    using OpenAI text-embedding-3-small with the user's decrypted API key.
-    """
     if not text or not text.strip():
         return [0.0] * EMBEDDING_DIMENSION
 
-    # Mock mode for testing
     if api_key.startswith("sk-MOCK_") or api_key.startswith("AIzaSy_MOCK_"):
         return [0.01 * (i % 10) for i in range(EMBEDDING_DIMENSION)]
 
@@ -82,20 +67,14 @@ def generate_embedding(text: str, api_key: str) -> List[float]:
     except Exception:
         return _generate_fallback_embedding(text)
 
-
 def generate_batch_embeddings(
     texts: List[str],
     api_key: str,
     batch_size: int = 50,
 ) -> List[List[float]]:
-    """
-    Generates embeddings for a batch of texts with chunking
-    and immediate fallback if API quota is exhausted.
-    """
     if not texts:
         return []
 
-    # Mock mode for testing
     if api_key.startswith("sk-MOCK_") or api_key.startswith("AIzaSy_MOCK_"):
         return [[0.01 * ((i + idx) % 10) for i in range(EMBEDDING_DIMENSION)] for idx in range(len(texts))]
 

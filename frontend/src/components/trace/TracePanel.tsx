@@ -1,22 +1,5 @@
 import React from 'react';
-import {
-  Compass,
-  ArrowRight,
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  RotateCcw,
-  Sparkles,
-  ShieldAlert,
-  ChevronDown,
-  ChevronUp,
-  X,
-  ArrowDownLeft,
-  ArrowUpRight,
-  HelpCircle,
-  Zap,
-} from 'lucide-react';
+import { Compass, ArrowRight, Play, Pause, SkipForward, SkipBack, RotateCcw, Sparkles, ShieldAlert, ChevronDown, ChevronUp, X, ArrowDownLeft, ArrowUpRight, HelpCircle, Zap } from 'lucide-react';
 import { useTrace } from '../../store/useTraceStore';
 
 interface TracePanelProps {
@@ -63,8 +46,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
     setActiveTab,
   } = useTrace();
 
-
-
   const viewLabels: Record<string, string> = {
     architecture: 'Architecture View',
     workflow: 'Workflow View',
@@ -73,7 +54,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
     lifecycle: 'Lifecycle View',
   };
 
-  // If dock is collapsed, render minimal floating pill
   if (!isPanelOpen) {
     return (
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40">
@@ -101,7 +81,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
 
   return (
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40 max-w-4xl w-[94vw] bg-[#09090b]/95 border border-[#27272a] rounded-2xl shadow-2xl backdrop-blur-2xl overflow-hidden flex flex-col font-mono text-xs select-none animate-in slide-in-from-bottom-2 duration-200">
-      {/* Top Header / Tab Bar */}
       <div className="px-4 py-2.5 border-b border-[#1f1f23] bg-[#0c0c0e]/80 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -115,7 +94,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
           </div>
         </div>
 
-        {/* Tab Buttons */}
         <div className="flex items-center gap-1 bg-[#141416] p-0.5 rounded-xl border border-zinc-800">
           <button
             onClick={() => setActiveTab('trace')}
@@ -161,10 +139,8 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
         </button>
       </div>
 
-      {/* TAB 1: NODE TRACE (Upstream, Current, Downstream, Explain, Impact) */}
       {activeTab === 'trace' && (
         <div className="p-3.5 space-y-3 max-h-[360px] overflow-y-auto">
-          {/* Quick Node Selector */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-1 max-w-sm">
               <span className="text-[10px] text-zinc-400 uppercase tracking-wider shrink-0">
@@ -214,7 +190,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             )}
           </div>
 
-          {/* Trace 3-Column Grid */}
           {traceLoading ? (
             <div className="py-8 flex flex-col items-center justify-center gap-2 text-zinc-400">
               <Zap className="w-5 h-5 text-amber-400 animate-pulse" />
@@ -222,7 +197,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             </div>
           ) : traceData ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Column 1: Upstream */}
               <div className="p-3 rounded-xl border border-zinc-800 bg-[#0c0c0e] flex flex-col">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 text-amber-400 font-bold">
@@ -269,7 +243,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                 </div>
               </div>
 
-              {/* Column 2: Current */}
               <div className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/5 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -295,7 +268,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                 </div>
               </div>
 
-              {/* Column 3: Downstream */}
               <div className="p-3 rounded-xl border border-zinc-800 bg-[#0c0c0e] flex flex-col">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 text-sky-400 font-bold">
@@ -348,7 +320,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             </div>
           )}
 
-          {/* Feature 6: Impact Analysis Drawer / Summary */}
           {impactData && (
             <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 space-y-2">
               <div className="flex items-center justify-between">
@@ -403,10 +374,8 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
         </div>
       )}
 
-      {/* TAB 2: PATHFINDER & ANIMATION PLAYER (Features 2, 3) */}
       {activeTab === 'path' && (
         <div className="p-3.5 space-y-3 max-h-[380px] overflow-y-auto">
-          {/* Start and End Selector */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
@@ -445,7 +414,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             </div>
           </div>
 
-          {/* Action Row */}
           <div className="flex items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-2">
               <button
@@ -489,7 +457,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
             )}
           </div>
 
-          {/* Path Display & Animation Player */}
           {pathData && (
             <div className="space-y-3 pt-2">
               {!pathData.found ? (
@@ -498,7 +465,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                 </div>
               ) : (
                 <>
-                  {/* Ordered Path Representation */}
                   <div className="p-3 rounded-xl border border-zinc-800 bg-[#0c0c0e] space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">
@@ -511,7 +477,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                       </span>
                     </div>
 
-                    {/* Path Breadcrumbs / Node Chips */}
                     <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
                       {pathData.path_nodes.map((n, idx) => {
                         const isCurrentStep = idx === pathStepIndex;
@@ -536,9 +501,7 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                     </div>
                   </div>
 
-                  {/* FEATURE 3: Path Animation Controls */}
                   <div className="p-3 rounded-xl border border-sky-500/30 bg-sky-500/5 flex items-center justify-between gap-3 flex-wrap">
-                    {/* Controls: Play, Pause, Step, Restart */}
                     <div className="flex items-center gap-1.5">
                       {isPathPlaying ? (
                         <button
@@ -585,7 +548,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
                       </button>
                     </div>
 
-                    {/* Speed Selector */}
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] text-zinc-400 uppercase mr-1">Speed:</span>
                       {[0.5, 1, 2].map((s) => (
@@ -610,7 +572,6 @@ export const TracePanel: React.FC<TracePanelProps> = () => {
         </div>
       )}
 
-      {/* TAB 3: CHANGE IMPACT LAUNCHER (Feature 7) */}
       {activeTab === 'impact' && (
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">

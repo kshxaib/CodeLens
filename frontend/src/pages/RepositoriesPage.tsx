@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  FolderGit2,
-  Plus,
-  Search,
-  Loader2,
-  Network,
-  MessageSquare,
-  ChevronRight,
-  GitBranch,
-  RefreshCw,
-  FileCode,
-  Code2,
-} from 'lucide-react';
+import { FolderGit2, Plus, Search, Loader2, Network, MessageSquare, ChevronRight, GitBranch, RefreshCw, FileCode, Code2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
@@ -32,12 +20,10 @@ export const RepositoriesPage: React.FC = () => {
   const [indexingId, setIndexingId] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  // Always fetch fresh repository list on mount
   useEffect(() => {
     fetchRepositories(true);
   }, [fetchRepositories]);
 
-  // Auto-poll when any repository is in indexing state
   useEffect(() => {
     const isAnyIndexing = repositories.some((r) => r.index_status === 'indexing');
     if (!isAnyIndexing) return;
@@ -116,7 +102,6 @@ export const RepositoriesPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="text-muted-foreground text-xs font-mono mb-1">
@@ -137,7 +122,6 @@ export const RepositoriesPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Search Bar */}
       {repositories.length > 0 && (
         <div className="relative max-w-md">
           <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -151,7 +135,6 @@ export const RepositoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Repositories Grid */}
       {repositories.length === 0 && !loading ? (
         <EmptyState
           type="repositories"
@@ -181,7 +164,6 @@ export const RepositoriesPage: React.FC = () => {
                 className="rounded-xl bg-card border-border hover:border-primary/40 transition-all duration-200 cursor-pointer p-5 flex flex-col justify-between group shadow-sm"
               >
                 <div>
-                  {/* Top Row: Icon, Title & Status */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="size-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary transition shrink-0">
@@ -201,7 +183,6 @@ export const RepositoriesPage: React.FC = () => {
                     {getStatusBadge(repo.index_status, isLocalIndexing)}
                   </div>
 
-                  {/* Description / Repo Details */}
                   {repo.description ? (
                     <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.25rem] leading-relaxed mt-2.5">
                       {repo.description}
@@ -223,7 +204,6 @@ export const RepositoriesPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Metadata Chips */}
                   <div className="flex flex-wrap items-center gap-2 mt-4 text-[11px] font-mono">
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-secondary border border-border text-muted-foreground">
                       <GitBranch className="size-3 text-primary" />
@@ -240,7 +220,6 @@ export const RepositoriesPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Bottom Actions Bar */}
                 <div className="mt-5 pt-3.5 border-t border-border flex items-center justify-between">
                   <div className="flex items-center gap-1 -ml-1">
                     <Link
@@ -286,7 +265,6 @@ export const RepositoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Add Repository Modal */}
       {isAddModalOpen && (
         <AddRepositoryModal
           isOpen={isAddModalOpen}
@@ -297,7 +275,6 @@ export const RepositoriesPage: React.FC = () => {
         />
       )}
 
-      {/* Add OpenAI Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}

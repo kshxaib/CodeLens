@@ -70,7 +70,6 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="w-full max-w-5xl h-[85vh] glass-card rounded-2xl border border-white/[0.12] shadow-2xl flex flex-col overflow-hidden relative">
-        {/* Top Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1f1f23] bg-[#09090b]">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-200 shrink-0">
@@ -109,7 +108,6 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
           </div>
         </div>
 
-        {/* Content Body */}
         <div className="flex-1 overflow-auto bg-[#0a0c10] font-mono text-xs text-slate-200">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center p-8 text-zinc-400 gap-2 select-none">

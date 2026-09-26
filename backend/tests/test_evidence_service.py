@@ -1,36 +1,9 @@
-"""
-Tests for the Evidence Service and Source Evidence Verification Layer.
-
-Ensures that:
-1. Claims WITH direct code evidence are marked VERIFIED.
-2. Claims WITHOUT direct code evidence are EXPLICITLY marked INFERRED — never faked as certain.
-3. Edges with no evidence in the graph return a well-formed INFERRED response.
-4. EvidenceType is correctly serialized in all responses.
-5. Verify endpoint returns VERIFIED / INFERRED / NOT_FOUND correctly.
-6. Repository evidence stats reflect correct counts.
-"""
 import pytest
-from app.parser.graph_schema import (
-    KnowledgeGraph,
-    ArchNode,
-    ArchEdge,
-    EntityType,
-    ArchLayer,
-    RelationshipType,
-    ConfidenceLevel,
-    EvidenceType,
-    SourceEvidence,
-)
+from app.parser.graph_schema import KnowledgeGraph, ArchNode, ArchEdge, EntityType, ArchLayer, RelationshipType, ConfidenceLevel, EvidenceType, SourceEvidence
 from app.services.evidence_service import EvidenceService
-
-
-# ---------------------------------------------------------------------------
-# Test Fixtures
-# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def verified_graph():
-    """Graph with fully verified (direct AST) evidence on all edges."""
     kg = KnowledgeGraph()
 
     chat_svc = ArchNode(
@@ -82,10 +55,8 @@ def verified_graph():
     kg.edges.append(edge)
     return kg
 
-
 @pytest.fixture
 def inferred_graph():
-    """Graph where edges have INFERRED evidence type (no direct code line)."""
     kg = KnowledgeGraph()
 
     svc_a = ArchNode(
@@ -121,10 +92,8 @@ def inferred_graph():
     kg.edges.append(inferred_edge)
     return kg
 
-
 @pytest.fixture
 def no_evidence_graph():
-    """Graph with edges that have ZERO evidence items attached."""
     kg = KnowledgeGraph()
 
     node_x = ArchNode(
@@ -139,7 +108,6 @@ def no_evidence_graph():
     )
     kg.nodes.extend([node_x, node_y])
 
-    # Edge with zero evidence items
     bare_edge = ArchEdge(
         id="edge_bare",
         source="node_x",
@@ -147,19 +115,13 @@ def no_evidence_graph():
         relationship_type=RelationshipType.IMPORTS,
         confidence=0.8,
         confidence_level=ConfidenceLevel.HIGH,
-        evidence=[],   # <-- NO evidence
+        evidence=[],
     )
     kg.edges.append(bare_edge)
     return kg
 
-
 def make_service(kg: KnowledgeGraph) -> EvidenceService:
     return EvidenceService(kg, files=[])
-
-
-# ---------------------------------------------------------------------------
-# Test: SourceEvidence properties
-# ---------------------------------------------------------------------------
 
 class TestSourceEvidenceProperties:
     def test_ast_evidence_is_not_inferred(self):
@@ -189,11 +151,6 @@ class TestSourceEvidenceProperties:
         assert d["is_inferred"] is False
         assert d["has_location"] is True
 
-
-# ---------------------------------------------------------------------------
-# Test: ArchEdge properties
-# ---------------------------------------------------------------------------
-
 class TestArchEdgeProperties:
     def test_edge_with_ast_evidence_not_inferred(self, verified_graph):
         edge = verified_graph.edges[0]
@@ -203,11 +160,11 @@ class TestArchEdgeProperties:
     def test_edge_with_inferred_evidence_is_inferred(self, inferred_graph):
         edge = inferred_graph.edges[0]
         assert edge.is_inferred
-        assert not edge.has_evidence  # has_location=False for INFERRED ev with empty file_path
+        assert not edge.has_evidence
 
     def test_edge_with_no_evidence_is_inferred(self, no_evidence_graph):
         edge = no_evidence_graph.edges[0]
-        assert edge.is_inferred       # No evidence → treated as inferred
+        assert edge.is_inferred
         assert not edge.has_evidence
 
     def test_edge_to_dict_includes_is_inferred(self, verified_graph):
@@ -216,11 +173,6 @@ class TestArchEdgeProperties:
         assert "has_evidence" in d
         assert d["is_inferred"] is False
         assert d["has_evidence"] is True
-
-
-# ---------------------------------------------------------------------------
-# Test: EvidenceService.get_edge_evidence
-# ---------------------------------------------------------------------------
 
 class TestGetEdgeEvidence:
     def test_verified_edge_returns_verified_status(self, verified_graph):
@@ -243,7 +195,6 @@ class TestGetEdgeEvidence:
     def test_missing_edge_returns_inferred_not_found(self, verified_graph):
         svc = make_service(verified_graph)
         result = svc.get_edge_evidence(source_id="nonexistent_a", target_id="nonexistent_b")
-        # Must not pretend certainty — explicit inferred response
         assert result["is_inferred"] is True
         assert result["confidence"] == 0.5
         assert result["relationship_type"] == "INFERRED"
@@ -268,11 +219,6 @@ class TestGetEdgeEvidence:
         result = svc.get_edge_evidence(source_id="svc_a", target_id="svc_b")
         assert "inferred" in result["reason"].lower()
 
-
-# ---------------------------------------------------------------------------
-# Test: EvidenceService.get_node_evidence
-# ---------------------------------------------------------------------------
-
 class TestGetNodeEvidence:
     def test_node_with_ast_evidence_is_verified(self, verified_graph):
         svc = make_service(verified_graph)
@@ -282,7 +228,6 @@ class TestGetNodeEvidence:
 
     def test_node_without_evidence_is_inferred(self, verified_graph):
         svc = make_service(verified_graph)
-        # QdrantRepository node has no evidence in fixture
         result = svc.get_node_evidence("mod_qdrant_repo")
         assert result["is_inferred"] is True
         assert result["verification"]["warning"] is not None
@@ -292,11 +237,6 @@ class TestGetNodeEvidence:
         result = svc.get_node_evidence("does_not_exist")
         assert result["verification"]["status"] == "NOT_FOUND"
         assert result["is_inferred"] is True
-
-
-# ---------------------------------------------------------------------------
-# Test: EvidenceService.verify_claim
-# ---------------------------------------------------------------------------
 
 class TestVerifyClaim:
     def test_verified_claim_returns_verified(self, verified_graph):
@@ -323,11 +263,6 @@ class TestVerifyClaim:
         result = svc.verify_claim("unknown_x", "unknown_y", "CALLS")
         assert result["status"] == "NOT_FOUND"
         assert result["confidence"] == 0.0
-
-
-# ---------------------------------------------------------------------------
-# Test: EvidenceService.get_repository_evidence_stats
-# ---------------------------------------------------------------------------
 
 class TestRepositoryEvidenceStats:
     def test_stats_count_verified_vs_inferred(self, verified_graph):

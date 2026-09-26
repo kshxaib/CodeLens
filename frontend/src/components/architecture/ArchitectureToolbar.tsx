@@ -1,32 +1,6 @@
-/**
- * ArchitectureToolbar — Top toolbar for the Architecture Canvas.
- *
- * LEFT GROUP:   View selector · Search · Depth toggle (System / All)
- * CENTER GROUP: Trace · Explain · Export
- * RIGHT GROUP:  Layout direction · Fit view · Rebuild · Fullscreen
- *
- * Active filters shown with subtle amber accent.
- * No flashy decorations — readability first.
- */
+
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Search,
-  Maximize2,
-  Minimize2,
-  RefreshCw,
-  Compass,
-  ArrowUpDown,
-  ArrowLeftRight,
-  X,
-  GitBranch,
-  Sparkles,
-  SlidersHorizontal,
-  LayoutGrid,
-  Activity,
-  Database,
-  Globe,
-  Cpu,
-} from 'lucide-react';
+import { Search, Maximize2, Minimize2, RefreshCw, Compass, ArrowUpDown, ArrowLeftRight, X, GitBranch, Sparkles, SlidersHorizontal, LayoutGrid, Activity, Database, Globe, Cpu } from 'lucide-react';
 import { ARCH_TIERS, RELATIONSHIP_CONFIG } from './constants';
 import { CanvasExportMenu } from './CanvasExportMenu';
 import type { KnowledgeGraphData } from '../../types';
@@ -57,12 +31,10 @@ interface ArchitectureToolbarProps {
   totalEdges: number;
   filteredNodesCount: number;
   filteredEdgesCount?: number;
-  // Trace & Explain actions
   onOpenTrace?: () => void;
   onOpenExplain?: () => void;
   onOpenSidebar?: () => void;
   isSidebarOpen?: boolean;
-  // Export
   kgData?: KnowledgeGraphData | null;
   canvasRef?: React.RefObject<HTMLDivElement | null>;
   repoName?: string;
@@ -142,7 +114,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
     onScopeChange('all');
   };
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
@@ -162,10 +133,8 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
   return (
     <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none flex-wrap">
 
-      {/* ─── LEFT GROUP ─── */}
       <div className="flex items-center gap-1.5 pointer-events-auto bg-[#09090b]/95 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-xl">
 
-        {/* Sidebar toggle */}
         {onOpenSidebar && (
           <button
             onClick={onOpenSidebar}
@@ -180,7 +149,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           </button>
         )}
 
-        {/* View Picker Dropdown */}
         {onViewChange && (
           <div className="relative" ref={viewPickerRef}>
             <button
@@ -216,10 +184,8 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           </div>
         )}
 
-        {/* Divider */}
         <span className="w-px h-4 bg-[#27272a]" />
 
-        {/* Search */}
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
           <input
@@ -239,7 +205,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           )}
         </div>
 
-        {/* View mode: System / Full */}
         <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a]">
           {(['system', 'full'] as const).map(mode => (
             <button
@@ -256,7 +221,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           ))}
         </div>
 
-        {/* Filter */}
         <div className="relative" ref={filterRef}>
           <button
             onClick={() => setShowFilters(v => !v)}
@@ -272,7 +236,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
             {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
           </button>
 
-          {/* Filter Popover */}
           {showFilters && (
             <div className="absolute top-full left-0 mt-2 z-50 bg-[#0c0c0e] border border-[#27272a] rounded-2xl shadow-2xl w-72 font-mono text-xs">
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f1f23]">
@@ -284,7 +247,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
                 )}
               </div>
               <div className="p-3 space-y-3">
-                {/* Layer */}
                 <div>
                   <label className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
                     Architectural Layer
@@ -301,7 +263,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
                   </select>
                 </div>
 
-                {/* Node type */}
                 <div>
                   <label className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
                     Node Type
@@ -317,7 +278,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
                   </select>
                 </div>
 
-                {/* Relationship */}
                 <div>
                   <label className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
                     Relationship Type
@@ -334,7 +294,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
                   </select>
                 </div>
 
-                {/* Scope */}
                 <div>
                   <label className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mb-1.5">
                     Scope
@@ -365,7 +324,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
         </div>
       </div>
 
-      {/* ─── CENTER GROUP: Actions ─── */}
       <div className="flex items-center gap-1.5 pointer-events-auto bg-[#09090b]/95 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-xl">
         {onOpenTrace && (
           <button
@@ -398,9 +356,7 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
         )}
       </div>
 
-      {/* ─── RIGHT GROUP: Canvas Controls ─── */}
       <div className="flex items-center gap-1 pointer-events-auto bg-[#09090b]/95 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-xl">
-        {/* Layout direction */}
         <button
           onClick={onToggleLayoutDirection}
           className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-600 transition cursor-pointer text-xs font-mono"
@@ -416,7 +372,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           </span>
         </button>
 
-        {/* Fit view */}
         <button
           onClick={onFitView}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-600 transition cursor-pointer"
@@ -425,7 +380,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           <Compass className="w-3.5 h-3.5 text-amber-400" />
         </button>
 
-        {/* Rebuild */}
         <button
           onClick={onRebuildGraph}
           disabled={isRebuilding}
@@ -435,7 +389,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRebuilding ? 'animate-spin' : ''}`} />
         </button>
 
-        {/* Fullscreen */}
         <button
           onClick={onToggleFullscreen}
           className="p-1.5 rounded-xl bg-[#121214] border border-[#27272a] text-zinc-400 hover:text-white hover:border-zinc-600 transition cursor-pointer"

@@ -1,27 +1,6 @@
-"""
-Automated Test Suite for Sequence Diagram Extraction Engine.
-
-Verifies:
-1. Participant discovery and column ordering (Actor -> Client -> Gateway -> Controller/Service -> External -> Queue/Worker -> Database).
-2. Chronological ordering of runtime messages.
-3. Message interaction types (call, return, self_call, error, async_call).
-4. Detected payloads and response models.
-5. Traceable line-level source code evidence.
-6. Inferred vs deterministic distinction and confidence levels.
-7. Both Python (FastAPI) and JavaScript/TypeScript (Express/Prisma) flows.
-8. Fallback sequence synthesis from Knowledge Graph edges.
-"""
 import pytest
-from app.parser.sequence_extractor import (
-    SequenceExtractor,
-    ParticipantType,
-    InteractionType,
-    SequenceDiagram,
-    SequenceParticipant,
-    SequenceMessage,
-)
+from app.parser.sequence_extractor import SequenceExtractor, ParticipantType, InteractionType, SequenceDiagram, SequenceParticipant, SequenceMessage
 from app.parser.knowledge_graph import build_knowledge_graph
-
 
 CHECKOUT_FASTAPI_APP = [
     {
@@ -109,7 +88,6 @@ export const loginUser = async (req, res) => {
     }
 ]
 
-
 class TestSequenceExtractor:
 
     def test_python_checkout_sequence_extraction(self):
@@ -130,14 +108,11 @@ class TestSequenceExtractor:
         sequences = extractor.extract_all_sequences()
         seq = sequences[0]
 
-        # First participant should be Actor / Customer
         assert seq.participants[0].participant_type == ParticipantType.ACTOR
         assert "Customer" in seq.participants[0].name or "User" in seq.participants[0].name
 
-        # Second participant should be API Gateway
         assert seq.participants[1].participant_type == ParticipantType.API_GATEWAY
 
-        # Order indices must be monotonic: 0, 1, 2, 3...
         indices = [p.order_index for p in seq.participants]
         assert indices == list(range(len(seq.participants)))
 
@@ -147,17 +122,14 @@ class TestSequenceExtractor:
         sequences = extractor.extract_all_sequences()
         seq = sequences[0]
 
-        # Step numbers must be strictly increasing: 1, 2, 3...
         step_numbers = [m.step_number for m in seq.messages]
         assert step_numbers == list(range(1, len(seq.messages) + 1))
 
-        # First message must be Inbound HTTP request from Actor to Gateway
         first_msg = seq.messages[0]
         assert first_msg.caller_id == seq.participants[0].id
         assert first_msg.callee_id == seq.participants[1].id
         assert first_msg.interaction_type == InteractionType.CALL
 
-        # Last message should be response return
         last_msg = seq.messages[-1]
         assert last_msg.interaction_type == InteractionType.RETURN
         assert "200 OK" in last_msg.method
@@ -168,15 +140,12 @@ class TestSequenceExtractor:
         sequences = extractor.extract_all_sequences()
         seq = sequences[0]
 
-        # Has errors flag should be true
         assert seq.has_errors is True
 
-        # Check self-call validation
         self_calls = [m for m in seq.messages if m.interaction_type == InteractionType.SELF_CALL]
         assert len(self_calls) >= 1
         assert "validate" in self_calls[0].method.lower()
 
-        # Check error branch
         errors = [m for m in seq.messages if m.interaction_type == InteractionType.ERROR]
         assert len(errors) >= 1
         assert errors[0].is_error is True
@@ -188,12 +157,10 @@ class TestSequenceExtractor:
         sequences = extractor.extract_all_sequences()
         seq = sequences[0]
 
-        # Must have Inventory Service and Payment Service
         participant_names = [p.name for p in seq.participants]
         assert any("Inventory" in name for name in participant_names)
         assert any("Payment" in name for name in participant_names)
 
-        # Must have matching CALL and RETURN pairs
         inv_calls = [m for m in seq.messages if "reserve_items" in m.method]
         assert len(inv_calls) >= 1
         assert inv_calls[0].interaction_type == InteractionType.CALL
@@ -221,25 +188,21 @@ class TestSequenceExtractor:
         assert len(sequences) >= 1
         seq = sequences[0]
 
-        # Participants check
         p_names = [p.name for p in seq.participants]
         assert any("User" in name or "Client" in name for name in p_names)
         assert any("Database" in name or "Prisma" in name or "PostgreSQL" in name for name in p_names)
         assert any("Authentication" in name or "Auth" in name for name in p_names)
 
-        # Database queries check: findUniqueUser
         db_messages = [m for m in seq.messages if "findUnique" in m.method]
         assert len(db_messages) >= 1
         assert db_messages[0].interaction_type == InteractionType.CALL
 
-        # Password compare & JWT token check
         bcrypt_calls = [m for m in seq.messages if "bcrypt.compare" in m.method]
         assert len(bcrypt_calls) >= 1
 
         jwt_calls = [m for m in seq.messages if "jwt.sign" in m.method]
         assert len(jwt_calls) >= 1
 
-        # Final 200 OK return check
         success_returns = [m for m in seq.messages if "200" in m.method]
         assert len(success_returns) >= 1
         assert success_returns[0].interaction_type == InteractionType.RETURN

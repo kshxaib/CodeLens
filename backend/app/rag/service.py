@@ -5,12 +5,7 @@ from typing import AsyncGenerator, List, Dict, Any, Optional
 from openai import OpenAI, APIError, RateLimitError
 
 from app.rag.retriever import retrieve_context
-from app.rag.prompts import (
-    build_system_prompt,
-    build_user_prompt,
-    parse_citations_from_response,
-    is_conversational_query,
-)
+from app.rag.prompts import build_system_prompt, build_user_prompt, parse_citations_from_response, is_conversational_query
 
 CANDIDATE_CHAT_MODELS = [
     "gpt-4o-mini",
@@ -19,11 +14,8 @@ CANDIDATE_CHAT_MODELS = [
     "gpt-3.5-turbo",
 ]
 
-
 def format_sse_event(event: str, data: Dict[str, Any]) -> str:
-    """Formats a single Server-Sent Event (SSE) message."""
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
-
 
 async def stream_chat_response(
     repository_id: int,
@@ -35,37 +27,25 @@ async def stream_chat_response(
     model_name: Optional[str] = None,
     limit_context_chunks: int = 6,
 ) -> AsyncGenerator[str, None]:
-    """
-    Asynchronously streams the grounded AI Copilot response for a question using OpenAI.
-    Yields standard Server-Sent Event strings:
-    - `status`: Progress steps (retrieving, generating)
-    - `token`: Individual streamed text tokens
-    - `done`: Final structured payload with extracted citations & full text
-    - `error`: Error details if generation fails
-    """
     full_response_text = ""
     retrieved_chunks: List[Dict[str, Any]] = []
     active_api_key = user_openai_key or user_gemini_key or ""
 
     try:
-        # Step 1: Detect intent (conversational greeting vs technical codebase query)
         is_conversational = is_conversational_query(question)
 
         if is_conversational:
-            # For casual greetings, skip heavy vector retrieval
             yield format_sse_event("status", {
                 "status": "generating",
                 "message": "CodeLens Copilot thinking...",
                 "context_chunks_count": 0,
             })
         else:
-            # Step 2: Technical query - retrieve codebase context chunks
             yield format_sse_event("status", {
                 "status": "retrieving",
                 "message": "Retrieving relevant codebase context from vector store...",
             })
 
-            # Query contextualization for pronoun references ("is that", "these", "this", "it", etc.)
             search_query = question.strip()
             if conversation_history:
                 last_user_messages = [
@@ -94,7 +74,6 @@ async def stream_chat_response(
                 "context_chunks_count": len(retrieved_chunks),
             })
 
-        # Step 3: Build prompts with intent awareness
         system_instruction = build_system_prompt(repo_full_name, is_conversational=is_conversational)
         user_prompt = build_user_prompt(
             question,
@@ -103,7 +82,6 @@ async def stream_chat_response(
             is_conversational=is_conversational,
         )
 
-        # Mock mode for testing
         if active_api_key.startswith("sk-MOCK_") or active_api_key.startswith("AIzaSy_MOCK_"):
             mock_tokens = [
                 "Hello! " if is_conversational else "Based on the codebase, ",
@@ -115,7 +93,6 @@ async def stream_chat_response(
                 yield format_sse_event("token", {"token": tok})
                 await asyncio.sleep(0.01)
         else:
-            # Live OpenAI Client streaming with fallback model support
             client = OpenAI(api_key=active_api_key)
 
             messages = [
@@ -158,14 +135,12 @@ async def stream_chat_response(
                     last_err = ex
                     print(f"[!] OpenAI model {m} failed: {ex}. Checking fallback...")
                     if full_response_text:
-                        # Tokens already yielded to client; don't restart mid-stream
                         break
                     continue
 
             if not stream_success and not full_response_text:
                 raise last_err or RuntimeError("All candidate OpenAI models failed to generate content.")
 
-        # Step 4: Extract citations & finalize
         citations = parse_citations_from_response(
             full_response_text,
             retrieved_chunks,

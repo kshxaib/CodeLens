@@ -1,28 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Files,
-  FolderGit2,
-  GitBranch,
-  KeyRound,
-  LoaderCircle,
-  MessageCircle,
-  MoreHorizontal,
-  Network,
-  RefreshCw,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Files, FolderGit2, GitBranch, KeyRound, LoaderCircle, MessageCircle, MoreHorizontal, Network, RefreshCw, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { WorkspaceLayout } from "@/components/layout/WorkspaceLayout";
@@ -64,12 +44,10 @@ export const DashboardPage: React.FC = () => {
     }
   }, [confirmationToast]);
 
-  // Always fetch fresh repository list on mount
   useEffect(() => {
     fetchRepositories(true);
   }, [fetchRepositories]);
 
-  // Auto-poll when any repository is indexing
   useEffect(() => {
     const isAnyIndexing = repositories.some((r) => r.index_status === 'indexing');
     if (!isAnyIndexing) return;
@@ -120,7 +98,6 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Workspace Overview Header */}
               <section className="flex justify-between items-end">
                 <div className="flex flex-col gap-2">
                   <div className="text-muted-foreground text-xs font-mono">
@@ -152,9 +129,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </section>
 
-              {/* 4 Metric Cards */}
               <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                {/* Repositories Card */}
                 <Card className="rounded-xl bg-card border-border pt-4 pr-4 pb-4 pl-4 gap-3">
                   <CardHeader className="flex pt-0 pr-0 pb-0 pl-0 flex-row justify-between items-center gap-2">
                     <span className="text-muted-foreground text-sm">
@@ -173,7 +148,6 @@ export const DashboardPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Indexed Files Card */}
                 <Card className="rounded-xl bg-card border-border pt-4 pr-4 pb-4 pl-4 gap-3">
                   <CardHeader className="flex pt-0 pr-0 pb-0 pl-0 flex-row justify-between items-center gap-2">
                     <span className="text-muted-foreground text-sm">
@@ -192,7 +166,6 @@ export const DashboardPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Indexing Queues Card */}
                 <Card className="rounded-xl bg-card border-border pt-4 pr-4 pb-4 pl-4 gap-3">
                   <CardHeader className="flex pt-0 pr-0 pb-0 pl-0 flex-row justify-between items-center gap-2">
                     <span className="text-muted-foreground text-sm">
@@ -211,7 +184,6 @@ export const DashboardPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Needs Attention Card */}
                 <Card className="rounded-xl bg-card border-border pt-4 pr-4 pb-4 pl-4 gap-3">
                   <CardHeader className="flex pt-0 pr-0 pb-0 pl-0 flex-row justify-between items-center gap-2">
                     <span className="text-muted-foreground text-sm">
@@ -231,7 +203,6 @@ export const DashboardPage: React.FC = () => {
                 </Card>
               </section>
 
-              {/* OpenAI API Key Prompt Banner - Only shown if key has NOT been added */}
               {!hasKey && (
                 <section className="rounded-xl bg-black border border-[#27272a] flex flex-col sm:flex-row p-4 justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3">
@@ -256,9 +227,7 @@ export const DashboardPage: React.FC = () => {
                 </section>
               )}
 
-              {/* Main Content Split: Recent Repositories & Quick Actions */}
               <section className="grid gap-6 grid-cols-1 lg:grid-cols-[1.65fr_1fr]">
-                {/* Recent Repositories Table */}
                 <Card className="rounded-xl bg-card border-border pt-6 pr-6 pb-6 pl-6 gap-4">
                   <CardHeader className="flex pt-0 pr-0 pb-0 pl-0 flex-row justify-between items-start gap-2">
                     <div className="flex flex-col gap-1">
@@ -390,9 +359,7 @@ export const DashboardPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Right Side Cards */}
                 <div className="flex flex-col gap-6">
-                  {/* Continue working Card */}
                   <Card className="rounded-xl bg-card border-border pt-6 pr-6 pb-6 pl-6 gap-4">
                     <CardHeader className="pt-0 pr-0 pb-0 pl-0 gap-1">
                       <CardTitle className="text-base">
@@ -462,7 +429,6 @@ export const DashboardPage: React.FC = () => {
                     </CardContent>
                   </Card>
 
-                  {/* Workspace health Card */}
                   <Card className="rounded-xl bg-card border-border pt-6 pr-6 pb-6 pl-6 gap-4">
                     <CardHeader className="pt-0 pr-0 pb-0 pl-0">
                       <CardTitle className="text-base">
@@ -508,7 +474,6 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </section>
 
-              {/* Recent Activity Card */}
               <section className="rounded-xl bg-card border-t border-t-border border-r border-r-border border-b border-b-border border-l border-l-border pt-6 pr-6 pb-6 pl-6 gap-4">
                 <div className="flex flex-col gap-1">
                   <h2 className="font-semibold text-base">Recent activity</h2>
@@ -562,7 +527,6 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </section>
 
-      {/* Add Repository Modal */}
       {isAddModalOpen && (
         <AddRepositoryModal
           isOpen={isAddModalOpen}
@@ -573,7 +537,6 @@ export const DashboardPage: React.FC = () => {
         />
       )}
 
-      {/* Add OpenAI Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}
@@ -584,7 +547,6 @@ export const DashboardPage: React.FC = () => {
         />
       )}
 
-      {/* Floating Confirmation Pop Message */}
       {confirmationToast && (
         <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-[#27272a] text-white px-3.5 py-2.5 rounded-lg animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

@@ -4,14 +4,12 @@ from typing import List, Optional, Dict, Any
 from tree_sitter import Node
 from app.parser.ast_parser import parse_source_code, detect_language
 
-
 @dataclass
 class Symbol:
-    """Represents an extracted code symbol (function, class, method, import, call)."""
     name: str
-    kind: str  # function | async_function | class | method | interface | struct | import | call
-    start_line: int  # 1-indexed
-    end_line: int    # 1-indexed
+    kind: str
+    start_line: int
+    end_line: int
     signature: Optional[str] = None
     docstring: Optional[str] = None
     parent: Optional[str] = None
@@ -19,14 +17,10 @@ class Symbol:
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
-
 def _get_node_text(node: Node, code_bytes: bytes) -> str:
-    """Extracts raw text string corresponding to an AST node."""
     return code_bytes[node.start_byte:node.end_byte].decode("utf-8", errors="replace")
 
-
 def _extract_python_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
-    """Extracts functions, classes, methods, imports, and calls from Python AST."""
     symbols: List[Symbol] = []
 
     def visit(node: Node, parent_class: Optional[str] = None):
@@ -36,7 +30,6 @@ def _extract_python_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
             start_line = node.start_point[0] + 1
             end_line = node.end_point[0] + 1
 
-            # Extract signature (first line)
             lines = _get_node_text(node, code_bytes).splitlines()
             signature = lines[0].strip() if lines else name
 
@@ -50,7 +43,6 @@ def _extract_python_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
                 parent=parent_class,
             ))
 
-            # Visit children for inner calls or functions
             for child in node.children:
                 visit(child, parent_class=parent_class)
             return
@@ -72,7 +64,6 @@ def _extract_python_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
                 signature=signature,
             ))
 
-            # Visit class body methods
             body_node = node.child_by_field_name("body")
             if body_node:
                 for child in body_node.children:
@@ -107,9 +98,7 @@ def _extract_python_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
     visit(root_node)
     return symbols
 
-
 def _extract_js_ts_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
-    """Extracts functions, classes, methods, imports, and calls from JS/TS AST."""
     symbols: List[Symbol] = []
 
     def visit(node: Node, parent_class: Optional[str] = None):
@@ -153,7 +142,6 @@ def _extract_js_ts_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
             return
 
         elif node.type == "lexical_declaration":
-            # Check for arrow functions: const myFunc = () => {}
             for declarator in node.children:
                 if declarator.type == "variable_declarator":
                     name_node = declarator.child_by_field_name("name")
@@ -201,38 +189,28 @@ def _extract_js_ts_symbols(root_node: Node, code_bytes: bytes) -> List[Symbol]:
     visit(root_node)
     return symbols
 
-
 def _fallback_regex_symbols(code: str) -> List[Symbol]:
-    """Fallback regex extractor when AST parser is unavailable."""
     symbols: List[Symbol] = []
     lines = code.splitlines()
 
     for idx, line in enumerate(lines, start=1):
         trimmed = line.strip()
-        # Function pattern
         fn_match = re.match(r"^(?:async\s+)?def\s+([a-zA-Z0-9_]+)\s*\(", trimmed)
         if fn_match:
             symbols.append(Symbol(name=fn_match.group(1), kind="function", start_line=idx, end_line=idx, signature=trimmed))
             continue
 
-        # Class pattern
         cls_match = re.match(r"^class\s+([a-zA-Z0-9_]+)", trimmed)
         if cls_match:
             symbols.append(Symbol(name=cls_match.group(1), kind="class", start_line=idx, end_line=idx, signature=trimmed))
             continue
 
-        # Import pattern
         if trimmed.startswith("import ") or trimmed.startswith("from ") or trimmed.startswith("require("):
             symbols.append(Symbol(name=trimmed, kind="import", start_line=idx, end_line=idx, signature=trimmed))
 
     return symbols
 
-
 def extract_symbols(code: str, file_path: str) -> List[Symbol]:
-    """
-    Extracts structured AST code symbols from source code.
-    Returns list of Symbol objects sorted by start_line.
-    """
     if not code or not code.strip():
         return []
 
@@ -249,6 +227,5 @@ def extract_symbols(code: str, file_path: str) -> List[Symbol]:
     else:
         symbols = _fallback_regex_symbols(code)
 
-    # Sort symbols by start_line
     symbols.sort(key=lambda s: s.start_line)
     return symbols

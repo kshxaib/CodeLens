@@ -1,35 +1,11 @@
 import axios, { AxiosError } from 'axios';
-import type {
-  UserProfile,
-  RepositoryItem,
-  FileItem,
-  FileContentResponse,
-  ConversationItem,
-  ConversationDetail,
-  ArchitectureGraphData,
-  BlastRadiusResponse,
-  KnowledgeGraphData,
-  WorkflowsResponse,
-  DataFlowResponse,
-  SequenceResponse,
-  LifecycleResponse,
-  TraceNodeResponse,
-  FindPathResponse,
-  WhyRelationshipResponse,
-  ExplainComponentResponse,
-  CalculateImpactResponse,
-  ChangeImpactResponse,
-  EdgeEvidenceResponse,
-  NodeEvidenceResponse,
-  EvidenceStatsResponse,
-  VerifyClaimResponse,
-} from '../types';
+import type { UserProfile, RepositoryItem, FileItem, FileContentResponse, ConversationItem, ConversationDetail, ArchitectureGraphData, BlastRadiusResponse, KnowledgeGraphData, WorkflowsResponse, DataFlowResponse, SequenceResponse, LifecycleResponse, TraceNodeResponse, FindPathResponse, WhyRelationshipResponse, ExplainComponentResponse, CalculateImpactResponse, ChangeImpactResponse, EdgeEvidenceResponse, NodeEvidenceResponse, EvidenceStatsResponse, VerifyClaimResponse } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Send session_token cookies across origins
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -47,7 +23,6 @@ export class ApiError extends Error {
   }
 }
 
-// Global request interceptor to attach Bearer token from localStorage
 apiClient.interceptors.request.use((config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('codelens_token') : null;
   if (token && config.headers) {
@@ -56,7 +31,6 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Global response interceptor for formatted errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<any>) => {
@@ -68,7 +42,6 @@ apiClient.interceptors.response.use(
 );
 
 export const api = {
-  // Auth & User Profile
   getGitHubOAuthUrl: async () => {
     const res = await apiClient.get<{ url: string; state: string }>('/auth/github');
     return res.data;
@@ -106,7 +79,6 @@ export const api = {
     return res.data;
   },
 
-  // Repositories
   getRepositories: async () => {
     const res = await apiClient.get<{ repositories: RepositoryItem[]; total: number }>('/repositories');
     return res.data;
@@ -200,7 +172,6 @@ export const api = {
     return res.data;
   },
 
-  // Interactive Trace & Explore System (All 5 Views)
   traceNode: async (repoId: number, nodeId: string, view = 'architecture', depth = 1) => {
     const res = await apiClient.get<TraceNodeResponse>(
       `/repositories/${repoId}/trace/node?node_id=${encodeURIComponent(nodeId)}&view=${encodeURIComponent(view)}&depth=${depth}`
@@ -250,7 +221,6 @@ export const api = {
     return res.data;
   },
 
-  // Evidence & Verification Layer
   getEdgeEvidence: async (
     repoId: number,
     params: { edgeId?: string; source?: string; target?: string }
@@ -291,7 +261,6 @@ export const api = {
     return res.data;
   },
 
-  // Chat & Copilot
   getConversations: async (repoId: number) => {
     const res = await apiClient.get<{ conversations: ConversationItem[]; total: number }>(
       `/repositories/${repoId}/chats`

@@ -1,16 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  useReactFlow,
-  type Node,
-  type Edge,
-} from '@xyflow/react';
+import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { LifecycleStateNode } from './LifecycleStateNode';
 import { LifecycleTransitionEdge } from './LifecycleTransitionEdge';
 import { LifecycleInspector } from './LifecycleInspector';
@@ -52,26 +41,21 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Inspector Selection: either a State or a Transition
   const [selectedStateId, setSelectedStateId] = useState<string | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<LifecycleTransition | null>(null);
   const [hoveredStateId, setHoveredStateId] = useState<string | null>(null);
 
-  // Toolbar & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<LifecycleFilterType>('all');
   const [layoutDirection, setLayoutDirection] = useState<'LR' | 'TB'>('LR');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Simulation state
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
 
-  // React Flow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // 1. Fetch lifecycles from backend
   const fetchLifecycles = useCallback(async () => {
     try {
       setLoading(true);
@@ -93,12 +77,10 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     fetchLifecycles();
   }, [fetchLifecycles]);
 
-  // Current active entity lifecycle
   const activeLifecycle = useMemo(() => {
     return lifecycles.find((l) => l.id === selectedLifecycleId) || lifecycles[0] || null;
   }, [lifecycles, selectedLifecycleId]);
 
-  // Reset selection on lifecycle change
   useEffect(() => {
     setSelectedStateId(null);
     setSelectedTransition(null);
@@ -106,7 +88,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setSimulationIndex(-1);
   }, [selectedLifecycleId]);
 
-  // Sync states to TraceContext
   useEffect(() => {
     if (activeLifecycle?.states) {
       setViewNodes(
@@ -120,16 +101,13 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     }
   }, [activeLifecycle, setViewNodes]);
 
-  // 2. Linear / Happy Path Simulation list of transitions
   const simulationTransitions = useMemo(() => {
     if (!activeLifecycle) return [];
-    // Prioritize non-failure transitions in sequence
     const transitions = activeLifecycle.transitions || [];
     const happy = transitions.filter((t) => !t.is_failure);
     return happy.length > 0 ? happy : transitions;
   }, [activeLifecycle]);
 
-  // Simulation timer loop
   useEffect(() => {
     if (!isPlaying || simulationTransitions.length === 0) return;
 
@@ -144,7 +122,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     ? simulationTransitions[simulationIndex]
     : null;
 
-  // 3. Build Nodes and Edges from active lifecycle
   useEffect(() => {
     if (!activeLifecycle) {
       setNodes([]);
@@ -154,12 +131,10 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
     const q = searchQuery.toLowerCase().trim();
 
-    // Raw Nodes
     const rawNodes: Node[] = (activeLifecycle.states || []).map((state) => {
       const isSelected = selectedStateId === state.id || selectedStateId === state.name;
       const isHovered = hoveredStateId === state.id || hoveredStateId === state.name;
 
-      // Filter logic
       let isDimmed = false;
       if (activeFilter === 'happy_path' && (state.is_failure || state.state_type === 'terminal_failure')) {
         isDimmed = true;
@@ -177,7 +152,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         if (!hasRetry) isDimmed = true;
       }
 
-      // Search match
       if (q && !isDimmed) {
         const matchName = state.name.toLowerCase().includes(q);
         const matchDesc = state.description?.toLowerCase().includes(q);
@@ -186,7 +160,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         }
       }
 
-      // Simulation active indicator
       const isCurrentActiveState = activeSimTransition
         ? activeSimTransition.from_state === state.id ||
           activeSimTransition.from_state === state.name ||
@@ -208,11 +181,9 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
       };
     });
 
-    // Raw Edges
     const rawEdges: Edge[] = (activeLifecycle.transitions || []).map((transition) => {
       const isSelected = selectedTransition?.id === transition.id;
 
-      // Filter logic
       let isDimmed = false;
       if (activeFilter === 'happy_path' && transition.is_failure) {
         isDimmed = true;
@@ -222,7 +193,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         isDimmed = true;
       }
 
-      // Search match
       if (q && !isDimmed) {
         const matchEvt = transition.event.toLowerCase().includes(q);
         const matchCond = transition.condition?.toLowerCase().includes(q);
@@ -235,7 +205,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
       const isCurrentActive = activeSimTransition?.id === transition.id;
 
-      // Marker color
       let arrowColor = '#6366f1';
       if (transition.is_failure) arrowColor = '#f43f5e';
       else if (transition.is_retry) arrowColor = '#f59e0b';
@@ -275,7 +244,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
       };
     });
 
-    // Dagre Layout
     const layouted = getLifecycleLayoutedElements(rawNodes, rawEdges, {
       direction: layoutDirection,
     });
@@ -283,7 +251,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setNodes(layouted.nodes);
     setEdges(layouted.edges);
 
-    // Auto-fit on layout or lifecycle change
     setTimeout(() => {
       reactFlowInstance.fitView({ padding: 0.18, duration: 400 });
     }, 60);
@@ -301,7 +268,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setEdges,
   ]);
 
-  // Click on node
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedStateId(node.id);
@@ -311,7 +277,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     [selectTraceNode]
   );
 
-  // Click on edge
   const handleEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
       const t = (edge.data as any)?.transition as LifecycleTransition;
@@ -324,13 +289,11 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     [openWhy]
   );
 
-  // Click on pane clears selection
   const handlePaneClick = useCallback(() => {
     setSelectedStateId(null);
     setSelectedTransition(null);
   }, []);
 
-  // Node hover
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredStateId(node.id);
   }, []);
@@ -339,7 +302,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setHoveredStateId(null);
   }, []);
 
-  // Simulator controls
   const handleTogglePlay = useCallback(() => {
     if (isPlaying) {
       setIsPlaying(false);
@@ -356,7 +318,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setSimulationIndex(-1);
   }, []);
 
-  // Export JSON
   const handleExport = useCallback(() => {
     if (!activeLifecycle) return;
     const blob = new Blob([JSON.stringify(activeLifecycle, null, 2)], {
@@ -372,7 +333,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     URL.revokeObjectURL(url);
   }, [activeLifecycle]);
 
-  // Fullscreen toggle
   const handleToggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -389,7 +349,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     return activeLifecycle.states.find((s) => s.id === selectedStateId || s.name === selectedStateId) || null;
   }, [selectedStateId, activeLifecycle]);
 
-  // Loading state: strictly uncluttered and minimal
   if (loading) {
     return (
       <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex items-center justify-center select-none">
@@ -403,7 +362,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     );
   }
 
-  // Error / Empty State
   if (error || !activeLifecycle) {
     return (
       <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex flex-col items-center justify-center p-8 select-none">
@@ -447,7 +405,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         .lc-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
       `}</style>
 
-      {/* TOP TOOLBAR */}
       <LifecycleToolbar
         currentView={currentView}
         onViewChange={onViewChange}
@@ -473,7 +430,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         onExport={handleExport}
       />
 
-      {/* MAIN REACT FLOW CANVAS */}
       <div className="flex-1 h-full relative">
         <ReactFlow
           nodes={nodes}
@@ -514,7 +470,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         </ReactFlow>
       </div>
 
-      {/* RIGHT INSPECTOR DRAWER */}
       <div
         className={`lc-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
           selectedStateData || selectedTransition ? 'open' : 'closed'

@@ -33,22 +33,17 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Inspector & Selection
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
 
-  // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'calls' | 'returns' | 'async' | 'errors'>('all');
 
-  // Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Step Simulation
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
 
-  // 1. Fetch Sequences
   const fetchSequences = useCallback(async () => {
     try {
       setLoading(true);
@@ -70,12 +65,10 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     fetchSequences();
   }, [fetchSequences]);
 
-  // Active Sequence
   const activeSequence = useMemo(() => {
     return sequences.find((s) => s.id === selectedSequenceId) || sequences[0] || null;
   }, [sequences, selectedSequenceId]);
 
-  // Sync sequence participants with TraceContext
   useEffect(() => {
     if (activeSequence?.participants) {
       setViewNodes(
@@ -89,18 +82,15 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     }
   }, [activeSequence, setViewNodes]);
 
-  // Filtered Messages
   const filteredMessages = useMemo(() => {
     if (!activeSequence) return [];
 
     return activeSequence.messages.filter((m) => {
-      // Type filter
       if (filterType === 'calls' && m.interaction_type !== 'call') return false;
       if (filterType === 'returns' && m.interaction_type !== 'return') return false;
       if (filterType === 'async' && !m.is_async && m.interaction_type !== 'event_emit') return false;
       if (filterType === 'errors' && !m.is_error && m.interaction_type !== 'error') return false;
 
-      // Text search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesMethod = m.method.toLowerCase().includes(q);
@@ -117,7 +107,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     });
   }, [activeSequence, filterType, searchQuery]);
 
-  // Participant Map
   const participantIndexMap = useMemo(() => {
     const map = new Map<string, number>();
     if (!activeSequence) return map;
@@ -127,7 +116,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return map;
   }, [activeSequence]);
 
-  // Active Message being simulated or selected
   const activeExecutingMessage = useMemo(() => {
     if (simulationIndex >= 0 && simulationIndex < filteredMessages.length) {
       return filteredMessages[simulationIndex];
@@ -150,7 +138,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return set;
   }, [activeExecutingMessage, selectedMessageId, filteredMessages]);
 
-  // 2. Playback Simulation Loop
   useEffect(() => {
     if (!isPlaying || !filteredMessages.length) return;
 
@@ -171,7 +158,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return () => clearInterval(interval);
   }, [isPlaying, playbackSpeed, filteredMessages.length]);
 
-  // Handlers
   const handleTogglePlay = useCallback(() => {
     if (!filteredMessages.length) return;
     if (isPlaying) {
@@ -230,7 +216,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     URL.revokeObjectURL(url);
   }, [activeSequence]);
 
-  // Selected Message for inspector
   const activeSelectedMessage = useMemo(() => {
     if (!selectedMessageId || !activeSequence) return null;
     return activeSequence.messages.find((m) => m.id === selectedMessageId) || null;
@@ -276,7 +261,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         .seq-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
       `}</style>
 
-      {/* Top Floating Toolbar */}
       <SequenceToolbar
         currentView={currentView}
         onViewChange={onViewChange}
@@ -306,7 +290,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         onExport={handleExportJSON}
       />
 
-      {/* Main Sequence Canvas (Vertical Timeline with Horizontal Scroll) */}
       <div
         ref={scrollAreaRef}
         className="flex-1 h-full w-full overflow-auto pt-32 pb-16 px-8 relative"
@@ -322,7 +305,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
           }}
           className="relative mx-auto flex flex-col"
         >
-          {/* 1. Sticky Participant Headers with Lifelines */}
           <div className="sticky top-0 z-30 pt-2 pb-4 bg-[#000000]/95 backdrop-blur-md">
             <SequenceParticipantHeader
               participants={activeSequence.participants}
@@ -332,7 +314,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
             />
           </div>
 
-          {/* 2. Messages List (Vertical Timeline Execution Order) */}
           <div className="flex flex-col mt-4 relative z-20">
             {filteredMessages.map((msg, idx) => {
               const callerIdx = participantIndexMap.get(msg.caller_id) ?? 0;
@@ -368,7 +349,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         </div>
       </div>
 
-      {/* Right Slide-in Inspector Drawer */}
       <div
         className={`seq-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
           activeSelectedMessage ? 'open' : 'closed'

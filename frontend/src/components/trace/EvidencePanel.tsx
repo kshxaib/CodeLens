@@ -1,38 +1,7 @@
-/**
- * EvidencePanel — Reusable source evidence display component.
- *
- * Shows:
- * - Evidence type badge (AST, Import, Function Call, Route, DB Access, etc.)
- * - File path + line range
- * - Code snippet (syntax-highlighted)
- * - Inferred warning when no direct code reference exists
- * - "Open Source" jump button
- * - Confidence bar
- * - Verification status (VERIFIED / INFERRED / NOT_FOUND)
- *
- * Used by: WhyModal, ExplainModal, ArchitectureInspector, SequenceInspector
- */
-import React from 'react';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  HelpCircle,
-  FileCode2,
-  ExternalLink,
-  ZapOff,
-  Zap,
-  Database,
-  Globe,
-  Settings,
-  GitMerge,
-  Cpu,
-  BrainCircuit,
-} from 'lucide-react';
-import type { SourceEvidence, EvidenceType, EvidenceVerification } from '../../types';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+import React from 'react';
+import { AlertTriangle, CheckCircle2, HelpCircle, FileCode2, ExternalLink, ZapOff, Zap, Database, Globe, Settings, GitMerge, Cpu, BrainCircuit } from 'lucide-react';
+import type { SourceEvidence, EvidenceType, EvidenceVerification } from '../../types';
 
 const EVIDENCE_TYPE_LABELS: Record<EvidenceType, string> = {
   ast: 'AST Parse',
@@ -66,10 +35,6 @@ const EVIDENCE_TYPE_ICONS: Record<EvidenceType, React.FC<{ className?: string }>
   inferred: ({ className }) => <ZapOff className={className} />,
   llm_inferred: ({ className }) => <BrainCircuit className={className} />,
 };
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
 
 interface EvidenceTypeBadgeProps {
   type: EvidenceType;
@@ -137,12 +102,8 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ status, co
   );
 };
 
-// ---------------------------------------------------------------------------
-// Confidence Bar
-// ---------------------------------------------------------------------------
-
 interface ConfidenceBarProps {
-  value: number; // 0-100
+  value: number; 
   label?: string;
 }
 
@@ -170,10 +131,6 @@ export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({ value, label }) =>
   );
 };
 
-// ---------------------------------------------------------------------------
-// Inferred Warning Banner
-// ---------------------------------------------------------------------------
-
 interface InferredWarningProps {
   warning?: string | null;
 }
@@ -192,10 +149,6 @@ export const InferredWarning: React.FC<InferredWarningProps> = ({ warning }) => 
     </div>
   );
 };
-
-// ---------------------------------------------------------------------------
-// Single Evidence Item Card
-// ---------------------------------------------------------------------------
 
 interface EvidenceItemCardProps {
   evidence: SourceEvidence;
@@ -220,7 +173,6 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
           : 'border-zinc-800 bg-[#0c0c0e]'
       }`}
     >
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-zinc-800/60">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[10px] text-zinc-500 font-mono shrink-0">#{index + 1}</span>
@@ -243,7 +195,6 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
         )}
       </div>
 
-      {/* Location */}
       {hasLocation ? (
         <div className="px-3.5 py-2 flex items-center gap-1.5">
           <FileCode2 className="w-3 h-3 text-zinc-500 shrink-0" />
@@ -260,7 +211,6 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
         </div>
       )}
 
-      {/* Code snippet */}
       {(evidence.snippet || evidence.code_snippet) && (
         <pre className="mx-3.5 mb-3 px-3 py-2.5 rounded-lg bg-black/60 border border-zinc-800 text-[10px] text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed font-mono">
           {evidence.snippet || evidence.code_snippet}
@@ -269,10 +219,6 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
     </div>
   );
 };
-
-// ---------------------------------------------------------------------------
-// Main EvidencePanel Component
-// ---------------------------------------------------------------------------
 
 interface EvidencePanelProps {
   evidence: SourceEvidence[];
@@ -297,7 +243,6 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
   return (
     <div className="space-y-3 font-mono text-xs">
-      {/* Panel Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -318,17 +263,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         )}
       </div>
 
-      {/* Confidence Bar */}
       {confidencePct !== undefined && !compact && (
         <ConfidenceBar value={confidencePct} label="Confidence" />
       )}
 
-      {/* Inferred Warning */}
       {verification?.warning && (
         <InferredWarning warning={verification.warning} />
       )}
 
-      {/* Evidence Items */}
       {hasAnyEvidence ? (
         <div className="space-y-2">
           {evidence.map((ev, idx) => (

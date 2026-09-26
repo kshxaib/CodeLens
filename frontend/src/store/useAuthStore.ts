@@ -30,7 +30,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const profile = await api.getUserProfile();
       set({ user: profile, error: null });
     } catch {
-      // If profile fails, check if we had a token, if not valid clear
       set({ user: null });
     } finally {
       set({ loading: false });
@@ -131,5 +130,4 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
-// Compatibility Hook export
 export const useAuth = useAuthStore;

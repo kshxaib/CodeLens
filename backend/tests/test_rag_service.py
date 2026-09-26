@@ -3,11 +3,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 from app.rag.service import format_sse_event, stream_chat_response
 
-
 def test_format_sse_event():
     evt = format_sse_event("token", {"token": "hello"})
     assert evt == 'event: token\ndata: {"token": "hello"}\n\n'
-
 
 @pytest.mark.asyncio
 @patch("app.rag.service.retrieve_context")
@@ -37,7 +35,6 @@ async def test_stream_chat_response_mock_mode(mock_retrieve):
     assert any("event: token" in e for e in events)
     assert any("event: done" in e for e in events)
 
-    # Check done event payload
     done_events = [e for e in events if "event: done" in e]
     assert len(done_events) == 1
     data = json.loads(done_events[0].split("data: ")[1].strip())
@@ -46,14 +43,12 @@ async def test_stream_chat_response_mock_mode(mock_retrieve):
     assert data["citations"][0]["file_path"] == "backend/app/api/auth.py"
     assert data["context_chunks_count"] == 1
 
-
 @pytest.mark.asyncio
 @patch("app.rag.service.retrieve_context")
 @patch("app.rag.service.OpenAI")
 async def test_stream_chat_response_live_client(mock_client_cls, mock_retrieve):
     mock_retrieve.return_value = []
 
-    # Mock OpenAI streaming client
     chunk1 = MagicMock()
     chunk1.choices = [MagicMock()]
     chunk1.choices[0].delta.content = "Here is the "
@@ -75,7 +70,6 @@ async def test_stream_chat_response_live_client(mock_client_cls, mock_retrieve):
 
     assert any("event: token" in e and "Here is the " in e for e in events)
     assert any("event: done" in e for e in events)
-
 
 @pytest.mark.asyncio
 @patch("app.rag.service.retrieve_context")

@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  ArrowDown,
-  ArrowRight,
-  ChevronDown,
-  CircleAlert,
-  Code2,
-  Compass,
-  Copy,
-  Check,
-  GitBranch,
-  Network,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowDown, ArrowRight, ChevronDown, CircleAlert, Code2, Compass, Copy, Check, GitBranch, Network, Sparkles } from 'lucide-react';
 import { GithubIcon } from '../components/common/Icons';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -75,7 +63,6 @@ export const LandingPage: React.FC = () => {
         .cl-meta-fade { animation: clFadeUpSm 500ms ease-out both; }
       `}</style>
 
-      {/* Main Top Navigation */}
       <nav
         className="backdrop-blur-md bg-[#000000]/90 sticky z-50 top-0 h-16"
         aria-label="Main navigation"
@@ -116,11 +103,8 @@ export const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content Area */}
       <main>
-        {/* Hero Section */}
         <section className="bg-[#000000] border-b border-[#1f1f23] pt-20 pr-6 pb-24 pl-6 relative overflow-hidden">
-          {/* Subtle Ambient Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/5 blur-3xl pointer-events-none -z-10" />
 
           <div className="mr-auto ml-auto max-w-7xl">
@@ -157,7 +141,6 @@ export const LandingPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Live Interactive Preview Screen */}
             <div className="cl-anim-preview shadow-[0px_25px_60px_-15px_rgba(0,0,0,0.6)] rounded-2xl bg-[#111827] border border-[#374151] mt-16 mr-auto ml-auto max-w-6xl overflow-hidden">
               <div className="border-b border-[#374151] flex pt-3.5 pr-5 pb-3.5 pl-5 flex-wrap justify-between items-center gap-4 bg-[#0d121c]">
                 <div className="font-semibold text-sm flex items-center gap-3 text-white">
@@ -183,7 +166,6 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[420px]">
-                {/* Left: Copilot Chat */}
                 <div className="border-b lg:border-b-0 lg:border-r border-[#374151] pt-6 pr-6 pb-6 pl-6 flex flex-col justify-between bg-[#111827]">
                   <div>
                     <div className="flex mb-5 justify-between items-center">
@@ -221,7 +203,6 @@ export const LandingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Right: Source Code Viewer with Line Highlights */}
                 <div className="pt-6 pr-6 pb-6 pl-6 bg-[#0a0d14] flex flex-col">
                   <div className="flex mb-4 justify-between items-center">
                     <span className="font-mono text-amber-400 text-xs flex items-center gap-1.5">
@@ -264,7 +245,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* The Problem Section */}
         <section
           id="product"
           className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0d1017]"
@@ -321,7 +301,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Features / Core Capabilities */}
         <section
           id="features"
           className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0b0e14]"
@@ -336,7 +315,6 @@ export const LandingPage: React.FC = () => {
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 mt-12 gap-5">
-              {/* Card 1 */}
               <div className="cl-card-1 rounded-2xl bg-[#111827] border border-[#374151] pt-6 pr-6 pb-6 pl-6 flex flex-col justify-between">
                 <div>
                   <h3 className="font-bold text-lg text-white">Ask your codebase</h3>
@@ -352,7 +330,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Card 2 */}
               <div className="cl-card-2 rounded-2xl bg-[#111827] border border-[#374151] pt-6 pr-6 pb-6 pl-6 flex flex-col justify-between">
                 <div>
                   <h3 className="font-bold text-lg text-white">Verify every answer</h3>
@@ -375,7 +352,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Card 3 */}
               <div className="cl-card-3 rounded-2xl bg-[#111827] border border-[#374151] pt-6 pr-6 pb-6 pl-6 flex flex-col justify-between">
                 <div>
                   <h3 className="font-bold text-lg text-white">See the architecture</h3>
@@ -411,7 +387,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* How It Works Section */}
         <section
           id="how-it-works"
           className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0d1017]"
@@ -424,7 +399,6 @@ export const LandingPage: React.FC = () => {
               Ask. Trace. Verify.
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 mt-12 gap-5">
-              {/* Step 1 */}
               <div className="cl-card-1 rounded-2xl bg-[#131722] border border-[#22283a] pt-7 pr-6 pb-7 pl-6 flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-amber-400 text-xs font-semibold">
@@ -440,7 +414,6 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Step 2 */}
               <div className="cl-card-2 rounded-2xl bg-[#131722] border border-[#22283a] pt-7 pr-6 pb-7 pl-6 flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-amber-400 text-xs font-semibold">
@@ -464,7 +437,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Step 3 */}
               <div className="cl-card-3 rounded-2xl bg-[#131722] border border-[#22283a] pt-7 pr-6 pb-7 pl-6 flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-amber-400 text-xs font-semibold">
@@ -490,7 +462,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Architecture Section */}
         <section
           id="architecture"
           className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0b0e14]"
@@ -565,7 +536,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Grounded AI Section */}
         <section className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0d1017]">
           <div className="mr-auto ml-auto max-w-7xl">
             <div className="max-w-2xl">
@@ -643,7 +613,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Developer Workflow Section */}
         <section className="border-b border-[#22283a] pt-24 pr-6 pb-24 pl-6 bg-[#0b0e14]">
           <div className="mr-auto ml-auto max-w-7xl">
             <p className="font-mono text-amber-400 text-xs tracking-[0.2em] uppercase font-semibold">
@@ -681,7 +650,6 @@ export const LandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-[#22283a] py-8 text-center text-xs text-[#6b7280] bg-[#0d1017]">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-slate-400">

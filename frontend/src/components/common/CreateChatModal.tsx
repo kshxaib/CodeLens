@@ -51,7 +51,6 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-fadeIn">
       <div className="w-full max-w-md bg-card rounded-xl p-6 border border-border relative flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           disabled={isLoading}
@@ -60,7 +59,6 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
           <X className="size-4" />
         </button>
 
-        {/* Modal Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="size-9 rounded-lg bg-secondary border border-border flex items-center justify-center text-primary shrink-0">
             <MessageSquarePlus className="size-4" />
@@ -71,7 +69,6 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="threadTitle" className="block text-xs font-medium text-muted-foreground mb-1.5">
@@ -96,7 +93,6 @@ export const CreateChatModal: React.FC<CreateChatModalProps> = ({
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
             <Button
               type="button"

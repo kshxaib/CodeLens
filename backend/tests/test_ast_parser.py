@@ -1,6 +1,5 @@
 from app.parser.ast_parser import detect_language, parse_source_code
 
-
 def test_detect_language():
     assert detect_language("app/main.py") == "python"
     assert detect_language("src/index.js") == "javascript"
@@ -11,7 +10,6 @@ def test_detect_language():
     assert detect_language("pkg/server/main.go") == "go"
     assert detect_language("README.md") == "markdown"
     assert detect_language("unknown.xyz") == "text"
-
 
 def test_parse_python_code():
     code = """
@@ -28,7 +26,6 @@ class MathService:
     assert tree is not None
     assert tree.root_node.type == "module"
 
-
 def test_parse_javascript_code():
     code = """
 export async function fetchUserData(userId) {
@@ -41,7 +38,6 @@ export async function fetchUserData(userId) {
     assert tree is not None
     assert tree.root_node.type == "program"
 
-
 def test_parse_typescript_and_tsx():
     ts_code = "interface User { id: string; name: string; }"
     tree_ts, lang_ts = parse_source_code(ts_code, "types.ts")
@@ -52,7 +48,6 @@ def test_parse_typescript_and_tsx():
     tree_tsx, lang_tsx = parse_source_code(tsx_code, "Button.tsx")
     assert lang_tsx == "tsx"
     assert tree_tsx is not None
-
 
 def test_parse_java_and_go():
     java_code = """
