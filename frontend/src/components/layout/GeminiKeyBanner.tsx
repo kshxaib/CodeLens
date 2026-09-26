@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 export const GeminiKeyBanner: React.FC = () => {
   const { user } = useAuth();
 
-  if (!user || user.has_gemini_key) {
+  if (!user || user.has_openai_key || user.has_gemini_key) {
     return null;
   }
 
@@ -17,7 +17,7 @@ export const GeminiKeyBanner: React.FC = () => {
           <KeyRound className="w-3.5 h-3.5" />
         </span>
         <span>
-          <strong className="text-amber-300 font-semibold">Gemini API Key Required:</strong> Add your free Google AI Studio key to unlock code embeddings and AI Copilot.
+          <strong className="text-amber-300 font-semibold">OpenAI API Key Required:</strong> Add your OpenAI API key to unlock code embeddings and AI Copilot.
         </span>
       </div>
       <Link
@@ -29,3 +29,5 @@ export const GeminiKeyBanner: React.FC = () => {
     </div>
   );
 };
+
+export const OpenAIKeyBanner = GeminiKeyBanner;

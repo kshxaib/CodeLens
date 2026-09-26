@@ -29,7 +29,8 @@ class User(Base):
     email = Column(String(255), nullable=True)
     avatar_url = Column(String(500), nullable=True)
     github_access_token = Column(String(500), nullable=True)
-    gemini_api_key = Column(String(500), nullable=True)  # Fernet encrypted key
+    openai_api_key = Column(String(500), nullable=True)  # Fernet encrypted OpenAI key
+    gemini_api_key = Column(String(500), nullable=True)  # Legacy Fernet encrypted key
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

@@ -12,7 +12,8 @@ from app.rag.vector_store import delete_repository_vectors, upsert_chunks
 def index_repository(
     repository_id: int,
     db: Session,
-    user_gemini_key: str,
+    user_openai_key: Optional[str] = None,
+    user_gemini_key: Optional[str] = None,
     github_token: Optional[str] = None,
     custom_files: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
@@ -23,13 +24,17 @@ def index_repository(
     3. Persists source files in PostgreSQL 'files' table
     4. Generates & caches architecture topology graph in PostgreSQL
     5. Splits code into AST structure-aware chunks
-    6. Generates 768-dim embeddings with user's Gemini key
+    6. Generates 768-dim embeddings with user's OpenAI key
     7. Idempotently upserts vectors into Qdrant collection
     8. Updates repository record with index_status = 'indexed' and metadata
     """
     repo = db.query(Repository).filter(Repository.id == repository_id).first()
     if not repo:
         raise ValueError(f"Repository {repository_id} not found.")
+
+    active_key = user_openai_key or user_gemini_key
+    if not active_key:
+        raise ValueError("An OpenAI API key is required to index the repository.")
 
     # 1. Update status to indexing
     repo.index_status = "indexing"
@@ -89,11 +94,11 @@ def index_repository(
                 total_symbols += len(c.symbols)
             all_chunks.extend(file_chunks)
 
-        # 6. Generate Embeddings using User's Gemini Key
+        # 6. Generate Embeddings using User's OpenAI Key (768 dimensions)
         chunk_texts = [c.augmented_content for c in all_chunks]
         embeddings = generate_batch_embeddings(
             texts=chunk_texts,
-            api_key=user_gemini_key,
+            api_key=active_key,
             batch_size=50,
         )
 

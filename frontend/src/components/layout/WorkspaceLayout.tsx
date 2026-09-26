@@ -269,14 +269,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                 <div className="mt-2.5 pt-2 border-t border-[#18181b] flex items-center justify-between">
                   <span className="text-[10px] text-slate-400 flex items-center gap-1">
                     <KeyRound className="w-3 h-3 text-amber-400" />
-                    Gemini Key:
+                    OpenAI Key:
                   </span>
                   <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-medium ${
-                    user?.has_gemini_key
+                    user?.has_openai_key || user?.has_gemini_key
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                       : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                   }`}>
-                    {user?.has_gemini_key ? 'Configured ✓' : 'Required ⚠'}
+                    {user?.has_openai_key || user?.has_gemini_key ? 'Configured ✓' : 'Required ⚠'}
                   </span>
                 </div>
               </div>

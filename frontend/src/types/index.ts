@@ -4,6 +4,8 @@ export interface UserProfile {
   username: string;
   email: string | null;
   avatar_url: string | null;
+  has_openai_key?: boolean;
+  masked_openai_key?: string | null;
   has_gemini_key: boolean;
   masked_gemini_key: string | null;
   created_at: string;

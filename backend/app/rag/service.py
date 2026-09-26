@@ -1,8 +1,7 @@
 import json
 import asyncio
 from typing import AsyncGenerator, List, Dict, Any, Optional
-from google import genai
-from google.genai import types
+from openai import OpenAI, APIError, RateLimitError
 
 from app.rag.retriever import retrieve_context
 from app.rag.prompts import (
@@ -13,11 +12,10 @@ from app.rag.prompts import (
 )
 
 CANDIDATE_CHAT_MODELS = [
-    "gemini-flash-latest",
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-lite-latest",
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4.1-mini",
+    "gpt-3.5-turbo",
 ]
 
 
@@ -30,13 +28,14 @@ async def stream_chat_response(
     repository_id: int,
     repo_full_name: str,
     question: str,
-    user_gemini_key: str,
+    user_openai_key: Optional[str] = None,
+    user_gemini_key: Optional[str] = None,
     conversation_history: Optional[List[Dict[str, Any]]] = None,
     model_name: Optional[str] = None,
     limit_context_chunks: int = 6,
 ) -> AsyncGenerator[str, None]:
     """
-    Asynchronously streams the grounded AI Copilot response for a question.
+    Asynchronously streams the grounded AI Copilot response for a question using OpenAI.
     Yields standard Server-Sent Event strings:
     - `status`: Progress steps (retrieving, generating)
     - `token`: Individual streamed text tokens
@@ -45,6 +44,7 @@ async def stream_chat_response(
     """
     full_response_text = ""
     retrieved_chunks: List[Dict[str, Any]] = []
+    active_api_key = user_openai_key or user_gemini_key or ""
 
     try:
         # Step 1: Detect intent (conversational greeting vs technical codebase query)
@@ -67,13 +67,13 @@ async def stream_chat_response(
             retrieved_chunks = retrieve_context(
                 repository_id=repository_id,
                 query=question,
-                user_gemini_key=user_gemini_key,
+                user_openai_key=active_api_key,
                 limit=limit_context_chunks,
             )
 
             yield format_sse_event("status", {
                 "status": "generating",
-                "message": f"Analyzing {len(retrieved_chunks)} context chunks with Gemini...",
+                "message": f"Analyzing {len(retrieved_chunks)} context chunks with OpenAI...",
                 "context_chunks_count": len(retrieved_chunks),
             })
 
@@ -87,10 +87,10 @@ async def stream_chat_response(
         )
 
         # Mock mode for testing
-        if user_gemini_key.startswith("AIzaSy_MOCK_TEST_KEY_"):
+        if active_api_key.startswith("sk-MOCK_") or active_api_key.startswith("AIzaSy_MOCK_"):
             mock_tokens = [
                 "Hello! " if is_conversational else "Based on the codebase, ",
-                "I am CodeLens Copilot. " if is_conversational else "the implementation is in ",
+                "I am CodeLens Copilot powered by OpenAI. " if is_conversational else "the implementation is in ",
                 "How can I help you today?" if is_conversational else "[cite:backend/app/api/auth.py:25-50].",
             ]
             for tok in mock_tokens:
@@ -98,13 +98,19 @@ async def stream_chat_response(
                 yield format_sse_event("token", {"token": tok})
                 await asyncio.sleep(0.01)
         else:
-            # Live Google Gemini Client streaming with fallback model support
-            client = genai.Client(api_key=user_gemini_key)
-            config = types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.7 if is_conversational else 0.2,
-                top_p=0.95,
-            )
+            # Live OpenAI Client streaming with fallback model support
+            client = OpenAI(api_key=active_api_key)
+
+            messages = [
+                {"role": "system", "content": system_instruction},
+            ]
+            if conversation_history:
+                for h in conversation_history[-6:]:
+                    messages.append({
+                        "role": h.get("role", "user"),
+                        "content": h.get("content", ""),
+                    })
+            messages.append({"role": "user", "content": user_prompt})
 
             models_to_try = [model_name] if model_name else CANDIDATE_CHAT_MODELS
             stream_success = False
@@ -112,18 +118,20 @@ async def stream_chat_response(
 
             for m in models_to_try:
                 try:
-                    response_stream = client.models.generate_content_stream(
+                    response_stream = client.chat.completions.create(
                         model=m,
-                        contents=user_prompt,
-                        config=config,
+                        messages=messages,
+                        stream=True,
+                        temperature=0.7 if is_conversational else 0.2,
                     )
 
                     chunk_received = False
                     for chunk in response_stream:
-                        if chunk and chunk.text:
+                        delta = chunk.choices[0].delta if chunk.choices else None
+                        if delta and delta.content:
                             chunk_received = True
-                            full_response_text += chunk.text
-                            yield format_sse_event("token", {"token": chunk.text})
+                            full_response_text += delta.content
+                            yield format_sse_event("token", {"token": delta.content})
                             await asyncio.sleep(0)
 
                     if chunk_received or full_response_text:
@@ -131,14 +139,14 @@ async def stream_chat_response(
                         break
                 except Exception as ex:
                     last_err = ex
-                    print(f"[!] Gemini model {m} failed: {ex}. Checking fallback...")
+                    print(f"[!] OpenAI model {m} failed: {ex}. Checking fallback...")
                     if full_response_text:
                         # Tokens already yielded to client; don't restart mid-stream
                         break
                     continue
 
             if not stream_success and not full_response_text:
-                raise last_err or RuntimeError("All candidate Gemini models failed to generate content.")
+                raise last_err or RuntimeError("All candidate OpenAI models failed to generate content.")
 
         # Step 4: Extract citations & finalize
         citations = parse_citations_from_response(
@@ -158,5 +166,5 @@ async def stream_chat_response(
         error_msg = str(e)
         yield format_sse_event("error", {
             "error": error_msg,
-            "message": f"Gemini Streaming Error: {error_msg}",
+            "message": f"OpenAI Streaming Error: {error_msg}",
         })

@@ -72,7 +72,7 @@ export const RepositoryOverviewPage: React.FC = () => {
   }, [indexError]);
 
   const handleTriggerIndex = async () => {
-    if (!user?.has_gemini_key) {
+    if (!user?.has_openai_key && !user?.has_gemini_key) {
       setIsKeyModalOpen(true);
       return;
     }

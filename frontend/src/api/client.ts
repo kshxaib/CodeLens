@@ -74,12 +74,20 @@ export const api = {
     const res = await apiClient.get<UserProfile>('/user/profile');
     return res.data;
   },
+  updateOpenAIKey: async (apiKey: string) => {
+    const res = await apiClient.put<UserProfile>('/user/openai-key', { api_key: apiKey });
+    return res.data;
+  },
+  deleteOpenAIKey: async () => {
+    const res = await apiClient.delete<{ status: string; has_key: boolean; message: string }>('/user/openai-key');
+    return res.data;
+  },
   updateGeminiKey: async (apiKey: string) => {
-    const res = await apiClient.put<UserProfile>('/user/gemini-key', { api_key: apiKey });
+    const res = await apiClient.put<UserProfile>('/user/openai-key', { api_key: apiKey });
     return res.data;
   },
   deleteGeminiKey: async () => {
-    const res = await apiClient.delete<{ status: string; has_key: boolean; message: string }>('/user/gemini-key');
+    const res = await apiClient.delete<{ status: string; has_key: boolean; message: string }>('/user/openai-key');
     return res.data;
   },
 

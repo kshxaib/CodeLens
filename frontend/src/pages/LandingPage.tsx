@@ -177,7 +177,7 @@ export const LandingPage: React.FC = () => {
                     Indexed
                   </span>
                   <span className="text-[#9ca3af] font-mono flex items-center gap-1.5">
-                    <Sparkles className="size-3 text-amber-400" /> Gemini 2.0 Active
+                    <Sparkles className="size-3 text-amber-400" /> OpenAI GPT-4o Active
                   </span>
                 </div>
               </div>

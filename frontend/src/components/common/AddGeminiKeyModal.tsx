@@ -13,7 +13,7 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { updateGeminiKey } = useAuthStore();
+  const { updateOpenAIKey } = useAuthStore();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -25,14 +25,14 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
     e.preventDefault();
     const cleanKey = apiKeyInput.trim();
     if (!cleanKey) {
-      setError('Please enter a valid Gemini API key.');
+      setError('Please enter a valid OpenAI API key.');
       return;
     }
 
     try {
       setSubmitting(true);
       setError(null);
-      await updateGeminiKey(cleanKey);
+      await updateOpenAIKey(cleanKey);
       setApiKeyInput('');
       onSuccess();
       onClose();
@@ -57,7 +57,7 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
 
         {/* Modal Header */}
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-white">Add Gemini API Key</h3>
+          <h3 className="text-sm font-semibold text-white">Add OpenAI API Key</h3>
           <p className="text-xs text-zinc-400 mt-0.5">Required for repository indexing and AI chat</p>
         </div>
 
@@ -73,7 +73,7 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label htmlFor="modalApiKey" className="block text-xs font-medium text-zinc-300 mb-1">
-              Google Gemini API Key
+              OpenAI API Key
             </label>
             <div className="relative">
               <input
@@ -84,7 +84,7 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
                   setApiKeyInput(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="AIzaSy..."
+                placeholder="sk-proj-... or sk-..."
                 disabled={submitting}
                 autoFocus
                 className="w-full bg-[#0c0c0e] border border-[#27272a] focus:border-zinc-500 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 font-mono transition outline-none"
@@ -102,12 +102,12 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
 
           <div className="flex items-center justify-end text-[11px]">
             <a
-              href="https://aistudio.google.com/app/apikey"
+              href="https://platform.openai.com/api-keys"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-200 transition"
             >
-              Get free key from Google AI Studio <ExternalLink className="w-3 h-3" />
+              Get API key from OpenAI Platform <ExternalLink className="w-3 h-3" />
             </a>
           </div>
 
@@ -141,3 +141,5 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
     </div>
   );
 };
+
+export const AddOpenAIKeyModal = AddGeminiKeyModal;

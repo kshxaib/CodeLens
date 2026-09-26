@@ -114,8 +114,9 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
       return;
     }
 
-    if (!user?.has_gemini_key) {
-      setError('Gemini API key is required to index a repository. Please add your key first.');
+    const hasKey = Boolean(user?.has_openai_key ?? user?.has_gemini_key);
+    if (!hasKey) {
+      setError('OpenAI API key is required to index a repository. Please add your key first.');
       setIsKeyModalOpen(true);
       return;
     }
@@ -167,7 +168,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
             clearTimeout(stepProgression);
             clearTimeout(stepProgression2);
             setStage('error');
-            setError('Repository indexing failed. Please verify the URL or ensure your Gemini API key is configured.');
+            setError('Repository indexing failed. Please verify the URL or ensure your OpenAI API key is configured.');
           }
         } catch (pollErr: any) {
           console.warn('Status poll warning:', pollErr);
@@ -236,11 +237,11 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         {/* STAGE 1: INPUT FORM */}
         {stage === 'input' && (
           <>
-            {!user?.has_gemini_key && (
+            {!(user?.has_openai_key ?? user?.has_gemini_key) && (
               <div className="mb-4 p-3 rounded-xl bg-black border border-[#27272a] text-zinc-300 text-xs flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <KeyRound className="w-4 h-4 text-zinc-400 shrink-0" />
-                  <span>Gemini API key required for indexing</span>
+                  <span>OpenAI API key required for indexing</span>
                 </div>
                 <button
                   type="button"

@@ -12,6 +12,8 @@ class UserBase(BaseModel):
 
 class UserRead(UserBase):
     id: int
+    has_openai_key: bool = False
+    masked_openai_key: Optional[str] = None
     has_gemini_key: bool = False
     masked_gemini_key: Optional[str] = None
     created_at: datetime
@@ -26,6 +28,8 @@ class UserProfileResponse(BaseModel):
     username: str
     email: Optional[str] = None
     avatar_url: Optional[str] = None
+    has_openai_key: bool = False
+    masked_openai_key: Optional[str] = None
     has_gemini_key: bool = False
     masked_gemini_key: Optional[str] = None
     created_at: datetime
@@ -34,7 +38,7 @@ class UserProfileResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class GeminiKeyUpdate(BaseModel):
+class OpenAIKeyUpdate(BaseModel):
     api_key: str
 
     @field_validator("api_key")
@@ -42,14 +46,22 @@ class GeminiKeyUpdate(BaseModel):
     def validate_api_key(cls, v: str) -> str:
         cleaned = v.strip()
         if not cleaned:
-            raise ValueError("Gemini API key cannot be empty.")
+            raise ValueError("OpenAI API key cannot be empty.")
         if len(cleaned) < 15:
-            raise ValueError("Invalid Gemini API key format (length too short).")
+            raise ValueError("Invalid OpenAI API key format (length too short).")
         return cleaned
 
 
-class GeminiKeyStatusResponse(BaseModel):
+# Alias for backward compatibility
+GeminiKeyUpdate = OpenAIKeyUpdate
+
+
+class OpenAIKeyStatusResponse(BaseModel):
     status: str  # verified | invalid | missing | removed
     has_key: bool
     masked_key: Optional[str] = None
     message: Optional[str] = None
+
+
+# Alias for backward compatibility
+GeminiKeyStatusResponse = OpenAIKeyStatusResponse

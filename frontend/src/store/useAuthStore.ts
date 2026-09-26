@@ -9,13 +9,15 @@ interface AuthState {
   loginWithGitHub: () => Promise<void>;
   handleCallback: (code: string) => Promise<UserProfile>;
   logout: () => Promise<void>;
+  updateOpenAIKey: (apiKey: string) => Promise<UserProfile>;
+  removeOpenAIKey: () => Promise<void>;
   updateGeminiKey: (apiKey: string) => Promise<UserProfile>;
   removeGeminiKey: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: UserProfile | null) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   error: null,
@@ -78,8 +80,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  updateGeminiKey: async (apiKey: string) => {
-    const res = await api.updateGeminiKey(apiKey);
+  updateOpenAIKey: async (apiKey: string) => {
+    const res = await api.updateOpenAIKey(apiKey);
     try {
       const profile = await api.getUserProfile();
       set({ user: profile });
@@ -89,17 +91,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: state.user
           ? {
               ...state.user,
+              has_openai_key: (res as any).has_key ?? (apiKey.trim().length > 0),
+              masked_openai_key: (res as any).masked_key ?? '',
               has_gemini_key: (res as any).has_key ?? (apiKey.trim().length > 0),
               masked_gemini_key: (res as any).masked_key ?? '',
             }
           : null,
       }));
-      return stateUser(res);
+      return res as any;
     }
   },
 
-  removeGeminiKey: async () => {
-    await api.deleteGeminiKey();
+  removeOpenAIKey: async () => {
+    await api.deleteOpenAIKey();
     try {
       const profile = await api.getUserProfile();
       set({ user: profile });
@@ -108,6 +112,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: state.user
           ? {
               ...state.user,
+              has_openai_key: false,
+              masked_openai_key: '',
               has_gemini_key: false,
               masked_gemini_key: '',
             }
@@ -115,11 +121,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       }));
     }
   },
-}));
 
-function stateUser(res: any): any {
-  return res;
-}
+  updateGeminiKey: async (apiKey: string) => {
+    return get().updateOpenAIKey(apiKey);
+  },
+
+  removeGeminiKey: async () => {
+    return get().removeOpenAIKey();
+  },
+}));
 
 // Compatibility Hook export
 export const useAuth = useAuthStore;

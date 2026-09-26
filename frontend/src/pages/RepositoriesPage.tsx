@@ -36,8 +36,10 @@ export const RepositoriesPage: React.FC = () => {
     (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const hasKey = Boolean(user?.has_openai_key ?? user?.has_gemini_key);
+
   const handleAddRepoClick = () => {
-    if (!user?.has_gemini_key) {
+    if (!hasKey) {
       setIsKeyModalOpen(true);
       return;
     }
@@ -47,7 +49,7 @@ export const RepositoriesPage: React.FC = () => {
   const handleIndexClick = async (e: React.MouseEvent, repoId: number) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!user?.has_gemini_key) {
+    if (!hasKey) {
       setIsKeyModalOpen(true);
       return;
     }

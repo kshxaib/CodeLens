@@ -45,10 +45,13 @@ export const DashboardPage: React.FC = () => {
   const [confirmationToast, setConfirmationToast] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const hasKey = Boolean(user?.has_openai_key ?? user?.has_gemini_key);
+
   useEffect(() => {
-    if (sessionStorage.getItem('gemini_key_just_verified')) {
+    if (sessionStorage.getItem('openai_key_just_verified') || sessionStorage.getItem('gemini_key_just_verified')) {
+      sessionStorage.removeItem('openai_key_just_verified');
       sessionStorage.removeItem('gemini_key_just_verified');
-      setConfirmationToast('Gemini API Key verified and active! Code indexing and AI Copilot are now ready.');
+      setConfirmationToast('OpenAI API Key verified and active! Code indexing and AI Copilot are now ready.');
     }
   }, []);
 
@@ -79,7 +82,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleAddRepoClick = () => {
-    if (!user?.has_gemini_key) {
+    if (!hasKey) {
       setIsKeyModalOpen(true);
       return;
     }
@@ -87,7 +90,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   const handleReindex = async (repoId: number) => {
-    if (!user?.has_gemini_key) {
+    if (!hasKey) {
       setIsKeyModalOpen(true);
       return;
     }
@@ -211,17 +214,17 @@ export const DashboardPage: React.FC = () => {
                 </Card>
               </section>
 
-              {/* Gemini API Key Prompt Banner - Only shown if key has NOT been added */}
-              {!user?.has_gemini_key && (
+              {/* OpenAI API Key Prompt Banner - Only shown if key has NOT been added */}
+              {!hasKey && (
                 <section className="rounded-xl bg-black border border-[#27272a] flex flex-col sm:flex-row p-4 justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3">
                     <KeyRound className="w-4 h-4 text-zinc-400 shrink-0" />
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-sm text-white">
-                        Gemini API Key Required
+                        OpenAI API Key Required
                       </span>
                       <span className="text-zinc-400 text-xs">
-                        Configure your Gemini API key to enable repository indexing and AI chat.
+                        Configure your OpenAI API key to enable repository indexing and AI chat.
                       </span>
                     </div>
                   </div>
@@ -553,13 +556,13 @@ export const DashboardPage: React.FC = () => {
         />
       )}
 
-      {/* Add Gemini Key Modal */}
+      {/* Add OpenAI Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}
           onClose={() => setIsKeyModalOpen(false)}
           onSuccess={() => {
-            setConfirmationToast("Gemini API Key verified and active! Code indexing and AI Copilot are now ready.");
+            setConfirmationToast("OpenAI API Key verified and active! Code indexing and AI Copilot are now ready.");
           }}
         />
       )}

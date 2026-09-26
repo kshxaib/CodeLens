@@ -32,7 +32,7 @@ export const RevokeKeyConfirmModal: React.FC<RevokeKeyConfirmModalProps> = ({
 
         {/* Modal Header */}
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-white">Remove Gemini API Key</h3>
+          <h3 className="text-sm font-semibold text-white">Remove OpenAI API Key</h3>
           <p className="text-xs text-zinc-400 mt-1">Are you sure you want to remove this key?</p>
         </div>
 

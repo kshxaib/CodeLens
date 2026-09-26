@@ -190,19 +190,20 @@ async def stream_chat(
     """
     repo = get_user_repository_access(repository_id, current_user, db)
 
-    # 1. Verify BYOK Gemini API key
-    if not current_user.gemini_api_key:
+    # 1. Verify BYOK OpenAI API key
+    encrypted_key = getattr(current_user, "openai_api_key", None) or current_user.gemini_api_key
+    if not encrypted_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Gemini API key is required. Please configure your key in User Settings.",
+            detail="OpenAI API key is required. Please configure your key in User Settings.",
         )
 
     try:
-        user_gemini_key = decrypt_api_key(current_user.gemini_api_key)
+        user_api_key = decrypt_api_key(encrypted_key)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to decrypt Gemini API key. Please re-enter your key in Settings.",
+            detail="Failed to decrypt API key. Please re-enter your key in Settings.",
         )
 
     # 2. Verify conversation
@@ -251,7 +252,7 @@ async def stream_chat(
             repository_id=repo.id,
             repo_full_name=repo.full_name,
             question=question_text,
-            user_gemini_key=user_gemini_key,
+            user_openai_key=user_api_key,
             conversation_history=history,
         ):
             yield sse_chunk

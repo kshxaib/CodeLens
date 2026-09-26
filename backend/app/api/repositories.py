@@ -178,29 +178,31 @@ async def trigger_repository_indexing(
     """
     repo = get_user_repository_access(id, current_user, db)
 
-    # Verify user has configured their BYOK Gemini key
-    if not current_user.gemini_api_key:
+    # Verify user has configured their BYOK OpenAI key
+    encrypted_key = getattr(current_user, "openai_api_key", None) or current_user.gemini_api_key
+    if not encrypted_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google Gemini API key is missing. Please configure your key in Profile & Settings before indexing.",
+            detail="OpenAI API key is missing. Please configure your key in Profile & Settings before indexing.",
         )
 
-    decrypted_key = decrypt_api_key(current_user.gemini_api_key)
+    decrypted_key = decrypt_api_key(encrypted_key)
     if not decrypted_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to decrypt Gemini API key. Please re-enter your key in Settings.",
+            detail="Failed to decrypt API key. Please re-enter your key in Settings.",
         )
 
     # Run indexing in background
-    def run_indexer_task(repo_id: int, gemini_key: str, gh_token: Optional[str]):
+    def run_indexer_task(repo_id: int, api_key: str, gh_token: Optional[str]):
         from app.db.session import SessionLocal
         task_db = SessionLocal()
         try:
             index_repository(
                 repository_id=repo_id,
                 db=task_db,
-                user_gemini_key=gemini_key,
+                user_openai_key=api_key,
+                user_gemini_key=api_key,
                 github_token=gh_token,
             )
         finally:

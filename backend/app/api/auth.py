@@ -70,8 +70,10 @@ def get_current_user_optional(
 
 
 def serialize_user_profile(user: User) -> UserProfileResponse:
-    """Helper to convert User model to UserProfileResponse with masked Gemini key."""
-    decrypted_key = decrypt_api_key(user.gemini_api_key) if user.gemini_api_key else ""
+    """Helper to convert User model to UserProfileResponse with masked OpenAI key."""
+    # Check OpenAI key first, fallback to gemini_api_key column
+    encrypted_key = getattr(user, "openai_api_key", None) or user.gemini_api_key
+    decrypted_key = decrypt_api_key(encrypted_key) if encrypted_key else ""
     has_key = bool(decrypted_key)
     masked_key = mask_api_key(decrypted_key) if has_key else None
 
@@ -81,6 +83,8 @@ def serialize_user_profile(user: User) -> UserProfileResponse:
         username=user.username,
         email=user.email,
         avatar_url=user.avatar_url,
+        has_openai_key=has_key,
+        masked_openai_key=masked_key,
         has_gemini_key=has_key,
         masked_gemini_key=masked_key,
         created_at=user.created_at,

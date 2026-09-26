@@ -113,7 +113,7 @@ export const CodeLensChatPage: React.FC = () => {
     const question = (customPrompt || inputQuery).trim();
     if (!question || !activeRepoId || isStreaming) return;
 
-    if (!user?.has_gemini_key) {
+    if (!user?.has_openai_key && !user?.has_gemini_key) {
       setIsKeyModalOpen(true);
       return;
     }
