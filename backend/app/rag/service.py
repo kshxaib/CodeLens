@@ -9,9 +9,16 @@ from app.rag.prompts import (
     build_system_prompt,
     build_user_prompt,
     parse_citations_from_response,
+    is_conversational_query,
 )
 
-DEFAULT_CHAT_MODEL = "gemini-2.0-flash"
+CANDIDATE_CHAT_MODELS = [
+    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.5-flash",
+    "gemini-flash-lite-latest",
+]
 
 
 def format_sse_event(event: str, data: Dict[str, Any]) -> str:
@@ -25,7 +32,7 @@ async def stream_chat_response(
     question: str,
     user_gemini_key: str,
     conversation_history: Optional[List[Dict[str, Any]]] = None,
-    model_name: str = DEFAULT_CHAT_MODEL,
+    model_name: Optional[str] = None,
     limit_context_chunks: int = 6,
 ) -> AsyncGenerator[str, None]:
     """
@@ -40,73 +47,111 @@ async def stream_chat_response(
     retrieved_chunks: List[Dict[str, Any]] = []
 
     try:
-        # Step 1: Notify retrieval status
-        yield format_sse_event("status", {
-            "status": "retrieving",
-            "message": "Retrieving relevant codebase context from vector store...",
-        })
+        # Step 1: Detect intent (conversational greeting vs technical codebase query)
+        is_conversational = is_conversational_query(question)
 
-        # Step 2: Retrieve context chunks
-        retrieved_chunks = retrieve_context(
-            repository_id=repository_id,
-            query=question,
-            user_gemini_key=user_gemini_key,
-            limit=limit_context_chunks,
+        if is_conversational:
+            # For casual greetings, skip heavy vector retrieval
+            yield format_sse_event("status", {
+                "status": "generating",
+                "message": "CodeLens Copilot thinking...",
+                "context_chunks_count": 0,
+            })
+        else:
+            # Step 2: Technical query - retrieve codebase context chunks
+            yield format_sse_event("status", {
+                "status": "retrieving",
+                "message": "Retrieving relevant codebase context from vector store...",
+            })
+
+            retrieved_chunks = retrieve_context(
+                repository_id=repository_id,
+                query=question,
+                user_gemini_key=user_gemini_key,
+                limit=limit_context_chunks,
+            )
+
+            yield format_sse_event("status", {
+                "status": "generating",
+                "message": f"Analyzing {len(retrieved_chunks)} context chunks with Gemini...",
+                "context_chunks_count": len(retrieved_chunks),
+            })
+
+        # Step 3: Build prompts with intent awareness
+        system_instruction = build_system_prompt(repo_full_name, is_conversational=is_conversational)
+        user_prompt = build_user_prompt(
+            question,
+            retrieved_chunks,
+            conversation_history,
+            is_conversational=is_conversational,
         )
-
-        # Step 3: Notify generation status
-        yield format_sse_event("status", {
-            "status": "generating",
-            "message": f"Analyzing {len(retrieved_chunks)} context chunks with Gemini...",
-            "context_chunks_count": len(retrieved_chunks),
-        })
-
-        # Step 4: Build prompts
-        system_instruction = build_system_prompt(repo_full_name)
-        user_prompt = build_user_prompt(question, retrieved_chunks, conversation_history)
 
         # Mock mode for testing
         if user_gemini_key.startswith("AIzaSy_MOCK_TEST_KEY_"):
             mock_tokens = [
-                "Based on the codebase, ",
-                "the authentication handler is implemented in ",
-                "[cite:backend/app/api/auth.py:25-50]. ",
-                "It validates GitHub OAuth codes securely.",
+                "Hello! " if is_conversational else "Based on the codebase, ",
+                "I am CodeLens Copilot. " if is_conversational else "the implementation is in ",
+                "How can I help you today?" if is_conversational else "[cite:backend/app/api/auth.py:25-50].",
             ]
             for tok in mock_tokens:
                 full_response_text += tok
                 yield format_sse_event("token", {"token": tok})
                 await asyncio.sleep(0.01)
         else:
-            # Live Google Gemini Client streaming
+            # Live Google Gemini Client streaming with fallback model support
             client = genai.Client(api_key=user_gemini_key)
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                temperature=0.2,
+                temperature=0.7 if is_conversational else 0.2,
                 top_p=0.95,
             )
 
-            # Generate streaming content
-            response_stream = client.models.generate_content_stream(
-                model=model_name,
-                contents=user_prompt,
-                config=config,
-            )
+            models_to_try = [model_name] if model_name else CANDIDATE_CHAT_MODELS
+            stream_success = False
+            last_err: Optional[Exception] = None
 
-            for chunk in response_stream:
-                if chunk and chunk.text:
-                    full_response_text += chunk.text
-                    yield format_sse_event("token", {"token": chunk.text})
-                    # Yield to event loop to keep SSE transmission snappy
-                    await asyncio.sleep(0)
+            for m in models_to_try:
+                try:
+                    response_stream = client.models.generate_content_stream(
+                        model=m,
+                        contents=user_prompt,
+                        config=config,
+                    )
 
-        # Step 5: Extract citations & finalize
-        citations = parse_citations_from_response(full_response_text, retrieved_chunks)
+                    chunk_received = False
+                    for chunk in response_stream:
+                        if chunk and chunk.text:
+                            chunk_received = True
+                            full_response_text += chunk.text
+                            yield format_sse_event("token", {"token": chunk.text})
+                            await asyncio.sleep(0)
+
+                    if chunk_received or full_response_text:
+                        stream_success = True
+                        break
+                except Exception as ex:
+                    last_err = ex
+                    print(f"[!] Gemini model {m} failed: {ex}. Checking fallback...")
+                    if full_response_text:
+                        # Tokens already yielded to client; don't restart mid-stream
+                        break
+                    continue
+
+            if not stream_success and not full_response_text:
+                raise last_err or RuntimeError("All candidate Gemini models failed to generate content.")
+
+        # Step 4: Extract citations & finalize
+        citations = parse_citations_from_response(
+            full_response_text,
+            retrieved_chunks,
+            is_conversational=is_conversational,
+        )
 
         yield format_sse_event("done", {
             "full_response": full_response_text,
             "citations": citations,
             "context_chunks_count": len(retrieved_chunks),
+            "is_conversational": is_conversational,
         })
 
     except Exception as e:

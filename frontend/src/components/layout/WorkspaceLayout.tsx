@@ -29,6 +29,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -36,6 +39,24 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const repoMenuRef = useRef<HTMLDivElement>(null);
 
   const activeRepo = selectedRepo || repositories[0] || null;
+
+  const handleMouseEnterSidebar = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsSidebarHovered(true);
+  };
+
+  const handleMouseLeaveSidebar = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    // Smooth delay before collapsing to prevent accidental jump
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsSidebarHovered(false);
+    }, 180);
+  };
 
   // Close popups on click outside
   useEffect(() => {
@@ -48,7 +69,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
   }, []);
 
   const navItems = [
@@ -72,16 +96,86 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
   return (
     <div data-appearance="dark" className="min-h-screen bg-[#000000] text-[#f4f4f5]">
-      {/* Top Header */}
-      <header className="bg-[#050505] text-foreground flex sticky z-30 top-0 px-6 items-center h-16 border-b border-[#1f1f23]">
-        {/* Left Brand */}
-        <Link to="/dashboard" className="flex items-center shrink-0 gap-3 w-64">
-          <ScanLine className="text-amber-400 size-6" />
-          <span className="font-semibold text-lg tracking-tight text-white">
-            CodeLens
-          </span>
-        </Link>
+      {/* Sidebar Fixed - Collapsed (w-16) by default, smoothly expands (w-64) on hover */}
+      <aside
+        onMouseEnter={handleMouseEnterSidebar}
+        onMouseLeave={handleMouseLeaveSidebar}
+        className={`bg-[#050505] border-r border-[#1f1f23] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
+          isSidebarHovered ? 'w-64 shadow-[0_0_35px_rgba(0,0,0,0.9)]' : 'w-16 shadow-lg'
+        }`}
+      >
+        {/* Top Brand Logo inside Sidebar */}
+        <div className="h-16 flex items-center px-3.5 border-b border-[#1f1f23] shrink-0 overflow-hidden">
+          <Link
+            to="/dashboard"
+            onClick={() => setIsSidebarHovered(false)}
+            className="flex items-center gap-3 overflow-hidden group cursor-pointer"
+            title="CodeLens Dashboard"
+          >
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 transition-colors group-hover:bg-amber-500/20">
+              <ScanLine className="text-amber-400 size-5" />
+            </div>
+            <span
+              className={`font-semibold text-base tracking-tight text-white whitespace-nowrap transition-all duration-300 origin-left ${
+                isSidebarHovered
+                  ? 'opacity-100 max-w-[160px] translate-x-0'
+                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
+              CodeLens
+            </span>
+          </Link>
+        </div>
 
+        {/* Navigation Items */}
+        <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1 overflow-y-auto overflow-x-hidden">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+            return (
+              <Link
+                key={item.label}
+                to={item.path}
+                onClick={() => setIsSidebarHovered(false)}
+                title={!isSidebarHovered ? item.label : undefined}
+                className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
+                  isActive
+                    ? 'bg-[#18181b] text-white font-semibold'
+                    : 'text-slate-400 hover:text-white hover:bg-[#121214]'
+                }`}
+              >
+                {/* Active Accent Indicator */}
+                {isActive && (
+                  <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-400 rounded-r" />
+                )}
+
+                <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                  <Icon
+                    className={`size-4.5 transition-colors ${
+                      isActive ? 'text-amber-400' : 'text-slate-400 group-hover/item:text-white'
+                    }`}
+                  />
+                </div>
+
+                <span
+                  className={`truncate whitespace-nowrap transition-all duration-300 origin-left ${
+                    isSidebarHovered
+                      ? 'opacity-100 max-w-[180px] translate-x-0'
+                      : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Top Header */}
+      <header className="bg-[#050505] text-foreground flex sticky z-30 top-0 pl-20 pr-6 items-center h-16 border-b border-[#1f1f23]">
         {/* Center Repository Selector Dropdown */}
         <div className="-translate-x-1/2 flex absolute left-1/2 items-center" ref={repoMenuRef}>
           <div className="relative">
@@ -215,33 +309,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </div>
       </header>
 
-      {/* Sidebar Fixed */}
-      <aside className="bg-[#050505] border-r border-[#1f1f23] fixed z-20 top-16 bottom-0 left-0 pt-5 px-3 pb-5 w-64">
-        <nav aria-label="Primary navigation" className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-            return (
-              <Link
-                key={item.label}
-                to={item.path}
-                className={`rounded-lg text-sm flex py-2.5 px-3 items-center gap-3 transition font-medium ${
-                  isActive
-                    ? 'bg-[#18181b] text-white border-l-2 border-l-amber-400 font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-[#121214] border-l-2 border-l-transparent'
-                }`}
-              >
-                <Icon className={`size-5 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Workspace Content */}
-      <main className="ml-64 pt-8 px-8 pb-10 min-h-[calc(100vh-4rem)]">
-        <div className="mx-auto flex flex-col gap-6 max-w-[1440px]">
+      {/* Workspace Content - Left margin adjusted to match collapsed sidebar (ml-16) */}
+      <main className="ml-16 pt-6 px-6 pb-10 min-h-[calc(100vh-4rem)]">
+        <div className="mx-auto flex flex-col gap-6 max-w-[1600px]">
           {children}
         </div>
       </main>

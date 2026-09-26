@@ -2,11 +2,73 @@ import re
 from typing import List, Dict, Any, Optional
 
 
-def build_system_prompt(repo_full_name: str) -> str:
+def is_conversational_query(text: str) -> bool:
     """
-    Builds the strict grounding system prompt for CodeLens Copilot.
-    Enforces truthfulness, exact file & line citations, and code formatting.
+    Determines if the user query is a greeting, polite pleasantry, identity question,
+    or general check-in (e.g. 'hello', 'how are you', 'which model are you using').
+    In these cases, the AI should respond naturally and politely instead of dumping code.
     """
+    if not text:
+        return True
+
+    clean = re.sub(r"[^\w\s]", " ", text.strip().lower())
+    words = clean.split()
+    if not words:
+        return True
+
+    greetings = {
+        "hi", "hello", "hey", "heya", "hola", "yo", "sup",
+        "kaise", "kya", "haal", "kese", "namaste", "salam", "assalam",
+        "good", "morning", "evening", "afternoon", "night",
+        "thanks", "thank", "thx", "shukriya", "dhanyawad",
+        "bye", "goodbye", "ok", "okay", "alright", "cool", "nice", "great"
+    }
+
+    code_specific_words = {
+        "file", "files", "function", "functions", "class", "classes",
+        "repo", "repository", "bug", "bugs", "error", "errors", "endpoint",
+        "endpoints", "schema", "table", "code", "directory", "service",
+        "controller", "route", "routes", "database", "query", "syntax"
+    }
+
+    casual_phrases = [
+        "how are you", "how r u", "how do you do", "how is it going", "hows it going",
+        "whats up", "what is up", "who are you", "what are you", "what can you do",
+        "which model", "what model", "which ai", "what ai", "are you ai", "are you a bot",
+        "kaise ho", "kya haal", "kya chal raha", "kaise chal", "sab theek"
+    ]
+
+    cleaned_phrase = " ".join(words)
+    for phrase in casual_phrases:
+        if phrase in cleaned_phrase:
+            if not any(sw in words for sw in code_specific_words):
+                return True
+
+    if len(words) <= 4:
+        if any(g in greetings for g in words):
+            if not any(sw in words for sw in code_specific_words):
+                return True
+
+    return False
+
+
+def build_system_prompt(repo_full_name: str, is_conversational: bool = False) -> str:
+    """
+    Builds the system prompt for CodeLens Copilot.
+    - If conversational: friendly, helpful, polite, answers greetings naturally without dumping code.
+    - If technical: strict grounding, exact file & line citations, code snippets.
+    """
+    if is_conversational:
+        return f"""You are **CodeLens**, an intelligent and friendly AI Codebase Intelligence Copilot.
+You are assisting a developer working on the repository **`{repo_full_name}`**.
+
+### CONVERSATIONAL INSTRUCTIONS:
+1. **NATURAL & CONCISE:** The user has sent a greeting, casual question, or asked about who you are or what model you use. Reply warmly, naturally, and concisely in human conversational tone.
+2. **DO NOT DUMP CODE:** Do NOT provide unsolicited source code snippets, repository file lists, or architecture breakdowns unless the user specifically asks for them.
+3. **SELF-IDENTIFICATION:** You are CodeLens Copilot, powered by Google Gemini. You are equipped to analyze repository code, explain architectures, trace functions, and debug issues whenever the user is ready.
+4. **LANGUAGE MATCHING:** Reply in the same language or tone the user used (e.g. English, Hinglish, Hindi).
+"""
+
     return f"""You are **CodeLens**, an expert AI Codebase Intelligence Copilot.
 You are assisting a developer working on the repository **`{repo_full_name}`**.
 
@@ -23,10 +85,11 @@ def build_user_prompt(
     question: str,
     context_chunks: List[Dict[str, Any]],
     conversation_history: Optional[List[Dict[str, Any]]] = None,
+    is_conversational: bool = False,
 ) -> str:
     """
     Builds the user prompt combining conversation history, relevant codebase
-    context chunks, and the developer's question.
+    context chunks (if technical), and the user's question.
     """
     prompt_parts: List[str] = []
 
@@ -39,26 +102,27 @@ def build_user_prompt(
             prompt_parts.append(f"**{role}:** {content}\n")
         prompt_parts.append("---\n")
 
-    # 2. Include retrieved codebase context chunks
-    prompt_parts.append("### RELEVANT CODEBASE CONTEXT CHUNKS:\n")
-    if not context_chunks:
-        prompt_parts.append("_No directly matching code chunks found for this query._\n")
-    else:
-        for idx, chunk in enumerate(context_chunks, start=1):
-            file_path = chunk.get("file_path", "")
-            start_line = chunk.get("start_line", 1)
-            end_line = chunk.get("end_line", 1)
-            language = chunk.get("language", "")
-            content = chunk.get("content", "").strip()
-            symbols = chunk.get("symbols", [])
-            sym_names = ", ".join([f"{s.get('kind','')}:{s.get('name','')}" for s in symbols if isinstance(s, dict)])
+    # 2. If technical question, include retrieved codebase context chunks
+    if not is_conversational:
+        prompt_parts.append("### RELEVANT CODEBASE CONTEXT CHUNKS:\n")
+        if not context_chunks:
+            prompt_parts.append("_No directly matching code chunks found for this query._\n")
+        else:
+            for idx, chunk in enumerate(context_chunks, start=1):
+                file_path = chunk.get("file_path", "")
+                start_line = chunk.get("start_line", 1)
+                end_line = chunk.get("end_line", 1)
+                language = chunk.get("language", "")
+                content = chunk.get("content", "").strip()
+                symbols = chunk.get("symbols", [])
+                sym_names = ", ".join([f"{s.get('kind','')}:{s.get('name','')}" for s in symbols if isinstance(s, dict)])
 
-            prompt_parts.append(f"#### [CHUNK {idx}] File: `{file_path}` (Lines {start_line}-{end_line}) | Symbols: {sym_names or 'none'}")
-            prompt_parts.append(f"```{language}\n{content}\n```\n")
+                prompt_parts.append(f"#### [CHUNK {idx}] File: `{file_path}` (Lines {start_line}-{end_line}) | Symbols: {sym_names or 'none'}")
+                prompt_parts.append(f"```{language}\n{content}\n```\n")
+        prompt_parts.append("---\n")
 
-    prompt_parts.append("---\n")
-    # 3. Developer Question
-    prompt_parts.append(f"### DEVELOPER QUESTION:\n{question.strip()}\n\nProvide a comprehensive, accurately cited answer:")
+    # 3. User Question
+    prompt_parts.append(f"### USER QUERY:\n{question.strip()}\n\nProvide your response:")
 
     return "\n".join(prompt_parts)
 
@@ -66,12 +130,13 @@ def build_user_prompt(
 def parse_citations_from_response(
     response_text: str,
     context_chunks: List[Dict[str, Any]],
+    is_conversational: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Extracts `[cite:file_path:start_line-end_line]` tags from the assistant response
     and enriches them with matching symbol information from the retrieved context.
     """
-    if not response_text:
+    if not response_text or is_conversational:
         return []
 
     # Pattern: [cite:src/api/auth.py:10-25] or [cite:src/auth.js:15]

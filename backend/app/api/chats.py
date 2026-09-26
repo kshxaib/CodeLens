@@ -259,25 +259,27 @@ async def stream_chat(
             # Check if event is 'done' to save assistant message
             if "event: done" in sse_chunk and not saved:
                 try:
-                    data_str = sse_chunk.split("data: ")[1].strip()
-                    payload_data = json.loads(data_str)
-                    full_resp = payload_data.get("full_response", "")
-                    citations = payload_data.get("citations", [])
+                    idx = sse_chunk.find("data: ")
+                    if idx != -1:
+                        data_str = sse_chunk[idx + 6:].strip()
+                        payload_data = json.loads(data_str)
+                        full_resp = payload_data.get("full_response", "")
+                        citations = payload_data.get("citations", [])
 
-                    # Persist assistant response
-                    with SessionLocal() as write_db:
-                        assistant_msg = Message(
-                            conversation_id=conv.id,
-                            role="assistant",
-                            content=full_resp,
-                            sources=citations,
-                        )
-                        write_db.add(assistant_msg)
-                        target_conv = write_db.query(Conversation).filter(Conversation.id == conv.id).first()
-                        if target_conv:
-                            target_conv.updated_at = datetime.now(timezone.utc)
-                        write_db.commit()
-                        saved = True
+                        # Persist assistant response
+                        with SessionLocal() as write_db:
+                            assistant_msg = Message(
+                                conversation_id=conv.id,
+                                role="assistant",
+                                content=full_resp,
+                                sources=citations,
+                            )
+                            write_db.add(assistant_msg)
+                            target_conv = write_db.query(Conversation).filter(Conversation.id == conv.id).first()
+                            if target_conv:
+                                target_conv.updated_at = datetime.now(timezone.utc)
+                            write_db.commit()
+                            saved = True
                 except Exception as ex:
                     print(f"[!] Error saving assistant message: {ex}")
 

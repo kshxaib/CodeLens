@@ -177,49 +177,116 @@ export const CodeLensChatPage: React.FC = () => {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let accumulatedText = '';
+      let sseBuffer = '';
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          sseBuffer += decoder.decode(value, { stream: true });
+          // Normalize line breaks
+          sseBuffer = sseBuffer.replace(/\r\n/g, '\n');
 
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line.startsWith('event: ')) {
-              const eventType = line.replace('event: ', '').trim();
-              const nextLine = lines[i + 1]?.trim() || '';
-              if (nextLine.startsWith('data: ')) {
-                const dataStr = nextLine.replace('data: ', '').trim();
-                try {
-                  const data = JSON.parse(dataStr);
-                  if (eventType === 'status') {
-                    setStreamStatus(data.message || data.status);
-                  } else if (eventType === 'token') {
-                    accumulatedText += data.token;
-                    setStreamingTokens(accumulatedText);
-                  } else if (eventType === 'done') {
-                    setStreamStatus(null);
-                  }
-                } catch {
-                  // Json parse ignore
-                }
+          // SSE blocks are separated by double newlines
+          const blocks = sseBuffer.split('\n\n');
+          // Keep the last (potentially incomplete) block in the buffer
+          sseBuffer = blocks.pop() || '';
+
+          for (const block of blocks) {
+            const trimmedBlock = block.trim();
+            if (!trimmedBlock) continue;
+
+            let eventType = '';
+            let dataStr = '';
+
+            for (const line of trimmedBlock.split('\n')) {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith('event:')) {
+                eventType = trimmedLine.slice(6).trim();
+              } else if (trimmedLine.startsWith('data:')) {
+                dataStr = trimmedLine.slice(5).trim();
               }
+            }
+
+            if (!eventType || !dataStr) continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+              if (eventType === 'status') {
+                setStreamStatus(data.message || data.status);
+              } else if (eventType === 'token') {
+                accumulatedText += data.token;
+                setStreamingTokens(accumulatedText);
+              } else if (eventType === 'done') {
+                setStreamStatus(null);
+                const assistantMsg: MessageItem = {
+                  id: Date.now(),
+                  conversation_id: targetChatId!,
+                  role: 'assistant',
+                  content: data.full_response || accumulatedText,
+                  sources: data.citations || [],
+                  created_at: new Date().toISOString(),
+                };
+                setCurrentConversation((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        messages: [...prev.messages, assistantMsg],
+                      }
+                    : null
+                );
+              } else if (eventType === 'error') {
+                setStreamStatus(null);
+                const errorMsg: MessageItem = {
+                  id: Date.now(),
+                  conversation_id: targetChatId!,
+                  role: 'assistant',
+                  content: `⚠️ ${data.message || data.error || 'An error occurred during generation.'}`,
+                  sources: [],
+                  created_at: new Date().toISOString(),
+                };
+                setCurrentConversation((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        messages: [...prev.messages, errorMsg],
+                      }
+                    : null
+                );
+              }
+            } catch {
+              // JSON parse error — skip
             }
           }
         }
       }
 
-      // Reload full conversation history from DB to sync
+      // Reload full conversation history from DB to sync authoritative database IDs
       await fetchConversations(activeRepoId);
       if (targetChatId) {
         await loadChatDetail(activeRepoId, targetChatId);
       }
     } catch (err: any) {
       console.error('Chat error:', err);
-      setStreamStatus('Error occurred during streaming.');
+      const errMsg = err?.message || 'Error occurred during streaming.';
+      setStreamStatus(null);
+      const errorMsg: MessageItem = {
+        id: Date.now(),
+        conversation_id: targetChatId!,
+        role: 'assistant',
+        content: `⚠️ ${errMsg}`,
+        sources: [],
+        created_at: new Date().toISOString(),
+      };
+      setCurrentConversation((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: [...prev.messages, errorMsg],
+            }
+          : null
+      );
     } finally {
       setIsStreaming(false);
       setStreamStatus(null);
@@ -320,11 +387,7 @@ export const CodeLensChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-[#1f1f23] text-[11px] text-slate-500 flex items-center justify-between font-mono">
-            <span>Gemini 2.0 Flash</span>
-            <span className="text-emerald-400">Grounded RAG</span>
-          </div>
+
         </div>
 
         {/* Main Chat Center Pane */}
@@ -380,7 +443,7 @@ export const CodeLensChatPage: React.FC = () => {
                       <div
                         className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                           msg.role === 'user'
-                            ? 'bg-amber-500 text-[#0d1017] font-medium rounded-tr-none'
+                            ? 'bg-[#121214] border border-amber-500/30 text-white font-medium rounded-tr-none'
                             : 'bg-[#09090b] border border-[#1f1f23] text-slate-200 rounded-tl-none'
                         }`}
                       >
@@ -418,7 +481,7 @@ export const CodeLensChatPage: React.FC = () => {
                     </div>
                     <div className="space-y-3 min-w-0 flex-1">
                       {streamStatus && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121214] border border-[#1f1f23] text-slate-300 text-xs font-mono">
                           <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
                           <span>{streamStatus}</span>
                         </div>
