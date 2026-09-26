@@ -19,6 +19,10 @@ import type {
   ExplainComponentResponse,
   CalculateImpactResponse,
   ChangeImpactResponse,
+  EdgeEvidenceResponse,
+  NodeEvidenceResponse,
+  EvidenceStatsResponse,
+  VerifyClaimResponse,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -242,6 +246,47 @@ export const api = {
     if (params.symbol) query.set('symbol', params.symbol);
     const res = await apiClient.get<ChangeImpactResponse>(
       `/repositories/${repoId}/trace/change-impact?${query.toString()}`
+    );
+    return res.data;
+  },
+
+  // Evidence & Verification Layer
+  getEdgeEvidence: async (
+    repoId: number,
+    params: { edgeId?: string; source?: string; target?: string }
+  ) => {
+    const query = new URLSearchParams();
+    if (params.edgeId) query.set('edge_id', params.edgeId);
+    if (params.source) query.set('source', params.source);
+    if (params.target) query.set('target', params.target);
+    const res = await apiClient.get<EdgeEvidenceResponse>(
+      `/repositories/${repoId}/evidence/edge?${query.toString()}`
+    );
+    return res.data;
+  },
+  getNodeEvidence: async (repoId: number, nodeId: string) => {
+    const res = await apiClient.get<NodeEvidenceResponse>(
+      `/repositories/${repoId}/evidence/node?node_id=${encodeURIComponent(nodeId)}`
+    );
+    return res.data;
+  },
+  getEvidenceStats: async (repoId: number) => {
+    const res = await apiClient.get<EvidenceStatsResponse>(
+      `/repositories/${repoId}/evidence/stats`
+    );
+    return res.data;
+  },
+  verifyClaim: async (
+    repoId: number,
+    params: { source: string; target: string; relationship: string }
+  ) => {
+    const query = new URLSearchParams({
+      source: params.source,
+      target: params.target,
+      relationship: params.relationship,
+    });
+    const res = await apiClient.get<VerifyClaimResponse>(
+      `/repositories/${repoId}/evidence/verify?${query.toString()}`
     );
     return res.data;
   },

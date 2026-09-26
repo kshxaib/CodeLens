@@ -97,12 +97,41 @@ class ConfidenceLevel(str, Enum):
     LOW = "low"                      # Heuristic or weak signal
 
 
+class EvidenceType(str, Enum):
+    """
+    The mechanism by which a relationship or classification was detected.
+
+    Critical for provenance: every edge and node classification must carry
+    an evidence_type so consumers know HOW the claim was established.
+    """
+    AST = "ast"                       # Proved by direct AST parsing (import statement, class def)
+    IMPORT = "import"                 # Static import statement (`from x import y`)
+    FUNCTION_CALL = "function_call"   # Runtime call expression detected in source (`x.method()`)
+    ROUTE = "route"                   # HTTP route decorator or router registration
+    DB_ACCESS = "db_access"           # ORM query, cursor.execute, or session usage
+    CONFIGURATION = "configuration"   # Config file entry (env var, settings.py, yaml)
+    INFERRED = "inferred"             # Heuristic / naming-convention guess, no direct code line
+    LLM_INFERRED = "llm_inferred"     # LLM-generated claim (must cite AST facts, not hallucinate)
+
+
 # Numeric confidence value for each level
 CONFIDENCE_VALUES: Dict[ConfidenceLevel, float] = {
     ConfidenceLevel.DETERMINISTIC: 1.0,
     ConfidenceLevel.HIGH: 0.85,
     ConfidenceLevel.MEDIUM: 0.55,
     ConfidenceLevel.LOW: 0.30,
+}
+
+# Minimum confidence threshold for each EvidenceType
+EVIDENCE_TYPE_MIN_CONFIDENCE: Dict[str, float] = {
+    EvidenceType.AST: 1.0,
+    EvidenceType.IMPORT: 1.0,
+    EvidenceType.FUNCTION_CALL: 0.85,
+    EvidenceType.ROUTE: 0.90,
+    EvidenceType.DB_ACCESS: 0.85,
+    EvidenceType.CONFIGURATION: 0.75,
+    EvidenceType.INFERRED: 0.55,
+    EvidenceType.LLM_INFERRED: 0.55,
 }
 
 # Default layer assignment for each entity type
@@ -133,17 +162,36 @@ class SourceEvidence:
     """
     Traceable source-code evidence for a relationship or classification.
 
-    Every inferred relationship must link back to a specific file and
-    line range where the inference was made. Optionally includes a
-    short code snippet for human inspection.
+    Every relationship must link back to a specific file and line range.
+    Optionally includes a short code snippet for human inspection.
+
+    If no direct evidence exists, use evidence_type=EvidenceType.INFERRED
+    and leave file_path as empty string — this explicitly marks the claim
+    as a heuristic inference rather than a proven fact.
     """
     file_path: str
     start_line: int
     end_line: int
-    snippet: Optional[str] = None  # Short code excerpt (max ~200 chars)
+    snippet: Optional[str] = None          # Short code excerpt (max ~200 chars)
+    evidence_type: EvidenceType = EvidenceType.AST  # HOW was this detected?
+    symbol: Optional[str] = None           # Specific symbol name involved (function, class, var)
+
+    @property
+    def is_inferred(self) -> bool:
+        """True if this evidence is a heuristic guess with no direct code line."""
+        return self.evidence_type in (EvidenceType.INFERRED, EvidenceType.LLM_INFERRED)
+
+    @property
+    def has_location(self) -> bool:
+        """True if this evidence points to a real file location."""
+        return bool(self.file_path and self.start_line > 0)
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["evidence_type"] = self.evidence_type.value
+        d["is_inferred"] = self.is_inferred
+        d["has_location"] = self.has_location
+        return d
 
 
 @dataclass
@@ -211,7 +259,21 @@ class ArchEdge:
         d["relationship_type"] = self.relationship_type.value
         d["confidence_level"] = self.confidence_level.value
         d["evidence"] = [e.to_dict() for e in self.evidence]
+        d["is_inferred"] = self.is_inferred
+        d["has_evidence"] = self.has_evidence
         return d
+
+    @property
+    def is_inferred(self) -> bool:
+        """True if this edge has no deterministic source evidence (no direct code reference)."""
+        if not self.evidence:
+            return True
+        return all(e.is_inferred for e in self.evidence)
+
+    @property
+    def has_evidence(self) -> bool:
+        """True if at least one evidence item has a real file location."""
+        return any(e.has_location for e in self.evidence)
 
 
 @dataclass

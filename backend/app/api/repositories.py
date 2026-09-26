@@ -22,6 +22,7 @@ from app.parser.data_flow_extractor import DataFlowExtractor
 from app.parser.sequence_extractor import SequenceExtractor
 from app.parser.lifecycle_extractor import LifecycleExtractor
 from app.services.trace_service import TraceService
+from app.services.evidence_service import EvidenceService
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -1106,4 +1107,104 @@ async def change_impact_endpoint(
     return service.change_impact(file_path=file_path, symbol_name=symbol)
 
 
+def _get_evidence_service(id: int, current_user: User, db: Session) -> EvidenceService:
+    """Build an EvidenceService for the repository."""
+    get_user_repository_access(id, current_user, db)
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+    kg = build_knowledge_graph(file_dicts)
+    return EvidenceService(kg, file_dicts)
 
+
+@router.get("/{id}/evidence/node", summary="Get Evidence for a Node Classification")
+async def get_node_evidence(
+    id: int,
+    node_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns the full source evidence for a node's architectural classification.
+
+    If the node has no direct code evidence, the response is explicitly marked
+    is_inferred=True with a clear warning. Claims are NEVER overstated.
+    """
+    svc = _get_evidence_service(id, current_user, db)
+    return svc.get_node_evidence(node_id)
+
+
+@router.get("/{id}/evidence/edge", summary="Get Evidence for a Relationship")
+async def get_edge_evidence(
+    id: int,
+    edge_id: Optional[str] = None,
+    source: Optional[str] = None,
+    target: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns full provenance for an edge/relationship.
+
+    If no direct code evidence exists, the relationship is clearly labeled
+    as an inferred connection with confidence=medium and a warning message.
+    """
+    svc = _get_evidence_service(id, current_user, db)
+    return svc.get_edge_evidence(
+        edge_id=edge_id,
+        source_id=source,
+        target_id=target,
+    )
+
+
+@router.get("/{id}/evidence/stats", summary="Repository Evidence Quality Statistics")
+async def get_evidence_stats(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns evidence coverage and quality statistics for the repository:
+    - Total edges with direct evidence vs inferred
+    - Evidence type breakdown (AST, import, function_call, route, db_access, etc.)
+    - Average confidence
+    """
+    svc = _get_evidence_service(id, current_user, db)
+    return svc.get_repository_evidence_stats()
+
+
+@router.get("/{id}/evidence/verify", summary="Verify a Specific Architecture Claim")
+async def verify_claim(
+    id: int,
+    source: str,
+    target: str,
+    relationship: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Verifies whether a claimed relationship (source → target via relationship type)
+    has actual source code evidence.
+
+    Returns:
+    - VERIFIED: Direct AST/import/call evidence found
+    - INFERRED: No direct evidence; heuristic guess only
+    - NOT_FOUND: Edge does not exist in the graph
+    """
+    svc = _get_evidence_service(id, current_user, db)
+    return svc.verify_claim(
+        source_id=source,
+        target_id=target,
+        claimed_relationship=relationship,
+    )

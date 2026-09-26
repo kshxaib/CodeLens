@@ -167,12 +167,26 @@ export type RelationshipType =
   | 'CONTAINS'
   | 'IMPLEMENTS';
 
+export type EvidenceType =
+  | 'ast'
+  | 'import'
+  | 'function_call'
+  | 'route'
+  | 'db_access'
+  | 'configuration'
+  | 'inferred'
+  | 'llm_inferred';
+
 export interface SourceEvidence {
   file_path: string;
   start_line: number;
   end_line: number;
   snippet?: string | null;
   code_snippet?: string | null;
+  evidence_type?: EvidenceType;
+  symbol?: string | null;
+  is_inferred?: boolean;
+  has_location?: boolean;
 }
 
 export interface ArchSymbol {
@@ -581,6 +595,8 @@ export interface WhyRelationshipResponse {
   confidence_level: string;
   reason: string;
   evidence: SourceEvidence[];
+  is_inferred?: boolean;
+  has_evidence?: boolean;
 }
 
 export interface ExplainComponentResponse {
@@ -649,7 +665,87 @@ export interface ChangeImpactResponse {
   risk_level: 'low' | 'medium' | 'high' | 'critical';
 }
 
+// ---------------------------------------------------------------------------
+// Source Evidence & Verification Layer Types
+// ---------------------------------------------------------------------------
 
+export interface EvidenceTypeMetadata {
+  type: EvidenceType;
+  label: string;
+  color: string;
+}
 
+export interface EvidenceSummary {
+  total: number;
+  by_type: Partial<Record<EvidenceType, number>>;
+  files: string[];
+  is_fully_inferred: boolean;
+  strongest_type: EvidenceType | 'inferred';
+}
+
+export interface EvidenceVerification {
+  status: 'VERIFIED' | 'INFERRED' | 'NOT_FOUND' | 'PARTIAL';
+  confidence_pct: number;
+  evidence_count: number;
+  direct_evidence_count: number;
+  inferred_evidence_count: number;
+  warning: string | null;
+}
+
+export interface EdgeEvidenceResponse {
+  edge_id: string | null;
+  source: { id: string; name: string; type?: string };
+  target: { id: string; name: string; type?: string };
+  relationship_type: string;
+  direction: string;
+  confidence: number;
+  confidence_level: string;
+  evidence: SourceEvidence[];
+  is_inferred: boolean;
+  has_evidence: boolean;
+  reason: string;
+  verification: EvidenceVerification;
+  evidence_summary: EvidenceSummary;
+  evidence_type_metadata: EvidenceTypeMetadata[];
+}
+
+export interface NodeEvidenceResponse {
+  entity_id: string;
+  entity_name: string;
+  entity_type: string;
+  layer: string;
+  confidence: number;
+  confidence_level: string;
+  evidence: SourceEvidence[];
+  source_files: string[];
+  is_inferred: boolean;
+  verification: EvidenceVerification;
+  evidence_summary: EvidenceSummary;
+}
+
+export interface EvidenceStatsResponse {
+  total_nodes: number;
+  total_edges: number;
+  edges_with_direct_evidence: number;
+  edges_inferred: number;
+  edges_no_evidence: number;
+  evidence_coverage_pct: number;
+  avg_confidence: number;
+  deterministic_edges: number;
+  evidence_type_breakdown: Partial<Record<EvidenceType, number>>;
+  evidence_type_labels: Record<string, string>;
+}
+
+export interface VerifyClaimResponse {
+  status: 'VERIFIED' | 'INFERRED' | 'NOT_FOUND' | 'PARTIAL';
+  message: string;
+  claimed_relationship: string;
+  actual_relationship?: string;
+  type_match?: boolean;
+  is_inferred: boolean;
+  confidence: number;
+  confidence_level: string;
+  evidence: SourceEvidence[];
+}
 
 
