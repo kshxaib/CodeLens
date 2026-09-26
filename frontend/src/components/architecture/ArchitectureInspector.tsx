@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ARCH_TIERS, CONFIDENCE_BADGES, getRelationshipCfg, getNodeTier } from './constants';
 import type { ArchKGNode, ArchKGEdge } from '../../types';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface ArchitectureInspectorProps {
   node: ArchKGNode;

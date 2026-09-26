@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { create } from 'zustand';
 import { api } from '../api/client';
 import type {
@@ -405,3 +407,24 @@ export const useTraceStore = create<TraceState>((set, get) => ({
   activeTab: 'trace',
   setActiveTab: (tab) => set({ activeTab: tab }),
 }));
+
+// ---------------------------------------------------------------------------
+// Compatibility exports — drop-in replacements for context/TraceContext.tsx
+// ---------------------------------------------------------------------------
+
+export const useTrace = useTraceStore;
+
+export type TraceContextType = TraceState;
+
+// TraceProvider — initializes view context (replaces context/TraceContext.tsx)
+export const TraceProvider: React.FC<{
+  repositoryId: number;
+  currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
+  children: ReactNode;
+}> = ({ repositoryId, currentView, children }) => {
+  useEffect(() => {
+    useTraceStore.getState().initTraceView(repositoryId, currentView);
+  }, [repositoryId, currentView]);
+
+  return <>{children}</>;
+};

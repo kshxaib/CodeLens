@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { AuthProvider } from './context/AuthContext';
-import { WorkspaceProvider } from './context/WorkspaceContext';
 import { useAuthStore } from './store/useAuthStore';
+import { useWorkspaceStore } from './store/useWorkspaceStore';
 
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
@@ -16,13 +15,27 @@ import { ProfileSettingsPage } from './pages/ProfileSettingsPage';
 import { ErrorState } from './components/common/ErrorState';
 
 function AppContent() {
-  const { user, handleCallback } = useAuthStore();
+  const { user, handleCallback, refreshUser } = useAuthStore();
+  const fetchRepositories = useWorkspaceStore((state) => state.fetchRepositories);
   const location = useLocation();
   const navigate = useNavigate();
   const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const processedCodeRef = useRef<string | null>(null);
 
+  // Bootstrap: refresh user session on mount
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  // Bootstrap: auto-fetch repos when user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchRepositories();
+    }
+  }, [user, fetchRepositories]);
+
+  // OAuth callback handling
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');
@@ -32,7 +45,6 @@ function AppContent() {
       setIsProcessingOAuth(true);
       setOauthError(null);
 
-      // Clean the URL query params so history doesn't retain the used code
       window.history.replaceState({}, document.title, window.location.pathname);
 
       handleCallback(code)
@@ -40,7 +52,6 @@ function AppContent() {
           navigate('/dashboard', { replace: true });
         })
         .catch((err: any) => {
-          // If token was already received in localStorage, don't show error
           if (localStorage.getItem('codelens_token')) {
             navigate('/dashboard', { replace: true });
             return;
@@ -76,63 +87,16 @@ function AppContent() {
       )}
       <main className="flex-1 flex flex-col">
         <Routes>
-          {/* Public Landing Page (Screen 23) */}
           <Route path="/" element={<LandingPage />} />
-
-          {/* Any /login link redirects to root landing page */}
           <Route path="/login" element={<Navigate to="/" replace />} />
 
-          {/* Protected Workspace Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/repositories"
-            element={
-              <ProtectedRoute>
-                <RepositoriesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/repository/:id"
-            element={
-              <ProtectedRoute>
-                <RepositoryOverviewPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/repository/:id/architecture"
-            element={
-              <ProtectedRoute>
-                <ArchitectureMapPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/chat"
-            element={
-              <ProtectedRoute>
-                <CodeLensChatPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfileSettingsPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/repositories" element={<ProtectedRoute><RepositoriesPage /></ProtectedRoute>} />
+          <Route path="/repository/:id" element={<ProtectedRoute><RepositoryOverviewPage /></ProtectedRoute>} />
+          <Route path="/repository/:id/architecture" element={<ProtectedRoute><ArchitectureMapPage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><CodeLensChatPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
 
-          {/* 404 Fallback */}
           <Route
             path="*"
             element={
@@ -153,13 +117,9 @@ function AppContent() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <WorkspaceProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </WorkspaceProvider>
-    </AuthProvider>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

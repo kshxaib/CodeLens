@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { SequenceMessage, SequenceParticipant } from '../../types';
 import { getInteractionConfig, getParticipantConfig } from './constants';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface SequenceInspectorProps {
   message: SequenceMessage;

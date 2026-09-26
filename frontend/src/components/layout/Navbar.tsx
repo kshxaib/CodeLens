@@ -12,8 +12,8 @@ import {
   X,
 } from 'lucide-react';
 import { GithubIcon } from '../common/Icons';
-import { useAuth } from '../../context/AuthContext';
-import { useWorkspace } from '../../context/WorkspaceContext';
+import { useAuth } from '../../store/useAuthStore';
+import { useWorkspace } from '../../store/useWorkspaceStore';
 
 interface NavbarProps {
   onToggleSidebar?: () => void;

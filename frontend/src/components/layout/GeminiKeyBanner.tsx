@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { KeyRound, ArrowRight } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../store/useAuthStore';
 
 export const GeminiKeyBanner: React.FC = () => {
   const { user } = useAuth();

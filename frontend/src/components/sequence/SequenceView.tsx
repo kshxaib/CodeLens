@@ -6,7 +6,7 @@ import { SequenceToolbar } from './SequenceToolbar';
 import { SequenceParticipantHeader } from './SequenceParticipantHeader';
 import { SequenceMessageRow } from './SequenceMessageRow';
 import { SequenceInspector } from './SequenceInspector';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface SequenceViewProps {
   repositoryId: number;

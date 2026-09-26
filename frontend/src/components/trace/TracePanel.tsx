@@ -17,7 +17,7 @@ import {
   HelpCircle,
   Zap,
 } from 'lucide-react';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface TracePanelProps {
   onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;

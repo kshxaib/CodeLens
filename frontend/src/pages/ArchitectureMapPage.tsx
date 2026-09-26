@@ -42,7 +42,7 @@ import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
 import { SequenceView } from '../components/sequence/SequenceView';
 import { LifecycleView } from '../components/lifecycle/LifecycleView';
-import { TraceProvider, useTrace } from '../context/TraceContext';
+import { TraceProvider, useTrace } from '../store/useTraceStore';
 import { TracePanel } from '../components/trace/TracePanel';
 import { WhyModal } from '../components/trace/WhyModal';
 import { ExplainModal } from '../components/trace/ExplainModal';

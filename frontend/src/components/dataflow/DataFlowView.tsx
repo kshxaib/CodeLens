@@ -19,7 +19,7 @@ import { getDataFlowLayoutedElements } from './layout';
 import { api } from '../../api/client';
 import type { DataPipeline } from '../../types';
 import { Loader2 } from 'lucide-react';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface DataFlowViewProps {
   repositoryId: number;

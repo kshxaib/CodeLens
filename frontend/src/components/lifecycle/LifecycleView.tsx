@@ -20,7 +20,7 @@ import { api } from '../../api/client';
 import type { EntityLifecycle, LifecycleTransition } from '../../types';
 import type { LifecycleFilterType } from './constants';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useTrace } from '../../context/TraceContext';
+import { useTrace } from '../../store/useTraceStore';
 
 interface LifecycleViewProps {
   repositoryId: number;
