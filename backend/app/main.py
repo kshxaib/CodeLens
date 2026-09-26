@@ -33,6 +33,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=BACKEND_CORS_ORIGINS,
+    allow_origin_regex=r"https?://.*(kshoeb\.in|vercel\.app|onrender\.com|localhost|127\.0\.0\.1).*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,7 +45,7 @@ app.include_router(user_router, prefix=API_V1_STR)
 app.include_router(repositories_router, prefix=API_V1_STR)
 app.include_router(chats_router, prefix=API_V1_STR)
 
-@app.get("/", summary="Root Welcome Endpoint")
+@app.api_route("/", methods=["GET", "HEAD"], summary="Root Welcome Endpoint")
 async def root():
     return {
         "app": PROJECT_NAME,
@@ -52,3 +53,8 @@ async def root():
         "docs": "/docs",
         "version": "1.0.0",
     }
+
+@app.api_route("/health", methods=["GET", "HEAD"], summary="Health Check Alias")
+async def health_alias():
+    from app.api.health import health_check
+    return await health_check()

@@ -1,5 +1,6 @@
 import time
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 import httpx
@@ -9,8 +10,22 @@ from app.db.session import engine
 
 router = APIRouter(prefix="/health", tags=["Health Checks"])
 
-@router.get("", summary="Comprehensive Health & Keep-Alive Check")
+IST = timezone(timedelta(hours=5, minutes=30))
+
+_health_lock = threading.Lock()
+
+health_tracker = {
+    "hit_count": 0,
+    "last_hit_at": None,
+    "server_start_time": datetime.now(IST).strftime("%Y-%m-%d %I:%M:%S %p"),
+}
+
+@router.api_route("", methods=["GET", "HEAD"], summary="Comprehensive Health & Keep-Alive Check")
 async def health_check():
+    with _health_lock:
+        health_tracker["hit_count"] += 1
+        health_tracker["last_hit_at"] = datetime.now(IST).strftime("%Y-%m-%d %I:%M:%S %p")
+
     timestamp = datetime.now(timezone.utc).isoformat()
     db_status = {"status": "unhealthy", "engine": "PostgreSQL", "latency_ms": None}
     qdrant_status = {"status": "unhealthy", "engine": "Qdrant", "latency_ms": None}
@@ -40,14 +55,19 @@ async def health_check():
         is_healthy = False
         qdrant_status = {"status": "disconnected", "engine": "Qdrant", "error": str(e), "latency_ms": None}
 
+    overall_status = "healthy" if is_healthy else "degraded"
+
     response_payload = {
-        "status": "healthy" if is_healthy else "degraded",
+        "status": overall_status,
         "service": PROJECT_NAME,
         "environment": ENVIRONMENT,
         "version": "1.0.0",
         "timestamp": timestamp,
         "database": db_status,
         "vector_db": qdrant_status,
+        "hit_count": health_tracker["hit_count"],
+        "last_hit_at": health_tracker["last_hit_at"],
+        "server_start_time": health_tracker["server_start_time"],
     }
 
     if not is_healthy:
@@ -55,7 +75,7 @@ async def health_check():
 
     return response_payload
 
-@router.get("/db", summary="PostgreSQL Database Keep-Alive Check")
+@router.api_route("/db", methods=["GET", "HEAD"], summary="PostgreSQL Database Keep-Alive Check")
 async def db_health_check():
     try:
         start_time = time.perf_counter()
@@ -69,7 +89,7 @@ async def db_health_check():
             content={"status": "disconnected", "database": "PostgreSQL", "error": str(e)},
         )
 
-@router.get("/qdrant", summary="Qdrant Vector DB Keep-Alive Check")
+@router.api_route("/qdrant", methods=["GET", "HEAD"], summary="Qdrant Vector DB Keep-Alive Check")
 async def qdrant_health_check():
     try:
         start_time = time.perf_counter()
@@ -78,6 +98,10 @@ async def qdrant_health_check():
             if resp.status_code == 200:
                 latency = round((time.perf_counter() - start_time) * 1000, 2)
                 return {"status": "connected", "vector_db": "Qdrant", "latency_ms": latency}
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content={"status": "degraded", "vector_db": "Qdrant", "http_status": resp.status_code},
+            )
     except Exception as e:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
