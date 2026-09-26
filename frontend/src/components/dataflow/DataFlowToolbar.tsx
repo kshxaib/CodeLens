@@ -90,9 +90,12 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
             Workflow
           </button>
           <button
-            disabled
-            title="Coming Soon"
-            className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+            onClick={() => onViewChange('sequence')}
+            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+              currentView === 'sequence'
+                ? 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
           >
             Sequence
           </button>

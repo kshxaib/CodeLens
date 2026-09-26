@@ -40,6 +40,7 @@ import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
+import { SequenceView } from '../components/sequence/SequenceView';
 
 const nodeTypes = {
   architectureNode: ArchitectureNode,
@@ -430,6 +431,13 @@ const ArchitectureMapCanvas: React.FC = () => {
     <WorkspaceLayout>
       {currentView === 'workflow' ? (
         <WorkflowView
+          repositoryId={repoId}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onOpenSource={handleOpenSource}
+        />
+      ) : currentView === 'sequence' ? (
+        <SequenceView
           repositoryId={repoId}
           currentView={currentView}
           onViewChange={setCurrentView}

@@ -355,5 +355,81 @@ export interface DataFlowResponse {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Unified Sequence View Types
+// ---------------------------------------------------------------------------
+
+export type ParticipantType =
+  | 'actor'
+  | 'client'
+  | 'api_gateway'
+  | 'controller'
+  | 'service'
+  | 'database'
+  | 'external_service'
+  | 'queue'
+  | 'worker';
+
+export type InteractionType =
+  | 'call'
+  | 'return'
+  | 'async_call'
+  | 'event_emit'
+  | 'callback'
+  | 'error'
+  | 'retry'
+  | 'timeout'
+  | 'self_call';
+
+export interface SequenceParticipant {
+  id: string;
+  name: string;
+  participant_type: ParticipantType;
+  associated_node_id?: string | null;
+  description?: string;
+  order_index: number;
+}
+
+export interface SequenceMessage {
+  id: string;
+  step_number: number;
+  caller_id: string;
+  callee_id: string;
+  method: string;
+  interaction_type: InteractionType;
+  signature?: string | null;
+  payload?: string | null;
+  response_payload?: string | null;
+  is_async: boolean;
+  is_error: boolean;
+  is_inferred: boolean;
+  confidence_level: 'deterministic' | 'high' | 'medium' | 'inferred';
+  evidence?: SourceEvidence | null;
+  description?: string;
+}
+
+export interface SequenceDiagram {
+  id: string;
+  title: string;
+  description: string;
+  trigger_endpoint?: string | null;
+  participants: SequenceParticipant[];
+  messages: SequenceMessage[];
+  confidence: string;
+  total_steps: number;
+  has_async: boolean;
+  has_errors: boolean;
+}
+
+export interface SequenceResponse {
+  sequences: SequenceDiagram[];
+  summary?: {
+    total_sequences: number;
+    total_interactions: number;
+    async_sequences: number;
+    error_handled_sequences: number;
+  };
+}
+
 
 
