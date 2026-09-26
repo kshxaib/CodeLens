@@ -18,6 +18,7 @@ import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { ConversationItem, ConversationDetail, MessageItem, Citation } from '../types';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
+import { DeleteChatConfirmModal } from '../components/common/DeleteChatConfirmModal';
 
 export const CodeLensChatPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -41,6 +42,10 @@ export const CodeLensChatPage: React.FC = () => {
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerTarget, setViewerTarget] = useState<{ filePath: string; lines?: { start: number; end: number } } | null>(null);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+
+  // Chat deletion state
+  const [chatToDelete, setChatToDelete] = useState<ConversationItem | null>(null);
+  const [isDeletingChat, setIsDeletingChat] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -98,14 +103,21 @@ export const CodeLensChatPage: React.FC = () => {
     }
   };
 
-  const handleDeleteChat = async (e: React.MouseEvent, chatId: number) => {
-    e.stopPropagation();
-    if (!activeRepoId) return;
+  const handleConfirmDeleteChat = async () => {
+    if (!activeRepoId || !chatToDelete) return;
     try {
-      await api.deleteConversation(activeRepoId, chatId);
+      setIsDeletingChat(true);
+      await api.deleteConversation(activeRepoId, chatToDelete.id);
+      if (activeChatId === chatToDelete.id) {
+        setActiveChatId(null);
+        setCurrentConversation(null);
+      }
       await fetchConversations(activeRepoId);
+      setChatToDelete(null);
     } catch (err) {
       console.error('Delete conversation error:', err);
+    } finally {
+      setIsDeletingChat(false);
     }
   };
 
@@ -374,7 +386,10 @@ export const CodeLensChatPage: React.FC = () => {
                         <span className="truncate font-medium">{c.title}</span>
                       </div>
                       <button
-                        onClick={(e) => handleDeleteChat(e, c.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatToDelete(c);
+                        }}
                         className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 hover:text-rose-400 transition cursor-pointer"
                         title="Delete thread"
                       >
@@ -540,7 +555,7 @@ export const CodeLensChatPage: React.FC = () => {
           />
         )}
 
-        {/* Add Gemini Key Modal */}
+        {/* Add OpenAI Key Modal */}
         {isKeyModalOpen && (
           <AddGeminiKeyModal
             isOpen={isKeyModalOpen}
@@ -550,6 +565,15 @@ export const CodeLensChatPage: React.FC = () => {
             }}
           />
         )}
+
+        {/* Delete Chat Confirmation Modal */}
+        <DeleteChatConfirmModal
+          isOpen={chatToDelete !== null}
+          onClose={() => setChatToDelete(null)}
+          onConfirm={handleConfirmDeleteChat}
+          chatTitle={chatToDelete?.title}
+          isLoading={isDeletingChat}
+        />
       </div>
     </WorkspaceLayout>
   );
