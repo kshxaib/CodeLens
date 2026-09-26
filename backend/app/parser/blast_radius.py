@@ -16,7 +16,20 @@ def compute_blast_radius(
     and a calculated Risk Level (low | medium | high).
     """
     if not target_symbol:
-        return {"nodes": [], "edges": [], "risk_level": "low", "impacted_count": 0}
+        return {
+            "target_symbol": "",
+            "nodes": [],
+            "edges": [],
+            "risk_level": "low",
+            "impact_level": "low",
+            "impacted_count": 0,
+            "upstream_count": 0,
+            "downstream_count": 0,
+            "direct_count": 0,
+            "upstream_dependents": [],
+            "downstream_dependencies": [],
+            "direct_dependencies": [],
+        }
 
     # Map: symbol_name -> list of files/functions that DEFINE it
     symbol_definitions: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
@@ -139,9 +152,14 @@ def compute_blast_radius(
     return {
         "target_symbol": target_symbol,
         "risk_level": risk_level,
+        "impact_level": risk_level,
         "impacted_count": impacted_count,
         "upstream_count": len(upstream_nodes),
         "downstream_count": len(downstream_nodes),
+        "direct_count": len(upstream_nodes) + len(downstream_nodes),
+        "upstream_dependents": list(upstream_nodes),
+        "downstream_dependencies": list(downstream_nodes),
+        "direct_dependencies": list(downstream_nodes),
         "nodes": nodes,
         "edges": edges,
     }

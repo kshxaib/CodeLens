@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   ReactFlow,
   MiniMap,
@@ -8,323 +8,594 @@ import {
   useNodesState,
   useEdgesState,
   MarkerType,
-  Position,
-  Handle,
+  ReactFlowProvider,
+  useReactFlow,
+  type Node,
+  type Edge,
 } from '@xyflow/react';
-import type { Node, Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import {
-  Network,
   Zap,
   X,
-  FileCode2,
-  ArrowLeft,
   ChevronRight,
   ChevronLeft,
-  Loader2,
   Layers,
   MousePointer2,
   Info,
   Code2,
   GitBranch,
-  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { api } from '../api/client';
-import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
-import type { ArchitectureGraphData, ArchitectureNode, BlastRadiusResponse } from '../types';
-import { LoadingScreen } from '../components/common/LoadingScreen';
+import type { KnowledgeGraphData, BlastRadiusResponse } from '../types';
 import { ErrorState } from '../components/common/ErrorState';
+import { ArchitectureNode } from '../components/architecture/ArchitectureNode';
+import { ArchitectureEdge } from '../components/architecture/ArchitectureEdge';
+import { ArchitectureInspector } from '../components/architecture/ArchitectureInspector';
+import { ArchitectureToolbar } from '../components/architecture/ArchitectureToolbar';
+import { getLayoutedElements } from '../components/architecture/layout';
+import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
+import { CodeViewerModal } from '../components/code/CodeViewerModal';
 
-const LAYER_CONFIG: Record<string, { label: string; emoji: string; color: string; border: string; bg: string; dot: string }> = {
-  presentation:  { label: 'Presentation',  emoji: '??', color: 'text-amber-300',   border: 'border-amber-500/40',   bg: 'bg-amber-500/10',   dot: '#f59e0b' },
-  frontend:      { label: 'Frontend',       emoji: '??', color: 'text-amber-300',   border: 'border-amber-500/40',   bg: 'bg-amber-500/10',   dot: '#f59e0b' },
-  api_gateway:   { label: 'API Gateway',    emoji: '??', color: 'text-sky-300',     border: 'border-sky-500/40',     bg: 'bg-sky-500/10',     dot: '#3b82f6' },
-  application:   { label: 'Application',    emoji: '??', color: 'text-sky-300',     border: 'border-sky-500/40',     bg: 'bg-sky-500/10',     dot: '#3b82f6' },
-  service:       { label: 'Service',        emoji: '??', color: 'text-emerald-300', border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', dot: '#10b981' },
-  domain:        { label: 'Domain',         emoji: '??', color: 'text-emerald-300', border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', dot: '#10b981' },
-  data:          { label: 'Data',           emoji: '??', color: 'text-purple-300',  border: 'border-purple-500/40',  bg: 'bg-purple-500/10',  dot: '#a855f7' },
-  infrastructure:{ label: 'Infrastructure', emoji: '??', color: 'text-purple-300',  border: 'border-purple-500/40',  bg: 'bg-purple-500/10',  dot: '#a855f7' },
-  unknown:       { label: 'Unknown',        emoji: '?', color: 'text-slate-400',   border: 'border-[#1f1f23]',      bg: 'bg-[#121214]',      dot: '#64748b' },
-};
-const getLayerCfg = (layer: string) => LAYER_CONFIG[layer] ?? LAYER_CONFIG.unknown;
-
-const LayerNode = ({ data, selected }: any) => {
-  const cfg = getLayerCfg(data.layer);
-  let highlightClass = '';
-  if (data.isBlastTarget) highlightClass = 'ring-2 ring-rose-500 shadow-2xl scale-105';
-  else if (data.isUpstream) highlightClass = 'ring-2 ring-amber-400';
-  else if (data.isDownstream) highlightClass = 'ring-2 ring-sky-400';
-
-  return (
-    <div className={`px-3 py-2.5 rounded-xl border shadow-lg transition-all min-w-[180px] bg-[#0d0d0f] ${cfg.border} ${selected ? 'ring-2 ring-amber-400 scale-105' : ''} ${highlightClass}`}>
-      <Handle type="target" position={Position.Top} className="!bg-slate-600 !w-1.5 !h-1.5 !border-0" />
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span className={`text-[9px] uppercase tracking-widest font-mono px-1.5 py-0.5 rounded-full font-bold ${cfg.bg} ${cfg.color} border ${cfg.border}`}>{data.layer}</span>
-        <span className="text-[9px] font-mono text-slate-600">{data.symbols?.length || 0}s</span>
-      </div>
-      <div className="font-mono font-semibold text-[11px] text-slate-100 truncate">{data.label}</div>
-      {data.file_path && <div className="text-[9px] text-slate-600 font-mono truncate mt-0.5">{data.file_path}</div>}
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-600 !w-1.5 !h-1.5 !border-0" />
-    </div>
-  );
+const nodeTypes = {
+  architectureNode: ArchitectureNode,
 };
 
-const nodeTypes = { layerNode: LayerNode };
-
-const LEGEND = [
-  { emoji: '??', label: 'Presentation', sub: 'Controllers / Routes / UI',       layer: 'presentation' },
-  { emoji: '??', label: 'Application',  sub: 'Services / Handlers',             layer: 'application' },
-  { emoji: '??', label: 'Domain',       sub: 'Models / Entities',               layer: 'domain' },
-  { emoji: '??', label: 'Infrastructure', sub: 'DB / External APIs / Config',   layer: 'infrastructure' },
-];
+const edgeTypes = {
+  architectureEdge: ArchitectureEdge,
+};
 
 const BLAST_LEGEND = [
-  { color: 'bg-rose-500',  label: 'Target Node' },
-  { color: 'bg-amber-400', label: 'Upstream Dependents' },
-  { color: 'bg-sky-400',   label: 'Downstream Calls' },
+  { color: 'bg-amber-400', label: 'Selected / Target Entity' },
+  { color: 'bg-amber-400', label: 'Upstream Callers (Dependents)' },
+  { color: 'bg-sky-400', label: 'Downstream Dependencies' },
 ];
 
-export const ArchitectureMapPage: React.FC = () => {
+const ArchitectureMapCanvas: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const repoId = parseInt(id || '0', 10);
-  const { selectedRepo } = useWorkspaceStore();
+  const reactFlowInstance = useReactFlow();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const [graphData, setGraphData] = useState<ArchitectureGraphData | null>(null);
+  // Raw Knowledge Graph Data from backend
+  const [kgData, setKgData] = useState<KnowledgeGraphData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRebuilding, setIsRebuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<ArchitectureNode | null>(null);
+
+  // UI state
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Filtering & View Mode
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTier, setSelectedTier] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedRel, setSelectedRel] = useState('all');
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'internal' | 'external'>('all');
+  const [viewMode, setViewMode] = useState<'system' | 'full'>('system');
+  const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
+
+  // Blast radius state
   const [blastRadius, setBlastRadius] = useState<BlastRadiusResponse | null>(null);
   const [blastLoading, setBlastLoading] = useState(false);
-  const [leftOpen, setLeftOpen] = useState(true);
 
+  // Source code viewer modal state
+  const [codeViewerState, setCodeViewerState] = useState<{
+    isOpen: boolean;
+    filePath?: string;
+    highlightLines?: { start: number; end: number };
+  }>({ isOpen: false });
+
+  // React Flow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  const fetchArchitecture = async () => {
+  // ---------------------------------------------------------------------------
+  // Data Fetching
+  // ---------------------------------------------------------------------------
+  const fetchKnowledgeGraph = useCallback(async (forceRebuild = false) => {
     try {
-      setLoading(true);
+      if (forceRebuild) {
+        setIsRebuilding(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-      const data = await api.getArchitecture(repoId);
-      setGraphData(data);
 
-      const COLS_PER_LAYER = 20;
-      const COL_GAP = 240;
-      const ROW_GAP = 170;
-      const LAYER_Y_GAP = 200;
-      const layerOrder = ['presentation','frontend','api_gateway','application','service','domain','data','infrastructure','unknown'];
-
-      const layerBaseY: Record<string, number> = {};
-      let cumulativeY = 50;
-      for (const layer of layerOrder) {
-        const count = (data?.nodes || []).filter((n: any) => (n.layer || n.data?.layer || 'unknown') === layer).length;
-        layerBaseY[layer] = cumulativeY;
-        cumulativeY += (Math.ceil(count / COLS_PER_LAYER) || 1) * ROW_GAP + LAYER_Y_GAP;
+      let data: KnowledgeGraphData;
+      if (forceRebuild) {
+        data = await api.buildKnowledgeGraph(repoId);
+      } else {
+        try {
+          data = await api.getKnowledgeGraph(repoId);
+        } catch (fetchErr: any) {
+          // If 404 or missing, automatically trigger on-demand build
+          data = await api.buildKnowledgeGraph(repoId);
+        }
       }
 
-      const layerCounters: Record<string, number> = {};
-      const rawNodes = data?.nodes || [];
-      const rawEdges = data?.edges || [];
-
-      const flowNodes: Node[] = rawNodes.map((n: any) => {
-        const nodeData = n.data || {};
-        const layer = n.layer || nodeData.layer || 'unknown';
-        const normalizedLayer = layerOrder.includes(layer) ? layer : 'unknown';
-        if (!(normalizedLayer in layerCounters)) layerCounters[normalizedLayer] = 0;
-        const idx = layerCounters[normalizedLayer]++;
-        const xPos = 50 + (idx % COLS_PER_LAYER) * COL_GAP;
-        const yPos = (layerBaseY[normalizedLayer] ?? 50) + Math.floor(idx / COLS_PER_LAYER) * ROW_GAP;
-        const filePath = nodeData.filePath || nodeData.file_path || n.file_path || '';
-        const rawLabel = nodeData.label || n.label || (filePath ? filePath.split(/[/\\]/).pop() : n.id || 'Module');
-        return {
-          id: n.id,
-          type: 'layerNode',
-          position: n.position || { x: xPos, y: yPos },
-          data: { ...nodeData, label: rawLabel, file_path: filePath || nodeData.filePath, layer: normalizedLayer, symbols: nodeData.topSymbols || n.symbols || [], symbolCount: nodeData.symbolCount || 0, lineCount: nodeData.lineCount || 0 },
-        };
-      });
-
-      const flowEdges: Edge[] = rawEdges.map((e: any, idx: number) => ({
-        id: e.id || `edge-${idx}`,
-        source: e.source,
-        target: e.target,
-        animated: true,
-        style: { stroke: 'rgba(245,158,11,0.35)', strokeWidth: 1.5 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' },
-      }));
-
-      setNodes(flowNodes);
-      setEdges(flowEdges);
+      setKgData(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate repository architecture topology.');
+      setError(err.message || 'Failed to generate Architecture Knowledge Graph.');
     } finally {
       setLoading(false);
+      setIsRebuilding(false);
     }
-  };
+  }, [repoId]);
 
-  useEffect(() => { if (repoId) fetchArchitecture(); }, [repoId]);
+  useEffect(() => {
+    if (repoId) {
+      fetchKnowledgeGraph();
+    }
+  }, [repoId, fetchKnowledgeGraph]);
 
-  const handleNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      setSelectedNode(node.data as any);
-      setBlastRadius(null);
-    },
-    [graphData]
-  );
+  // ---------------------------------------------------------------------------
+  // Graph Filtering & Layout Transformation
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!kgData) return;
 
-  const handleComputeBlastRadius = async (symbolName?: string) => {
-    if (!selectedNode) return;
-    const targetSymbol = symbolName || selectedNode.symbols?.[0]?.name || selectedNode.label;
+    const rawNodes = kgData.nodes || [];
+    const rawEdges = kgData.edges || [];
+
+    // Filter nodes according to viewMode, tier, type, scope, and search
+    const filteredNodes = rawNodes.filter((n) => {
+      const tierKey = getNodeTier(n.type, n.layer);
+
+      // View mode filter: 'system' shows semantic components, services, APIs, databases, external
+      if (viewMode === 'system') {
+        const isUtilityModule =
+          (n.type === 'module' || n.type === 'function' || n.type === 'class') &&
+          (!n.symbols || n.symbols.length === 0);
+        if (isUtilityModule) return false;
+      }
+
+      // Tier filter
+      if (selectedTier !== 'all' && tierKey !== selectedTier) return false;
+
+      // Entity type filter
+      if (selectedType !== 'all') {
+        if (selectedType === 'queue' && n.type !== 'queue' && n.type !== 'worker') return false;
+        else if (selectedType !== 'queue' && n.type !== selectedType) return false;
+      }
+
+      // Scope filter
+      if (scopeFilter === 'internal' && n.type === 'external_service') return false;
+      if (scopeFilter === 'external' && n.type !== 'external_service') return false;
+
+      // Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesName = (n.name || '').toLowerCase().includes(q);
+        const matchesDisplay = (n.display_name || '').toLowerCase().includes(q);
+        const matchesType = (n.type || '').toLowerCase().includes(q);
+        const matchesFile = (n.source_files || []).some((f) => f.toLowerCase().includes(q));
+        const matchesSymbol = (n.symbols || []).some((s) => s.name.toLowerCase().includes(q));
+        if (!matchesName && !matchesDisplay && !matchesType && !matchesFile && !matchesSymbol) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    const visibleNodeIdSet = new Set(filteredNodes.map((n) => n.id));
+
+    // Filter edges: both source and target must be visible, plus relationship filter
+    const filteredEdges = rawEdges.filter((e) => {
+      if (!visibleNodeIdSet.has(e.source) || !visibleNodeIdSet.has(e.target)) return false;
+      if (selectedRel !== 'all' && e.relationship_type !== selectedRel) return false;
+      return true;
+    });
+
+    // Compute Upstream and Downstream dependency sets if a node is selected or hovered
+    const activeFocusNodeId = selectedNodeId || hoveredNodeId;
+
+    const upstreamNodeIds = new Set<string>();
+    const downstreamNodeIds = new Set<string>();
+    const highlightedEdgeIds = new Set<string>();
+
+    if (activeFocusNodeId && visibleNodeIdSet.has(activeFocusNodeId)) {
+      // Direct edges and paths
+      filteredEdges.forEach((e) => {
+        if (e.target === activeFocusNodeId) {
+          upstreamNodeIds.add(e.source);
+          highlightedEdgeIds.add(e.id);
+        }
+        if (e.source === activeFocusNodeId) {
+          downstreamNodeIds.add(e.target);
+          highlightedEdgeIds.add(e.id);
+        }
+      });
+
+      // If blast radius data exists, integrate with blast upstream/downstream
+      if (blastRadius) {
+        const upstreamNames = new Set(blastRadius.upstream_dependents || []);
+        const downstreamNames = new Set(blastRadius.downstream_dependencies || []);
+
+        filteredNodes.forEach((n) => {
+          if (upstreamNames.has(n.name) || upstreamNames.has(n.display_name)) {
+            upstreamNodeIds.add(n.id);
+          }
+          if (downstreamNames.has(n.name) || downstreamNames.has(n.display_name)) {
+            downstreamNodeIds.add(n.id);
+          }
+        });
+      }
+    }
+
+    const hasFocus = !!activeFocusNodeId;
+
+    // Convert ArchKGNode to ReactFlow Node
+    const flowNodes: Node[] = filteredNodes.map((n) => {
+      const isSelected = n.id === selectedNodeId;
+      const isHovered = n.id === hoveredNodeId;
+      const isUpstream = upstreamNodeIds.has(n.id);
+      const isDownstream = downstreamNodeIds.has(n.id);
+      const isTarget = n.id === activeFocusNodeId;
+
+      const isDimmed = hasFocus && !isSelected && !isHovered && !isUpstream && !isDownstream && !isTarget;
+
+      return {
+        id: n.id,
+        type: 'architectureNode',
+        position: { x: 0, y: 0 }, // Will be laid out by Dagre
+        data: {
+          ...n,
+          isSelected,
+          isHovered,
+          isUpstream,
+          isDownstream,
+          isBlastTarget: isTarget && isSelected,
+          isDimmed,
+          tier: getNodeTier(n.type, n.layer),
+        },
+      };
+    });
+
+    // Convert ArchKGEdge to ReactFlow Edge
+    const flowEdges: Edge[] = filteredEdges.map((e) => {
+      const isUpstream = upstreamNodeIds.has(e.source) && (e.target === activeFocusNodeId || downstreamNodeIds.has(e.target));
+      const isDownstream = (e.source === activeFocusNodeId || upstreamNodeIds.has(e.source)) && downstreamNodeIds.has(e.target);
+      const isConnected = e.source === activeFocusNodeId || e.target === activeFocusNodeId;
+      const isDimmed = hasFocus && !isConnected && !isUpstream && !isDownstream;
+
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        type: 'architectureEdge',
+        animated: e.relationship_type === 'CALLS' || e.relationship_type === 'CONSUMES' || isConnected,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: isUpstream ? '#f59e0b' : isDownstream ? '#38bdf8' : '#71717a',
+          width: 14,
+          height: 14,
+        },
+        data: {
+          relationship_type: e.relationship_type,
+          confidence: e.confidence,
+          confidence_level: e.confidence_level,
+          isUpstream,
+          isDownstream,
+          isHovered: isConnected,
+          isDimmed,
+          evidence_count: e.evidence?.length || 0,
+        },
+      };
+    });
+
+    // Compute Dagre layered layout
+    const layouted = getLayoutedElements(flowNodes, flowEdges, {
+      direction: layoutDirection,
+    });
+
+    setNodes(layouted.nodes);
+    setEdges(layouted.edges);
+  }, [
+    kgData,
+    searchQuery,
+    selectedTier,
+    selectedType,
+    selectedRel,
+    scopeFilter,
+    viewMode,
+    layoutDirection,
+    selectedNodeId,
+    hoveredNodeId,
+    blastRadius,
+    setNodes,
+    setEdges,
+  ]);
+
+  // Fit to screen on initial layout
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const timer = setTimeout(() => {
+        reactFlowInstance.fitView({ padding: 0.15, duration: 400 });
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [nodes.length, layoutDirection, viewMode, reactFlowInstance]);
+
+  // ---------------------------------------------------------------------------
+  // Interactions
+  // ---------------------------------------------------------------------------
+  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
+    setBlastRadius(null);
+  }, []);
+
+  const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
+    setHoveredNodeId(node.id);
+  }, []);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null);
+  }, []);
+
+  const handlePaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+    setHoveredNodeId(null);
+    setBlastRadius(null);
+  }, []);
+
+  const handleAnalyzeBlastRadius = async (symbolName: string) => {
+    if (!symbolName) return;
     try {
       setBlastLoading(true);
-      const res = await api.getBlastRadius(repoId, targetSymbol);
+      const res = await api.getBlastRadius(repoId, symbolName);
       setBlastRadius(res);
-      setNodes((nds) =>
-        nds.map((n) => ({
-          ...n,
-          data: {
-            ...n.data,
-            isBlastTarget: n.id === selectedNode.id,
-            isUpstream: res.upstream_dependents.some((u) => u.includes(n.data.label as string)),
-            isDownstream: res.downstream_dependencies.some((d) => d.includes(n.data.label as string)),
-          },
-        }))
-      );
     } catch (err: any) {
-      console.error('Blast radius error:', err);
+      console.error('Blast radius calculation failed:', err);
     } finally {
       setBlastLoading(false);
     }
   };
 
-  const clearBlastRadius = () => {
-    setBlastRadius(null);
-    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, isBlastTarget: false, isUpstream: false, isDownstream: false } })));
+  const handleOpenSource = (filePath: string, lineRange?: { start: number; end: number }) => {
+    setCodeViewerState({
+      isOpen: true,
+      filePath,
+      highlightLines: lineRange,
+    });
   };
 
-  const layerStats = nodes.reduce<Record<string, number>>((acc, n) => {
-    const l = (n.data as any).layer || 'unknown';
-    acc[l] = (acc[l] || 0) + 1;
-    return acc;
-  }, {});
+  const handleToggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
 
-  if (loading) return <LoadingScreen title="Rendering Architecture Topology" message="Analyzing Tree-sitter AST nodes and dependency graph..." />;
-  if (error) return <ErrorState type="general" title="Topology Generation Failed" message={error} onRetry={fetchArchitecture} />;
+  // Currently selected ArchKGNode object
+  const activeSelectedNode = useMemo(() => {
+    if (!selectedNodeId || !kgData) return null;
+    return kgData.nodes.find((n) => n.id === selectedNodeId) || null;
+  }, [selectedNodeId, kgData]);
+
+  // Layer statistics
+  const tierStats = useMemo(() => {
+    if (!kgData) return {};
+    return kgData.nodes.reduce<Record<string, number>>((acc, n) => {
+      const t = getNodeTier(n.type, n.layer);
+      acc[t] = (acc[t] || 0) + 1;
+      return acc;
+    }, {});
+  }, [kgData]);
+
+  if (loading) {
+    return (
+      <WorkspaceLayout>
+        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex flex-col items-center justify-center p-6 text-center select-none">
+          <div className="w-12 h-12 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center mb-4 shadow-xl">
+            <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+          </div>
+          <h3 className="text-base font-bold text-white font-mono tracking-tight">
+            Analyzing Architecture Knowledge Graph
+          </h3>
+        </div>
+      </WorkspaceLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <WorkspaceLayout>
+        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex items-center justify-center p-6">
+          <ErrorState
+            type="general"
+            title="Knowledge Graph Generation Failed"
+            message={error}
+            onRetry={() => fetchKnowledgeGraph(true)}
+          />
+        </div>
+      </WorkspaceLayout>
+    );
+  }
 
   return (
     <WorkspaceLayout>
       <style>{`
         .arc-left { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, transform 0.28s cubic-bezier(0.4,0,0.2,1); }
-        .arc-left.open  { width:260px; opacity:1; transform:translateX(0); }
-        .arc-left.closed{ width:0px;   opacity:0; transform:translateX(-20px); overflow:hidden; }
+        .arc-left.open  { width: 270px; opacity: 1; transform: translateX(0); }
+        .arc-left.closed{ width: 0px; opacity: 0; transform: translateX(-20px); overflow: hidden; }
         .arc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
-        .arc-right.open  { width:340px; opacity:1; }
-        .arc-right.closed{ width:0px;   opacity:0; pointer-events:none; overflow:hidden; }
-        .arc-topbar { transition: left 0.28s cubic-bezier(0.4,0,0.2,1); }
-        .arc-toggle-btn { transition: left 0.28s cubic-bezier(0.4,0,0.2,1); }
+        .arc-right.open  { width: 400px; opacity: 1; }
+        .arc-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
       `}</style>
 
-      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex">
-
-        {/* LEFT SIDEBAR */}
-        <div className={`arc-left flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] flex flex-col ${leftOpen ? 'open' : 'closed'}`}>
-          <div className="flex flex-col h-full overflow-y-auto p-4 min-w-[260px]">
-            <div className="flex items-center gap-2 mb-5">
-              <Layers className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">Layer Guide</span>
+      <div
+        ref={containerRef}
+        className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+      >
+        {/* LEFT LAYER GUIDE SIDEBAR */}
+        <div
+          className={`arc-left flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] flex flex-col z-30 ${
+            leftOpen ? 'open' : 'closed'
+          }`}
+        >
+          <div className="flex flex-col h-full overflow-y-auto p-4 min-w-[270px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+                  Architectural Layers
+                </span>
+              </div>
+              <button
+                onClick={() => setLeftOpen(false)}
+                className="text-zinc-500 hover:text-white p-1 rounded"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {/* Legend */}
+            {/* Layer Tiers Cards with click-to-filter */}
             <div className="space-y-2 mb-6">
-              {LEGEND.map((l) => {
-                const cfg = getLayerCfg(l.layer);
-                const count = layerStats[l.layer] ?? 0;
+              {Object.entries(ARCH_TIERS).map(([key, tier]) => {
+                const count = tierStats[key] || 0;
+                const isSelected = selectedTier === key;
                 return (
-                  <div key={l.layer} className={`flex items-start gap-2.5 p-2.5 rounded-xl border ${cfg.border} ${cfg.bg}`}>
-                    <span className="text-base leading-none mt-0.5">{l.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className={`text-[11px] font-bold font-mono ${cfg.color}`}>{l.label}</div>
-                      <div className="text-[10px] text-slate-500 leading-snug mt-0.5">{l.sub}</div>
+                  <div
+                    key={key}
+                    onClick={() => setSelectedTier((prev) => (prev === key ? 'all' : key))}
+                    className={`p-2.5 rounded-xl border transition cursor-pointer flex items-start justify-between ${
+                      isSelected
+                        ? 'bg-amber-400/10 border-amber-400/50 shadow-md ring-1 ring-amber-400/30'
+                        : 'bg-[#121214] border-[#1f1f23] hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tier.dot }} />
+                        <span className={`text-[11px] font-bold font-mono ${tier.color}`}>{tier.label}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500 leading-snug mt-1 pl-4 truncate">
+                        {tier.sub}
+                      </div>
                     </div>
-                    {count > 0 && <span className={`text-[10px] font-mono font-bold ${cfg.color} mt-0.5`}>{count}</span>}
+                    {count > 0 && (
+                      <span className="text-[10px] font-mono font-bold text-zinc-300 px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700">
+                        {count}
+                      </span>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            {/* Blast colors */}
+            {/* Blast Colors */}
             <div className="mb-6">
               <div className="flex items-center gap-1.5 mb-2.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider font-mono">Blast Radius Colors</span>
+                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider font-mono">
+                  Dependency Highlights
+                </span>
               </div>
               <div className="space-y-1.5">
                 {BLAST_LEGEND.map((b) => (
                   <div key={b.label} className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${b.color}`} />
-                    <span className="text-[10px] text-slate-400 font-mono">{b.label}</span>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${b.color}`} />
+                    <span className="text-[10px] text-zinc-400 font-mono">{b.label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* How to use */}
-            <div className="border-t border-[#1f1f23] pt-4">
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <Info className="w-3.5 h-3.5 text-slate-500" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">How to Use</span>
+            <div className="border-t border-[#1f1f23] pt-4 mt-auto">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Info className="w-3.5 h-3.5 text-zinc-500" />
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-mono">
+                  Interactive Features
+                </span>
               </div>
-              <ul className="space-y-2">
-                {[
-                  { icon: <MousePointer2 className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />, text: 'Click any node to inspect details in the right panel.' },
-                  { icon: <Zap className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />, text: 'Press "Analyze Impact Radius" to highlight upstream & downstream.' },
-                  { icon: <GitBranch className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />, text: 'Scroll to zoom · Drag to pan · MiniMap to jump.' },
-                  { icon: <Code2 className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />, text: 'Click a symbol in the drawer to blast on that specific symbol.' },
-                ].map((s, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    {s.icon}
-                    <span className="text-[10px] text-slate-500 leading-snug font-mono">{s.text}</span>
-                  </li>
-                ))}
+              <ul className="space-y-1.5 text-[10px] text-zinc-500 font-mono">
+                <li className="flex items-start gap-1.5">
+                  <MousePointer2 className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                  <span>Click node to open inspector & trace paths</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <GitBranch className="w-3 h-3 text-sky-400 shrink-0 mt-0.5" />
+                  <span>Hover to isolate connected relationships</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <Code2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Click symbol or evidence to view exact code</span>
+                </li>
               </ul>
             </div>
-
-            {/* Stats */}
           </div>
         </div>
 
-        {/* SIDEBAR TOGGLE ARROW */}
+        {/* SIDEBAR TOGGLE BUTTON */}
         <button
           onClick={() => setLeftOpen((v) => !v)}
           title={leftOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          className="arc-toggle-btn absolute top-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-5 h-10 bg-[#18181b] border border-[#1f1f23] border-l-0 rounded-r-lg text-slate-500 hover:text-white hover:bg-[#232326] transition cursor-pointer shadow-xl"
-          style={{ left: leftOpen ? '260px' : '0px' }}
+          className="absolute top-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-5 h-10 bg-[#18181b] border border-[#1f1f23] border-l-0 rounded-r-lg text-zinc-400 hover:text-white hover:bg-[#232326] transition cursor-pointer shadow-xl"
+          style={{ left: leftOpen ? '270px' : '0px' }}
         >
           {leftOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
         </button>
 
-        {/* TOP BAR */}
-        <div
-          className="arc-topbar absolute top-4 z-30 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] px-3 py-2 rounded-2xl shadow-2xl"
-          style={{ left: leftOpen ? '276px' : '16px' }}
-        >
-          <Link to={`/repository/${repoId}`} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#18181b] transition cursor-pointer">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Network className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-white font-mono">{selectedRepo?.name || 'Architecture Map'}</span>
-            <span className="text-[10px] text-slate-500 font-mono">{nodes.length} nodes · {edges.length} edges</span>
-          </div>
-          {blastRadius && (
-            <button onClick={clearBlastRadius} className="ml-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-rose-300 bg-rose-500/15 hover:bg-rose-500/25 px-2.5 py-1 rounded-lg border border-rose-500/30 transition cursor-pointer">
-              <X className="w-3 h-3" /> Clear Focus
-            </button>
-          )}
-        </div>
+        {/* TOP TOOLBAR */}
+        <ArchitectureToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedTier={selectedTier}
+          onTierChange={setSelectedTier}
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+          selectedRel={selectedRel}
+          onRelChange={setSelectedRel}
+          scopeFilter={scopeFilter}
+          onScopeChange={setScopeFilter}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          layoutDirection={layoutDirection}
+          onToggleLayoutDirection={() =>
+            setLayoutDirection((d) => (d === 'TB' ? 'LR' : 'TB'))
+          }
+          onFitView={() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 })}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
+          onRebuildGraph={() => fetchKnowledgeGraph(true)}
+          isRebuilding={isRebuilding}
+          totalNodes={kgData?.nodes?.length || 0}
+          totalEdges={kgData?.edges?.length || 0}
+          filteredNodesCount={nodes.length}
+        />
 
-        {/* CANVAS */}
+        {/* BOTTOM ACTIVE FOCUS BADGE */}
+        {(selectedNodeId || blastRadius) && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-md border border-[#1f1f23] px-3.5 py-2 rounded-2xl shadow-2xl">
+            <span className="text-[11px] font-mono text-zinc-300 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              Focus: <span className="font-bold text-white">{activeSelectedNode?.name || selectedNodeId}</span>
+            </span>
+            <button
+              onClick={() => {
+                setSelectedNodeId(null);
+                setBlastRadius(null);
+              }}
+              className="text-[10px] font-mono font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2 py-0.5 rounded-lg border border-rose-500/20 transition cursor-pointer"
+            >
+              Clear Focus
+            </button>
+          </div>
+        )}
+
+        {/* REACT FLOW CANVAS */}
         <div className="flex-1 h-full">
           <ReactFlow
             nodes={nodes}
@@ -332,184 +603,83 @@ export const ArchitectureMapPage: React.FC = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
+            onNodeMouseEnter={handleNodeMouseEnter}
+            onNodeMouseLeave={handleNodeMouseLeave}
+            onPaneClick={handlePaneClick}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
             fitViewOptions={{ padding: 0.15 }}
             panOnDrag={true}
             panOnScroll={false}
             zoomOnScroll={true}
             zoomOnPinch={true}
-            zoomOnDoubleClick={false}
             nodesDraggable={true}
             nodesConnectable={false}
             elementsSelectable={true}
             minZoom={0.05}
             maxZoom={2}
+            proOptions={{ hideAttribution: true }}
             className="bg-[#000000]"
-            style={{ width: '100%', height: '100%' }}
           >
             <Background color="rgba(255,255,255,0.03)" gap={24} size={1} />
-            <Controls showInteractive={false} className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-slate-300" />
+            <Controls
+              showInteractive={false}
+              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
+            />
             <MiniMap
-              nodeColor={(n) => getLayerCfg((n.data as any)?.layer || 'unknown').dot}
+              nodeColor={(n) => {
+                const tierKey = (n.data as any)?.tier || 'application';
+                return ARCH_TIERS[tierKey]?.dot || '#10b981';
+              }}
               zoomable
               pannable
-              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden"
+              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
             />
           </ReactFlow>
         </div>
 
-        {/* RIGHT DRAWER */}
-        <div className={`arc-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${selectedNode ? 'open' : 'closed'}`}>
-          {selectedNode && (
-            <div className="flex flex-col h-full overflow-y-auto p-5 min-w-[340px]">
-
-              {/* Header */}
-              <div className="flex items-start justify-between pb-4 border-b border-[#1f1f23] mb-4 gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileCode2 className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <h3 className="text-sm font-bold text-white font-mono leading-tight break-all">{selectedNode.label}</h3>
-                </div>
-                <button onClick={() => { setSelectedNode(null); clearBlastRadius(); }} className="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-[#18181b] transition cursor-pointer flex-shrink-0">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Layer badge */}
-              {(() => {
-                const cfg = getLayerCfg(selectedNode.layer || 'unknown');
-                const leg = LEGEND.find((l) => l.layer === selectedNode.layer);
-                return (
-                  <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border mb-4 ${cfg.border} ${cfg.bg}`}>
-                    <span className="text-lg">{leg?.emoji ?? '?'}</span>
-                    <div>
-                      <div className={`text-[11px] font-bold font-mono ${cfg.color}`}>{cfg.label} Layer</div>
-                      <div className="text-[10px] text-slate-500">{leg?.sub ?? 'Module'}</div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Meta */}
-              <div className="space-y-0 rounded-xl border border-[#1f1f23] overflow-hidden mb-5 text-xs font-mono">
-                {selectedNode.file_path && (
-                  <div className="px-3 py-2.5 border-b border-[#1f1f23]">
-                    <span className="text-[9px] text-slate-600 uppercase tracking-wider block mb-0.5">File Path</span>
-                    <span className="text-slate-300 break-all text-[10px] leading-relaxed">{selectedNode.file_path || (selectedNode as any).filePath}</span>
-                  </div>
-                )}
-                {(selectedNode as any).language && (
-                  <div className="px-3 py-2.5 border-b border-[#1f1f23] flex justify-between items-center">
-                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Language</span>
-                    <span className="text-amber-300 text-[10px] font-bold uppercase">{(selectedNode as any).language}</span>
-                  </div>
-                )}
-                {(selectedNode as any).lineCount > 0 && (
-                  <div className="px-3 py-2.5 border-b border-[#1f1f23] flex justify-between items-center">
-                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Lines of Code</span>
-                    <span className="text-slate-300 text-[10px] font-bold">{(selectedNode as any).lineCount}</span>
-                  </div>
-                )}
-                {(selectedNode as any).symbolCount > 0 && (
-                  <div className="px-3 py-2.5 flex justify-between items-center">
-                    <span className="text-[9px] text-slate-600 uppercase tracking-wider">Total Symbols</span>
-                    <span className="text-slate-300 text-[10px] font-bold">{(selectedNode as any).symbolCount}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* AST Symbols */}
-              <div className="mb-5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono font-bold">
-                    AST Symbols ({selectedNode.symbols?.length || 0} shown{(selectedNode as any).symbolCount > (selectedNode.symbols?.length || 0) ? ` of ${(selectedNode as any).symbolCount}` : ""})
-                  </span>
-                  {selectedNode.symbols && selectedNode.symbols.length > 0 && (
-                    <span className="text-[9px] text-slate-600 font-mono">click to blast</span>
-                  )}
-                </div>
-                <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
-                  {selectedNode.symbols && selectedNode.symbols.length > 0 ? (
-                    selectedNode.symbols.map((sym: any, idx: number) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleComputeBlastRadius(sym.name)}
-                        className="w-full flex items-center justify-between p-2 rounded-lg bg-card border border-border hover:border-primary/40 hover:bg-accent/40 transition cursor-pointer text-left group"
-                      >
-                        <div className="min-w-0">
-                          <span className="text-amber-300 font-bold text-[11px] group-hover:text-amber-200 truncate block">{sym.name}</span>
-                          <span className="text-[9px] text-slate-600 font-sans capitalize">{sym.kind}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                          <span className="text-[9px] text-slate-600 font-mono">L:{sym.line ?? sym.line_number}</span>
-                          <Zap className="w-2.5 h-2.5 text-slate-700 group-hover:text-amber-400 transition" />
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="flex items-center gap-1.5 p-3 rounded-lg bg-[#111113] border border-[#1f1f23]">
-                      <AlertTriangle className="w-3 h-3 text-slate-600" />
-                      <span className="text-slate-600 text-[10px]">No high-level symbols found.</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Blast Radius */}
-              <div className="border-t border-[#1f1f23] pt-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-bold text-white font-mono">Impact Radius Analysis</span>
-                </div>
-
-                {blastRadius ? (
-                  <div className="rounded-xl border border-[#1f1f23] overflow-hidden">
-                    <div className="flex justify-between items-center px-3 py-2.5 bg-rose-500/10 border-b border-[#1f1f23]">
-                      <span className="text-[10px] text-slate-400 font-mono">Target Symbol</span>
-                      <span className="font-bold text-rose-300 font-mono text-[11px]">{blastRadius.target_symbol}</span>
-                    </div>
-                    <div className="flex justify-between items-center px-3 py-2.5 border-b border-[#1f1f23]">
-                      <span className="text-[10px] text-slate-400 font-mono">Impact Level</span>
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">{blastRadius.impact_level}</span>
-                    </div>
-                    <div className="flex justify-between items-center px-3 py-2.5 border-b border-[#1f1f23]">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                        <span className="text-[10px] text-slate-400 font-mono">Upstream Dependents</span>
-                      </div>
-                      <span className="font-mono text-amber-300 font-bold text-sm">{blastRadius.upstream_count}</span>
-                    </div>
-                    <div className="flex justify-between items-center px-3 py-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-sky-400 flex-shrink-0" />
-                        <span className="text-[10px] text-slate-400 font-mono">Downstream Calls</span>
-                      </div>
-                      <span className="font-mono text-sky-300 font-bold text-sm">{blastRadius.downstream_count}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleComputeBlastRadius()}
-                    disabled={blastLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-[#0d1017] text-xs font-bold py-2.5 px-4 rounded-xl transition disabled:opacity-50 cursor-pointer"
-                  >
-                    {blastLoading ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" />Computing...</>) : (<><Zap className="w-3.5 h-3.5" />Analyze Impact Radius</>)}
-                  </button>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="mt-auto pt-4 border-t border-[#1f1f23] text-center">
-                <Link to={`/chat?repository=${repoId}`} className="text-[11px] text-amber-400 hover:text-amber-300 font-medium inline-flex items-center gap-1 cursor-pointer transition">
-                  Ask AI Copilot about this module <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
+        {/* RIGHT INSPECTOR DRAWER */}
+        <div
+          className={`arc-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
+            activeSelectedNode ? 'open' : 'closed'
+          }`}
+        >
+          {activeSelectedNode && (
+            <ArchitectureInspector
+              node={activeSelectedNode}
+              allNodes={kgData?.nodes || []}
+              edges={kgData?.edges || []}
+              repositoryId={repoId}
+              onClose={() => {
+                setSelectedNodeId(null);
+                setBlastRadius(null);
+              }}
+              onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
+              onOpenSource={handleOpenSource}
+              onAnalyzeBlastRadius={handleAnalyzeBlastRadius}
+              blastLoading={blastLoading}
+            />
           )}
         </div>
       </div>
+
+      {/* SOURCE CODE VIEWER MODAL */}
+      <CodeViewerModal
+        isOpen={codeViewerState.isOpen}
+        onClose={() => setCodeViewerState({ isOpen: false })}
+        repositoryId={repoId}
+        filePath={codeViewerState.filePath}
+        highlightLines={codeViewerState.highlightLines}
+      />
     </WorkspaceLayout>
   );
 };
 
-
+export const ArchitectureMapPage: React.FC = () => {
+  return (
+    <ReactFlowProvider>
+      <ArchitectureMapCanvas />
+    </ReactFlowProvider>
+  );
+};

@@ -121,3 +121,108 @@ export interface BlastRadiusResponse {
   downstream_count: number;
   impact_level: 'low' | 'medium' | 'high';
 }
+
+// ---------------------------------------------------------------------------
+// Unified Architecture Knowledge Graph Types
+// ---------------------------------------------------------------------------
+
+export type ArchNodeType =
+  | 'application'
+  | 'service'
+  | 'module'
+  | 'component'
+  | 'api_endpoint'
+  | 'database'
+  | 'database_model'
+  | 'external_service'
+  | 'queue'
+  | 'worker'
+  | 'storage'
+  | 'function'
+  | 'class'
+  | 'lifecycle_entity';
+
+export type ArchLayerType =
+  | 'presentation'
+  | 'api_gateway'
+  | 'application'
+  | 'domain'
+  | 'infrastructure'
+  | 'unknown';
+
+export type RelationshipType =
+  | 'IMPORTS'
+  | 'CALLS'
+  | 'DEPENDS_ON'
+  | 'EXPOSES'
+  | 'CONSUMES'
+  | 'READS'
+  | 'WRITES'
+  | 'PERSISTS'
+  | 'AUTHENTICATES'
+  | 'EMITS'
+  | 'LISTENS'
+  | 'TRIGGERS'
+  | 'TRANSFORMS'
+  | 'CONTAINS'
+  | 'IMPLEMENTS';
+
+export interface SourceEvidence {
+  file_path: string;
+  start_line: number;
+  end_line: number;
+  snippet?: string | null;
+}
+
+export interface ArchSymbol {
+  name: string;
+  kind: string;
+  line_number: number;
+  end_line?: number;
+  docstring?: string;
+  code_snippet?: string;
+}
+
+export interface ArchKGNode {
+  id: string;
+  type: ArchNodeType;
+  name: string;
+  display_name: string;
+  layer: ArchLayerType;
+  description: string;
+  source_files: string[];
+  symbols: ArchSymbol[];
+  metadata: Record<string, any>;
+  confidence: number;
+  confidence_level: 'deterministic' | 'high' | 'medium' | 'low';
+  evidence: SourceEvidence[];
+}
+
+export interface ArchKGEdge {
+  id: string;
+  source: string;
+  target: string;
+  relationship_type: RelationshipType;
+  direction: 'directed' | 'bidirectional';
+  confidence: number;
+  confidence_level: 'deterministic' | 'high' | 'medium' | 'low';
+  evidence: SourceEvidence[];
+  metadata?: Record<string, any>;
+}
+
+export interface KnowledgeGraphData {
+  nodes: ArchKGNode[];
+  edges: ArchKGEdge[];
+  metadata?: {
+    total_nodes: number;
+    total_edges: number;
+    node_types?: Record<string, number>;
+    edge_types?: Record<string, number>;
+    layers?: Record<string, number>;
+    avg_edge_confidence?: number;
+    deterministic_edges?: number;
+    inferred_edges?: number;
+    [key: string]: any;
+  };
+}
+

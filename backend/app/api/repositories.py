@@ -15,6 +15,7 @@ from app.schemas.repository import (
 )
 from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
+from app.parser.knowledge_graph import build_knowledge_graph
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -313,3 +314,134 @@ async def get_symbol_blast_radius(
     ]
 
     return compute_blast_radius(symbol, file_dicts)
+
+
+@router.get("/{id}/knowledge-graph", summary="Get Architecture Knowledge Graph")
+async def get_knowledge_graph(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns the Architecture Knowledge Graph for the repository.
+
+    The KG is built during indexing and stored inside the architecture_graphs
+    table. It contains:
+    - Semantically typed nodes (service, api_endpoint, database_model, etc.)
+    - Typed edges with relationship types (IMPORTS, CALLS, READS, WRITES, etc.)
+    - Source evidence for every edge (file path + line range + code snippet)
+    - Confidence scores distinguishing deterministic facts from inferences
+
+    If the repository was indexed before the KG feature was added, use
+    GET /{id}/knowledge-graph/build to generate it on demand.
+    """
+    get_user_repository_access(id, current_user, db)
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+
+    kg_data = arch.graph_data.get("knowledge_graph") if (arch and arch.graph_data) else None
+    if kg_data:
+        return kg_data
+
+    # Auto-generate if missing but files exist
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found for repository. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    kg_dict = kg.to_dict()
+
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["knowledge_graph"] = kg_dict
+        arch.graph_data = graph_data
+        db.commit()
+    else:
+        new_arch = ArchitectureGraph(
+            repository_id=id,
+            graph_data={"knowledge_graph": kg_dict, "nodes": [], "edges": []}
+        )
+        db.add(new_arch)
+        db.commit()
+
+    return kg_dict
+
+
+@router.post("/{id}/knowledge-graph/build", summary="Build Knowledge Graph On-Demand")
+async def build_knowledge_graph_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Builds (or rebuilds) the Architecture Knowledge Graph on demand.
+
+    Useful when:
+    - The repository was indexed before the KG feature was added.
+    - A quick refresh is needed without full re-indexing.
+
+    Reads file contents from the database (no GitHub clone needed).
+    Stores the result in the latest ArchitectureGraph record.
+    Returns the generated Knowledge Graph immediately.
+    """
+    get_user_repository_access(id, current_user, db)
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    kg_dict = kg.to_dict()
+
+    # Persist into the latest arch record if one exists
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+    if arch:
+        graph_data = arch.graph_data or {}
+        graph_data["knowledge_graph"] = kg_dict
+        arch.graph_data = graph_data
+        db.commit()
+
+    return kg_dict

@@ -112,9 +112,9 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
         {/* Content Body */}
         <div className="flex-1 overflow-auto bg-[#0a0c10] font-mono text-xs text-slate-200">
           {loading ? (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-slate-400 gap-3">
-              <Loader2 className="w-7 h-7 animate-spin text-purple-400" />
-              <span>Fetching file content from repository storage...</span>
+            <div className="h-full flex flex-col items-center justify-center p-8 text-zinc-400 gap-2 select-none">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+              <span className="text-xs font-mono">Loading source...</span>
             </div>
           ) : error ? (
             <div className="h-full flex flex-col items-center justify-center p-8 text-rose-300 gap-3 text-center">

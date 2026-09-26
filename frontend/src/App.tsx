@@ -56,18 +56,13 @@ function AppContent() {
 
   if (isProcessingOAuth) {
     return (
-      <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] mb-6 animate-pulse">
-          <Code2 className="w-7 h-7" />
+      <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-12 h-12 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center mb-4 shadow-xl">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">Connecting to CodeLens via GitHub</h2>
-        <p className="text-xs text-slate-400 max-w-sm mb-6">
-          Verifying session credentials and synchronizing your repositories...
-        </p>
-        <div className="flex items-center gap-2 text-amber-400 text-xs font-mono bg-[#09090b] px-4 py-2 rounded-lg border border-[#1f1f23]">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Authenticating...</span>
-        </div>
+        <h3 className="text-sm font-bold text-white font-mono tracking-tight">
+          Authenticating Session
+        </h3>
       </div>
     );
   }

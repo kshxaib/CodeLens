@@ -89,7 +89,11 @@ export const RepositoryOverviewPage: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingScreen title="Loading Repository" message="Fetching AST symbol indices and file tree..." />;
+    return (
+      <WorkspaceLayout>
+        <LoadingScreen title="Loading Repository" />
+      </WorkspaceLayout>
+    );
   }
 
   if (error || !repo) {

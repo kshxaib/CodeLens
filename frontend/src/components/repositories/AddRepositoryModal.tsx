@@ -312,7 +312,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               <div className="flex items-center gap-2.5">
                 <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
                 <span className="text-xs font-medium text-slate-300">
-                  Indexing pipeline running in background
+                  Indexing repository...
                 </span>
               </div>
               <span className="text-xs font-mono text-slate-400 font-medium">

@@ -8,6 +8,7 @@ import type {
   ConversationDetail,
   ArchitectureGraphData,
   BlastRadiusResponse,
+  KnowledgeGraphData,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -136,6 +137,14 @@ export const api = {
   },
   getArchitecture: async (repoId: number) => {
     const res = await apiClient.get<ArchitectureGraphData>(`/repositories/${repoId}/architecture`);
+    return res.data;
+  },
+  getKnowledgeGraph: async (repoId: number) => {
+    const res = await apiClient.get<KnowledgeGraphData>(`/repositories/${repoId}/knowledge-graph`);
+    return res.data;
+  },
+  buildKnowledgeGraph: async (repoId: number) => {
+    const res = await apiClient.post<KnowledgeGraphData>(`/repositories/${repoId}/knowledge-graph/build`);
     return res.data;
   },
   getBlastRadius: async (repoId: number, symbol: string) => {

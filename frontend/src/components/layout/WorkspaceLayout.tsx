@@ -24,7 +24,7 @@ interface WorkspaceLayoutProps {
 
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) => {
   const { user } = useAuthStore();
-  const { repositories, selectedRepo, setSelectedRepo } = useWorkspaceStore();
+  const { repositories, selectedRepo } = useWorkspaceStore();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
