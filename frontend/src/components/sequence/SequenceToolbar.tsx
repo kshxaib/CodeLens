@@ -122,11 +122,14 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
           </button>
 
           <button
-            disabled
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-zinc-600 cursor-not-allowed opacity-50"
-            title="Lifecycle View (Coming Soon)"
+            onClick={() => onViewChange('lifecycle')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
+              currentView === 'lifecycle'
+                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
             <span>Lifecycle</span>
           </button>
         </div>

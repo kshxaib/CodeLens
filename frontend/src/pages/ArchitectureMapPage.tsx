@@ -41,6 +41,7 @@ import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
 import { SequenceView } from '../components/sequence/SequenceView';
+import { LifecycleView } from '../components/lifecycle/LifecycleView';
 
 const nodeTypes = {
   architectureNode: ArchitectureNode,
@@ -445,6 +446,13 @@ const ArchitectureMapCanvas: React.FC = () => {
         />
       ) : currentView === 'dataflow' ? (
         <DataFlowView
+          repositoryId={repoId}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onOpenSource={handleOpenSource}
+        />
+      ) : currentView === 'lifecycle' ? (
+        <LifecycleView
           repositoryId={repoId}
           currentView={currentView}
           onViewChange={setCurrentView}

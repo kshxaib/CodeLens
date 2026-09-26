@@ -19,6 +19,7 @@ from app.parser.knowledge_graph import build_knowledge_graph
 from app.parser.workflow_extractor import WorkflowExtractor
 from app.parser.data_flow_extractor import DataFlowExtractor
 from app.parser.sequence_extractor import SequenceExtractor
+from app.parser.lifecycle_extractor import LifecycleExtractor
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -842,5 +843,145 @@ async def build_sequences_endpoint(
         db.commit()
 
     return result
+
+
+@router.get("/{id}/lifecycles", summary="Get Extracted Entity Lifecycles")
+async def get_lifecycles_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns finite state machine lifecycles for entities in the repository.
+    Answers: "What states can an entity occupy, what events cause transitions,
+    and what are the terminal/failure states?"
+    """
+    get_user_repository_access(id, current_user, db)
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+
+    lifecycles_cache = arch.graph_data.get("lifecycles") if (arch and arch.graph_data) else None
+    if lifecycles_cache:
+        return lifecycles_cache
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = LifecycleExtractor(file_dicts, kg)
+    lifecycles = extractor.extract_all_lifecycles()
+    serialized_lifecycles = [lc.to_dict() for lc in lifecycles]
+
+    result = {
+        "lifecycles": serialized_lifecycles,
+        "summary": {
+            "total_lifecycles": len(lifecycles),
+            "total_states": sum(lc.total_states for lc in lifecycles),
+            "total_transitions": sum(lc.total_transitions for lc in lifecycles),
+            "entities_with_retries": sum(1 for lc in lifecycles if lc.has_retry_loop),
+            "entities_with_failures": sum(1 for lc in lifecycles if lc.has_failure_state),
+        },
+    }
+
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["lifecycles"] = result
+        arch.graph_data = graph_data
+        db.commit()
+    else:
+        new_arch = ArchitectureGraph(
+            repository_id=id,
+            graph_data={"lifecycles": result, "knowledge_graph": kg.to_dict(), "nodes": [], "edges": []},
+        )
+        db.add(new_arch)
+        db.commit()
+
+    return result
+
+
+@router.post("/{id}/lifecycles/build", summary="Rebuild Extracted Entity Lifecycles On-Demand")
+async def build_lifecycles_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-extracts and persists all finite state machine lifecycles from source files.
+    """
+    get_user_repository_access(id, current_user, db)
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = LifecycleExtractor(file_dicts, kg)
+    lifecycles = extractor.extract_all_lifecycles()
+    serialized_lifecycles = [lc.to_dict() for lc in lifecycles]
+
+    result = {
+        "lifecycles": serialized_lifecycles,
+        "summary": {
+            "total_lifecycles": len(lifecycles),
+            "total_states": sum(lc.total_states for lc in lifecycles),
+            "total_transitions": sum(lc.total_transitions for lc in lifecycles),
+            "entities_with_retries": sum(1 for lc in lifecycles if lc.has_retry_loop),
+            "entities_with_failures": sum(1 for lc in lifecycles if lc.has_failure_state),
+        },
+    }
+
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["lifecycles"] = result
+        arch.graph_data = graph_data
+        db.commit()
+
+    return result
+
 
 

@@ -12,6 +12,7 @@ import type {
   WorkflowsResponse,
   DataFlowResponse,
   SequenceResponse,
+  LifecycleResponse,
 } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -172,6 +173,14 @@ export const api = {
   },
   buildSequences: async (repoId: number) => {
     const res = await apiClient.post<SequenceResponse>(`/repositories/${repoId}/sequences/build`);
+    return res.data;
+  },
+  getLifecycles: async (repoId: number) => {
+    const res = await apiClient.get<LifecycleResponse>(`/repositories/${repoId}/lifecycles`);
+    return res.data;
+  },
+  buildLifecycles: async (repoId: number) => {
+    const res = await apiClient.post<LifecycleResponse>(`/repositories/${repoId}/lifecycles/build`);
     return res.data;
   },
   getBlastRadius: async (repoId: number, symbol: string) => {

@@ -110,9 +110,12 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
             Data Flow
           </button>
           <button
-            disabled
-            title="Coming Soon"
-            className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+            onClick={() => onViewChange('lifecycle')}
+            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+              currentView === 'lifecycle'
+                ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
           >
             Lifecycle
           </button>

@@ -172,6 +172,7 @@ export interface SourceEvidence {
   start_line: number;
   end_line: number;
   snippet?: string | null;
+  code_snippet?: string | null;
 }
 
 export interface ArchSymbol {
@@ -430,6 +431,68 @@ export interface SequenceResponse {
     error_handled_sequences: number;
   };
 }
+
+// ---------------------------------------------------------------------------
+// Unified Lifecycle View Types
+// ---------------------------------------------------------------------------
+
+export type StateType =
+  | 'initial'
+  | 'intermediate'
+  | 'terminal_success'
+  | 'terminal_failure';
+
+export interface LifecycleState {
+  id: string;
+  name: string;
+  state_type: StateType;
+  entity_name: string;
+  description: string;
+  is_initial: boolean;
+  is_terminal: boolean;
+  is_failure: boolean;
+  associated_node_id?: string | null;
+  evidence?: SourceEvidence | null;
+}
+
+export interface LifecycleTransition {
+  id: string;
+  from_state: string;
+  to_state: string;
+  event: string;
+  condition?: string | null;
+  action?: string | null;
+  is_retry: boolean;
+  is_failure: boolean;
+  is_inferred: boolean;
+  confidence_level: 'deterministic' | 'high' | 'medium' | 'inferred';
+  evidence?: SourceEvidence | null;
+}
+
+export interface EntityLifecycle {
+  id: string;
+  entity_name: string;
+  description: string;
+  states: LifecycleState[];
+  transitions: LifecycleTransition[];
+  confidence: string;
+  has_failure_state: boolean;
+  has_retry_loop: boolean;
+  total_states: number;
+  total_transitions: number;
+}
+
+export interface LifecycleResponse {
+  lifecycles: EntityLifecycle[];
+  summary?: {
+    total_lifecycles: number;
+    total_states: number;
+    total_transitions: number;
+    entities_with_retries: number;
+    entities_with_failures: number;
+  };
+}
+
 
 
 
