@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { LogoutConfirmModal } from '../components/common/LogoutConfirmModal';
+import { RevokeKeyConfirmModal } from '../components/common/RevokeKeyConfirmModal';
 
 export const ProfileSettingsPage: React.FC = () => {
   const { user, updateGeminiKey, refreshUser } = useAuthStore();
@@ -22,6 +23,7 @@ export const ProfileSettingsPage: React.FC = () => {
   const [showKey, setShowKey] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleSaveKey = async (e: React.FormEvent) => {
@@ -54,14 +56,12 @@ export const ProfileSettingsPage: React.FC = () => {
   };
 
   const handleRevokeKey = async () => {
-    if (!window.confirm('Are you sure you want to remove your Gemini API key? Code indexing and AI chat will be disabled until a new key is provided.')) {
-      return;
-    }
     try {
       setSubmitting(true);
       await updateGeminiKey('');
       setFeedback({ type: 'success', message: 'Gemini API key removed.' });
       await refreshUser();
+      setIsRevokeModalOpen(false);
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to remove key.' });
     } finally {
@@ -195,7 +195,7 @@ export const ProfileSettingsPage: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={handleRevokeKey}
+                onClick={() => setIsRevokeModalOpen(true)}
                 disabled={submitting}
                 className="inline-flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 bg-[#141416] hover:bg-rose-500/10 px-3 py-1.5 rounded-lg border border-[#27272a] hover:border-rose-500/30 transition disabled:opacity-50 cursor-pointer"
               >
@@ -266,6 +266,14 @@ export const ProfileSettingsPage: React.FC = () => {
       <LogoutConfirmModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
+      />
+
+      <RevokeKeyConfirmModal
+        isOpen={isRevokeModalOpen}
+        onClose={() => setIsRevokeModalOpen(false)}
+        onConfirm={handleRevokeKey}
+        isLoading={submitting}
+        maskedKey={user.masked_gemini_key}
       />
     </WorkspaceLayout>
   );
