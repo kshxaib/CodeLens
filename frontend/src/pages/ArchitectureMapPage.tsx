@@ -10,21 +10,13 @@ import {
   MarkerType,
   ReactFlowProvider,
   useReactFlow,
+  useViewport,
   type Node,
   type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import {
-  Zap,
-  X,
-  ChevronRight,
-  ChevronLeft,
-  Layers,
-  MousePointer2,
-  Info,
-  Code2,
-  GitBranch,
   Loader2,
 } from 'lucide-react';
 import { api } from '../api/client';
@@ -35,6 +27,8 @@ import { ArchitectureNode } from '../components/architecture/ArchitectureNode';
 import { ArchitectureEdge } from '../components/architecture/ArchitectureEdge';
 import { ArchitectureInspector } from '../components/architecture/ArchitectureInspector';
 import { ArchitectureToolbar } from '../components/architecture/ArchitectureToolbar';
+import { CanvasSidebar } from '../components/architecture/CanvasSidebar';
+import { CanvasStatusBar } from '../components/architecture/CanvasStatusBar';
 import { getLayoutedElements } from '../components/architecture/layout';
 import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
@@ -56,11 +50,12 @@ const edgeTypes = {
   architectureEdge: ArchitectureEdge,
 };
 
-const BLAST_LEGEND = [
-  { color: 'bg-amber-400', label: 'Selected / Target Entity' },
-  { color: 'bg-amber-400', label: 'Upstream Callers (Dependents)' },
-  { color: 'bg-sky-400', label: 'Downstream Dependencies' },
-];
+// Zoom tracker hook — reads from ReactFlow viewport
+function useZoomLevel() {
+  const { zoom } = useViewport();
+  return zoom;
+}
+
 
 interface ArchitectureMapCanvasProps {
   currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
@@ -112,6 +107,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const zoom = useZoomLevel();
 
   // Filtering & View Mode
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,6 +132,9 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   // React Flow elements
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // Filtered edge count (computed from edges state)
+  const filteredEdgesCount = edges.length;
 
   // ---------------------------------------------------------------------------
   // Data Fetching
@@ -484,15 +483,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return kgData.nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, kgData]);
 
-  // Layer statistics
-  const tierStats = useMemo(() => {
-    if (!kgData) return {};
-    return kgData.nodes.reduce<Record<string, number>>((acc, n) => {
-      const t = getNodeTier(n.type, n.layer);
-      acc[t] = (acc[t] || 0) + 1;
-      return acc;
-    }, {});
-  }, [kgData]);
 
   if (loading) {
     return (
@@ -555,249 +545,178 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
           onOpenSource={handleOpenSource}
         />
       ) : (
-        <div
-          ref={containerRef}
-          className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
-        >
-          <style>{`
-            .arc-left { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, transform 0.28s cubic-bezier(0.4,0,0.2,1); }
-            .arc-left.open  { width: 270px; opacity: 1; transform: translateX(0); }
-            .arc-left.closed{ width: 0px; opacity: 0; transform: translateX(-20px); overflow: hidden; }
-            .arc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
-            .arc-right.open  { width: 400px; opacity: 1; }
-            .arc-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
-          `}</style>
-        {/* LEFT LAYER GUIDE SIDEBAR */}
-        <div
-          className={`arc-left flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] flex flex-col z-30 ${
-            leftOpen ? 'open' : 'closed'
-          }`}
-        >
-          <div className="flex flex-col h-full overflow-y-auto p-4 min-w-[270px]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
-                  Architectural Layers
-                </span>
-              </div>
-              <button
-                onClick={() => setLeftOpen(false)}
-                className="text-zinc-500 hover:text-white p-1 rounded"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Layer Tiers Cards with click-to-filter */}
-            <div className="space-y-2 mb-6">
-              {Object.entries(ARCH_TIERS).map(([key, tier]) => {
-                const count = tierStats[key] || 0;
-                const isSelected = selectedTier === key;
-                return (
-                  <div
-                    key={key}
-                    onClick={() => setSelectedTier((prev) => (prev === key ? 'all' : key))}
-                    className={`p-2.5 rounded-xl border transition cursor-pointer flex items-start justify-between ${
-                      isSelected
-                        ? 'bg-amber-400/10 border-amber-400/50 shadow-md ring-1 ring-amber-400/30'
-                        : 'bg-[#121214] border-[#1f1f23] hover:border-zinc-700'
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tier.dot }} />
-                        <span className={`text-[11px] font-bold font-mono ${tier.color}`}>{tier.label}</span>
-                      </div>
-                      <div className="text-[10px] text-zinc-500 leading-snug mt-1 pl-4 truncate">
-                        {tier.sub}
-                      </div>
-                    </div>
-                    {count > 0 && (
-                      <span className="text-[10px] font-mono font-bold text-zinc-300 px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700">
-                        {count}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Blast Colors */}
-            <div className="mb-6">
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider font-mono">
-                  Dependency Highlights
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {BLAST_LEGEND.map((b) => (
-                  <div key={b.label} className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${b.color}`} />
-                    <span className="text-[10px] text-zinc-400 font-mono">{b.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* How to use */}
-            <div className="border-t border-[#1f1f23] pt-4 mt-auto">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Info className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-mono">
-                  Interactive Features
-                </span>
-              </div>
-              <ul className="space-y-1.5 text-[10px] text-zinc-500 font-mono">
-                <li className="flex items-start gap-1.5">
-                  <MousePointer2 className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
-                  <span>Click node to open inspector & trace paths</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <GitBranch className="w-3 h-3 text-sky-400 shrink-0 mt-0.5" />
-                  <span>Hover to isolate connected relationships</span>
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <Code2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Click symbol or evidence to view exact code</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* SIDEBAR TOGGLE BUTTON */}
-        <button
-          onClick={() => setLeftOpen((v) => !v)}
-          title={leftOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          className="absolute top-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-5 h-10 bg-[#18181b] border border-[#1f1f23] border-l-0 rounded-r-lg text-zinc-400 hover:text-white hover:bg-[#232326] transition cursor-pointer shadow-xl"
-          style={{ left: leftOpen ? '270px' : '0px' }}
-        >
-          {leftOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-        </button>
-
-        {/* TOP TOOLBAR */}
-        <ArchitectureToolbar
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedTier={selectedTier}
-          onTierChange={setSelectedTier}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          selectedRel={selectedRel}
-          onRelChange={setSelectedRel}
-          scopeFilter={scopeFilter}
-          onScopeChange={setScopeFilter}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          layoutDirection={layoutDirection}
-          onToggleLayoutDirection={() =>
-            setLayoutDirection((d) => (d === 'TB' ? 'LR' : 'TB'))
-          }
-          onFitView={() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 })}
-          isFullscreen={isFullscreen}
-          onToggleFullscreen={handleToggleFullscreen}
-          onRebuildGraph={() => fetchKnowledgeGraph(true)}
-          isRebuilding={isRebuilding}
-          totalNodes={kgData?.nodes?.length || 0}
-          totalEdges={kgData?.edges?.length || 0}
-          filteredNodesCount={nodes.length}
-        />
-
-        {/* BOTTOM ACTIVE FOCUS BADGE */}
-        {(selectedNodeId || blastRadius) && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-[#09090b]/90 backdrop-blur-md border border-[#1f1f23] px-3.5 py-2 rounded-2xl shadow-2xl">
-            <span className="text-[11px] font-mono text-zinc-300 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              Focus: <span className="font-bold text-white">{activeSelectedNode?.name || selectedNodeId}</span>
-            </span>
-            <button
-              onClick={() => {
-                selectTraceNode(null);
-                setBlastRadius(null);
-              }}
-              className="text-[10px] font-mono font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-2 py-0.5 rounded-lg border border-rose-500/20 transition cursor-pointer"
-            >
-              Clear Focus
-            </button>
-          </div>
-        )}
-
-        {/* REACT FLOW CANVAS */}
-        <div className="flex-1 h-full">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeClick={handleNodeClick}
-            onEdgeClick={handleEdgeClick}
-            onNodeMouseEnter={handleNodeMouseEnter}
-            onNodeMouseLeave={handleNodeMouseLeave}
-            onPaneClick={handlePaneClick}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.15 }}
-            panOnDrag={true}
-            panOnScroll={false}
-            zoomOnScroll={true}
-            zoomOnPinch={true}
-            nodesDraggable={true}
-            nodesConnectable={false}
-            elementsSelectable={true}
-            minZoom={0.05}
-            maxZoom={2}
-            proOptions={{ hideAttribution: true }}
-            className="bg-[#000000]"
+          <div
+            ref={containerRef}
+            className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex flex-col select-none"
           >
-            <Background color="rgba(255,255,255,0.03)" gap={24} size={1} />
-            <Controls
-              showInteractive={false}
-              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
-            />
-            <MiniMap
-              nodeColor={(n) => {
-                const tierKey = (n.data as any)?.tier || 'application';
-                return ARCH_TIERS[tierKey]?.dot || '#10b981';
-              }}
-              zoomable
-              pannable
-              className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
-            />
-          </ReactFlow>
-        </div>
+            <style>{`
+              .arc-sidebar {
+                transition: width 0.26s cubic-bezier(0.4,0,0.2,1),
+                            opacity 0.22s ease,
+                            transform 0.26s cubic-bezier(0.4,0,0.2,1);
+              }
+              .arc-sidebar.open  { width: 260px; opacity: 1; transform: translateX(0); }
+              .arc-sidebar.closed{ width: 0px; opacity: 0; transform: translateX(-16px); overflow: hidden; }
+              .arc-inspector {
+                transition: width 0.26s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease;
+              }
+              .arc-inspector.open  { width: 400px; opacity: 1; }
+              .arc-inspector.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
+            `}</style>
 
-        {/* RIGHT INSPECTOR DRAWER */}
-        <div
-          className={`arc-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
-            activeSelectedNode ? 'open' : 'closed'
-          }`}
-        >
-          {activeSelectedNode && (
-            <ArchitectureInspector
-              node={activeSelectedNode}
-              allNodes={kgData?.nodes || []}
-              edges={kgData?.edges || []}
-              repositoryId={repoId}
-              onClose={() => {
-                selectTraceNode(null);
-                setBlastRadius(null);
-              }}
-              onSelectNode={(nodeId) => selectTraceNode(nodeId)}
-              onOpenSource={handleOpenSource}
-              onAnalyzeBlastRadius={handleAnalyzeBlastRadius}
-              blastLoading={blastLoading}
-            />
-          )}
-        </div>
-      </div>
+            {/* ─── MAIN CONTENT ROW ─── */}
+            <div className="flex flex-1 min-h-0">
+
+              {/* LEFT SIDEBAR */}
+              <div className={`arc-sidebar flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] z-30 ${leftOpen ? 'open' : 'closed'}`}>
+                {leftOpen && (
+                  <CanvasSidebar
+                    kgData={kgData}
+                    selectedTier={selectedTier}
+                    onTierChange={setSelectedTier}
+                    selectedType={selectedType}
+                    onTypeChange={setSelectedType}
+                    selectedRel={selectedRel}
+                    onRelChange={setSelectedRel}
+                    onClose={() => setLeftOpen(false)}
+                  />
+                )}
+              </div>
+
+              {/* CANVAS + TOOLBAR + STATUS */}
+              <div className="flex-1 relative min-w-0 h-full flex flex-col">
+
+                {/* TOP TOOLBAR */}
+                <ArchitectureToolbar
+                  currentView={currentView}
+                  onViewChange={setCurrentView}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  selectedTier={selectedTier}
+                  onTierChange={setSelectedTier}
+                  selectedType={selectedType}
+                  onTypeChange={setSelectedType}
+                  selectedRel={selectedRel}
+                  onRelChange={setSelectedRel}
+                  scopeFilter={scopeFilter}
+                  onScopeChange={setScopeFilter}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  layoutDirection={layoutDirection}
+                  onToggleLayoutDirection={() => setLayoutDirection(d => d === 'TB' ? 'LR' : 'TB')}
+                  onFitView={() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 })}
+                  isFullscreen={isFullscreen}
+                  onToggleFullscreen={handleToggleFullscreen}
+                  onRebuildGraph={() => fetchKnowledgeGraph(true)}
+                  isRebuilding={isRebuilding}
+                  totalNodes={kgData?.nodes?.length || 0}
+                  totalEdges={kgData?.edges?.length || 0}
+                  filteredNodesCount={nodes.length}
+                  filteredEdgesCount={filteredEdgesCount}
+                  onOpenSidebar={() => setLeftOpen(v => !v)}
+                  isSidebarOpen={leftOpen}
+                  onOpenTrace={() => {
+                    // Dispatch to TracePanel open (it manages its own state via store)
+                    const panel = document.querySelector('[data-trace-panel-toggle]') as HTMLButtonElement | null;
+                    panel?.click();
+                  }}
+                  onOpenExplain={
+                    selectedNodeId
+                      ? () => {
+                          const { openExplain } = useTrace.getState();
+                          openExplain(selectedNodeId!);
+                        }
+                      : undefined
+                  }
+                  kgData={kgData}
+                  canvasRef={containerRef}
+                  repoName={kgData?.metadata?.repository_name}
+                />
+
+                {/* REACT FLOW CANVAS */}
+                <div className="flex-1 min-h-0 pb-8">
+                  <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onNodeClick={handleNodeClick}
+                    onEdgeClick={handleEdgeClick}
+                    onNodeMouseEnter={handleNodeMouseEnter}
+                    onNodeMouseLeave={handleNodeMouseLeave}
+                    onPaneClick={handlePaneClick}
+                    nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
+                    fitView
+                    fitViewOptions={{ padding: 0.15 }}
+                    panOnDrag
+                    panOnScroll={false}
+                    zoomOnScroll
+                    zoomOnPinch
+                    nodesDraggable
+                    nodesConnectable={false}
+                    elementsSelectable
+                    minZoom={0.05}
+                    maxZoom={2}
+                    proOptions={{ hideAttribution: true }}
+                    className="bg-[#000000] h-full"
+                  >
+                    <Background color="rgba(255,255,255,0.025)" gap={24} size={1} />
+                    <Controls
+                      showInteractive={false}
+                      className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
+                    />
+                    <MiniMap
+                      nodeColor={(n) => {
+                        const tierKey = (n.data as any)?.tier || 'application';
+                        return ARCH_TIERS[tierKey]?.dot || '#10b981';
+                      }}
+                      zoomable
+                      pannable
+                      className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
+                    />
+                  </ReactFlow>
+                </div>
+
+                {/* BOTTOM STATUS BAR */}
+                <CanvasStatusBar
+                  repoName={kgData?.metadata?.repository_name}
+                  currentView={currentView}
+                  selectedNodeName={activeSelectedNode?.name || selectedNodeId}
+                  totalNodes={kgData?.nodes?.length || 0}
+                  filteredNodes={nodes.length}
+                  totalEdges={kgData?.edges?.length || 0}
+                  filteredEdges={filteredEdgesCount}
+                  evidenceStatus={
+                    activeSelectedNode
+                      ? (activeSelectedNode.confidence_level === 'deterministic' ? 'verified' : 'inferred')
+                      : null
+                  }
+                  zoom={zoom}
+                />
+              </div>
+
+              {/* RIGHT INSPECTOR */}
+              <div className={`arc-inspector flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl z-30 ${activeSelectedNode ? 'open' : 'closed'}`}>
+                {activeSelectedNode && (
+                  <ArchitectureInspector
+                    node={activeSelectedNode}
+                    allNodes={kgData?.nodes || []}
+                    edges={kgData?.edges || []}
+                    repositoryId={repoId}
+                    onClose={() => { selectTraceNode(null); setBlastRadius(null); }}
+                    onSelectNode={(nodeId) => selectTraceNode(nodeId)}
+                    onOpenSource={handleOpenSource}
+                    onAnalyzeBlastRadius={handleAnalyzeBlastRadius}
+                    blastLoading={blastLoading}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
       )}
 
-      {/* TRACE / EXPLORE FLOATING DOCK & CONTROLS (Features 1, 2, 3, 6, 7) */}
+      {/* TRACE / EXPLORE FLOATING DOCK & CONTROLS */}
       <TracePanel onOpenSource={handleOpenSource} />
 
       {/* FEATURE 4: WHY RELATIONSHIP MODAL */}
