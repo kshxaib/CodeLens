@@ -39,6 +39,7 @@ import { getLayoutedElements } from '../components/architecture/layout';
 import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
+import { DataFlowView } from '../components/dataflow/DataFlowView';
 
 const nodeTypes = {
   architectureNode: ArchitectureNode,
@@ -429,6 +430,13 @@ const ArchitectureMapCanvas: React.FC = () => {
     <WorkspaceLayout>
       {currentView === 'workflow' ? (
         <WorkflowView
+          repositoryId={repoId}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onOpenSource={handleOpenSource}
+        />
+      ) : currentView === 'dataflow' ? (
+        <DataFlowView
           repositoryId={repoId}
           currentView={currentView}
           onViewChange={setCurrentView}

@@ -17,6 +17,7 @@ from app.parser.blast_radius import compute_blast_radius
 from app.services.indexer import index_repository
 from app.parser.knowledge_graph import build_knowledge_graph
 from app.parser.workflow_extractor import WorkflowExtractor
+from app.parser.data_flow_extractor import DataFlowExtractor
 
 router = APIRouter(prefix="/repositories", tags=["Repositories & Workspace"])
 
@@ -564,4 +565,144 @@ async def build_workflows_endpoint(
         db.commit()
 
     return {"workflows": serialized_workflows}
+
+
+@router.get("/{id}/data-flows", summary="Get Extracted Data Flows")
+async def get_data_flows_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns extracted data flow pipelines and consolidated data lineage graph.
+    Answers: "What data moves through the system, where does it originate,
+    how is it transformed, and where is it stored or consumed?"
+    """
+    get_user_repository_access(id, current_user, db)
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+
+    data_flows_cache = arch.graph_data.get("data_flows") if (arch and arch.graph_data) else None
+    if data_flows_cache:
+        return data_flows_cache
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = DataFlowExtractor(file_dicts, kg)
+    pipelines = extractor.extract_all_pipelines()
+    serialized_pipelines = [p.to_dict() for p in pipelines]
+    consolidated_graph = extractor.extract_consolidated_graph(pipelines)
+
+    result = {
+        "pipelines": serialized_pipelines,
+        "global_graph": consolidated_graph,
+        "summary": {
+            "total_pipelines": len(pipelines),
+            "total_entities": consolidated_graph.get("total_entities", 0),
+            "total_transitions": consolidated_graph.get("total_transitions", 0),
+        },
+    }
+
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["data_flows"] = result
+        arch.graph_data = graph_data
+        db.commit()
+    else:
+        new_arch = ArchitectureGraph(
+            repository_id=id,
+            graph_data={"data_flows": result, "knowledge_graph": kg.to_dict(), "nodes": [], "edges": []},
+        )
+        db.add(new_arch)
+        db.commit()
+
+    return result
+
+
+@router.post("/{id}/data-flows/build", summary="Rebuild Extracted Data Flows On-Demand")
+async def build_data_flows_endpoint(
+    id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-extracts and persists all data flow pipelines and lineages from source files.
+    """
+    get_user_repository_access(id, current_user, db)
+
+    files = (
+        db.query(File.file_path, File.content, File.language, File.line_count)
+        .filter(File.repository_id == id)
+        .all()
+    )
+    if not files:
+        raise HTTPException(
+            status_code=404,
+            detail="No indexed files found. Please index the repository first.",
+        )
+
+    file_dicts = [
+        {
+            "file_path": f.file_path,
+            "content": f.content or "",
+            "language": f.language or "text",
+            "line_count": f.line_count or 0,
+        }
+        for f in files
+    ]
+
+    kg = build_knowledge_graph(file_dicts)
+    extractor = DataFlowExtractor(file_dicts, kg)
+    pipelines = extractor.extract_all_pipelines()
+    serialized_pipelines = [p.to_dict() for p in pipelines]
+    consolidated_graph = extractor.extract_consolidated_graph(pipelines)
+
+    result = {
+        "pipelines": serialized_pipelines,
+        "global_graph": consolidated_graph,
+        "summary": {
+            "total_pipelines": len(pipelines),
+            "total_entities": consolidated_graph.get("total_entities", 0),
+            "total_transitions": consolidated_graph.get("total_transitions", 0),
+        },
+    }
+
+    arch = (
+        db.query(ArchitectureGraph)
+        .filter(ArchitectureGraph.repository_id == id)
+        .order_by(ArchitectureGraph.created_at.desc())
+        .first()
+    )
+    if arch:
+        graph_data = dict(arch.graph_data or {})
+        graph_data["data_flows"] = result
+        arch.graph_data = graph_data
+        db.commit()
+
+    return result
+
 

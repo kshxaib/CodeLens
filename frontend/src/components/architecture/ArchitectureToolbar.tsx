@@ -131,9 +131,12 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
               Sequence
             </button>
             <button
-              disabled
-              title="Coming Soon"
-              className="px-2 py-1 rounded-lg text-zinc-600 cursor-not-allowed hidden sm:inline"
+              onClick={() => onViewChange('dataflow')}
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                currentView === 'dataflow'
+                  ? 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/30'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
             >
               Data Flow
             </button>

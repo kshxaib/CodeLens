@@ -287,4 +287,73 @@ export interface WorkflowsResponse {
   workflows: WorkflowItem[];
 }
 
+// ---------------------------------------------------------------------------
+// Unified Data Flow Types
+// ---------------------------------------------------------------------------
+
+export type DataClassificationType =
+  | 'request_payload'
+  | 'response_payload'
+  | 'dto_schema'
+  | 'transformation_step'
+  | 'database_model'
+  | 'file_binary'
+  | 'storage_object'
+  | 'queue_message'
+  | 'token_secret'
+  | 'cache_entry';
+
+export interface DataNode {
+  id: string;
+  name: string;
+  data_classification: DataClassificationType;
+  description?: string;
+  format?: string;
+  storage?: string | null;
+  fields?: string[];
+  is_transformation?: boolean;
+  associated_node_id?: string | null;
+  evidence?: SourceEvidence | null;
+  metadata?: Record<string, any>;
+}
+
+export interface DataFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  data_type: string;
+  transformation: string;
+  storage?: string | null;
+  direction?: string;
+  confidence: number;
+  confidence_level: 'deterministic' | 'high' | 'medium' | 'low';
+  evidence?: SourceEvidence | null;
+}
+
+export interface DataPipeline {
+  id: string;
+  name: string;
+  description: string;
+  trigger: string;
+  nodes: DataNode[];
+  edges: DataFlowEdge[];
+  metadata?: Record<string, any>;
+}
+
+export interface DataFlowResponse {
+  pipelines: DataPipeline[];
+  global_graph?: {
+    nodes: DataNode[];
+    edges: DataFlowEdge[];
+    total_entities: number;
+    total_transitions: number;
+  };
+  summary?: {
+    total_pipelines: number;
+    total_entities: number;
+    total_transitions: number;
+  };
+}
+
+
 
