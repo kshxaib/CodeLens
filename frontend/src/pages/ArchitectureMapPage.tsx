@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ReactFlow,
@@ -434,7 +434,7 @@ export const ArchitectureMapPage: React.FC = () => {
                       <button
                         key={idx}
                         onClick={() => handleComputeBlastRadius(sym.name)}
-                        className="w-full flex items-center justify-between p-2 rounded-lg bg-[#111113] border border-[#1f1f23] hover:border-amber-500/40 hover:bg-amber-500/5 transition cursor-pointer text-left group"
+                        className="w-full flex items-center justify-between p-2 rounded-lg bg-card border border-border hover:border-primary/40 hover:bg-accent/40 transition cursor-pointer text-left group"
                       >
                         <div className="min-w-0">
                           <span className="text-amber-300 font-bold text-[11px] group-hover:text-amber-200 truncate block">{sym.name}</span>

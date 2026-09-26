@@ -8,13 +8,14 @@ import {
   RefreshCw,
   Search,
   FileCode2,
-  CheckCircle2,
   ExternalLink,
   ChevronRight,
   Layers,
   AlertCircle,
   X,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { api } from '../api/client';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -103,44 +104,45 @@ export const RepositoryOverviewPage: React.FC = () => {
   return (
     <WorkspaceLayout>
       {/* Header Card */}
-      <div className="rounded-2xl p-6 sm:p-8 bg-[#09090b] border border-[#1f1f23] relative overflow-hidden">
+      <Card className="rounded-xl p-6 sm:p-7 bg-card border-border shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-200 shrink-0 shadow-lg">
-              <FolderGit2 className="w-7 h-7" />
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="size-12 rounded-xl bg-secondary border border-border flex items-center justify-center text-foreground shrink-0 shadow-sm">
+              <FolderGit2 className="size-6 text-muted-foreground" />
             </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-3 mb-1.5">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{repo.full_name}</h1>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5 mb-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight truncate">{repo.full_name}</h1>
                 <a
                   href={repo.html_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-slate-400 hover:text-white transition p-1 cursor-pointer"
+                  className="text-muted-foreground hover:text-foreground transition p-1 cursor-pointer"
+                  title="Open on GitHub"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="size-3.5" />
                 </a>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-                {repo.description || 'GitHub repository configured for CodeLens intelligence.'}
+              <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl line-clamp-2">
+                {repo.description || 'GitHub repository synchronized for CodeLens intelligence.'}
               </p>
 
-              {/* Status & Metadata Pills */}
-              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs font-mono">
-                <span className="flex items-center gap-1 text-slate-300 bg-[#121214] px-2.5 py-1 rounded-lg border border-[#1f1f23]">
-                  <GitBranch className="w-3.5 h-3.5 text-amber-400" />
+              {/* Status & Metadata Badges */}
+              <div className="flex flex-wrap items-center gap-2 mt-3.5 text-xs font-mono">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border">
+                  <GitBranch className="size-3 text-primary" />
                   {repo.default_branch || 'main'}
                 </span>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] text-slate-300 border border-[#1f1f23]">
-                  <Layers className="w-3.5 h-3.5 text-amber-400" />
-                  {repo.symbol_count || 0} Symbols
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border">
+                  <Layers className="size-3" />
+                  {(repo.symbol_count || 0).toLocaleString()} Symbols
                 </span>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#121214] text-slate-300 border border-[#1f1f23]">
-                  <FileCode2 className="w-3.5 h-3.5 text-amber-400" />
-                  {files.length} Files
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border">
+                  <FileCode2 className="size-3" />
+                  {files.length.toLocaleString()} Files
                 </span>
-                <span className="flex items-center gap-1 text-slate-300 bg-[#121214] px-2.5 py-1 rounded-lg border border-[#1f1f23]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  <span className="rounded-full bg-primary size-1.5" />
                   {repo.index_status.toUpperCase()}
                 </span>
               </div>
@@ -148,81 +150,86 @@ export const RepositoryOverviewPage: React.FC = () => {
           </div>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to={`/repository/${repo.id}/architecture`}
-              className="inline-flex items-center gap-2 bg-[#121214] hover:bg-[#1c1c20] text-white border border-[#1f1f23] text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg transition cursor-pointer"
-            >
-              <Network className="w-4 h-4 text-amber-400" />
-              <span>Architecture Map</span>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Link to={`/repository/${repo.id}/architecture`}>
+              <Button
+                variant="outline"
+                className="h-9 px-3.5 text-xs font-medium rounded-lg border-border hover:bg-accent cursor-pointer"
+              >
+                <Network className="mr-1.5 size-3.5" />
+                Architecture Map
+              </Button>
             </Link>
-            <Link
-              to={`/chat?repository=${repo.id}`}
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Ask AI Copilot</span>
+            <Link to={`/chat?repository=${repo.id}`}>
+              <Button
+                className="h-9 px-3.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-md cursor-pointer"
+              >
+                <MessageSquare className="mr-1.5 size-3.5" />
+                Ask AI Copilot
+              </Button>
             </Link>
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={handleTriggerIndex}
               disabled={indexing || repo.index_status === 'indexing'}
-              className="p-2.5 rounded-xl bg-[#121214] hover:bg-[#1c1c20] border border-[#1f1f23] text-slate-300 hover:text-white transition disabled:opacity-40 cursor-pointer"
+              className="h-9 w-9 rounded-lg border-border hover:bg-accent cursor-pointer disabled:opacity-40"
               title="Re-Index Codebase"
             >
-              <RefreshCw className={`w-4 h-4 ${indexing ? 'animate-spin text-amber-400' : ''}`} />
-            </button>
+              <RefreshCw className={`size-3.5 ${indexing ? 'animate-spin text-primary' : 'text-muted-foreground'}`} />
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Ingested Files Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-white">Ingested Source Files ({files.length})</h2>
-            <p className="text-xs text-slate-400">Click any file to view source code and inspected AST tokens</p>
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Ingested Source Files ({files.length.toLocaleString()})</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Click any file to view source code and inspected AST tokens</p>
           </div>
 
           <div className="relative w-full sm:w-72">
+            <Search className="size-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={fileSearch}
               onChange={(e) => setFileSearch(e.target.value)}
               placeholder="Filter files by path or extension..."
-              className="w-full bg-[#121214] border border-[#1f1f23] focus:border-amber-500/60 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 outline-none transition font-mono"
+              className="w-full bg-card border border-border focus:border-ring rounded-lg pl-9 pr-3.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none transition font-sans"
             />
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           </div>
         </div>
 
-        {/* Files Grid / List */}
+        {/* Files Grid */}
         {filteredFiles.length === 0 ? (
-          <div className="rounded-2xl p-8 text-center text-xs text-slate-400 bg-[#09090b] border border-[#1f1f23]">
+          <div className="rounded-xl p-8 text-center text-xs text-muted-foreground bg-card border border-border">
             {files.length === 0 ? "No source files found or indexed yet." : "No files matched your filter query."}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredFiles.map((file) => (
-              <div
+              <Card
                 key={file.id}
                 onClick={() => setSelectedFileId(file.id)}
-                className="rounded-xl p-3.5 bg-[#09090b] border border-[#1f1f23] hover:border-amber-500/40 cursor-pointer flex items-center justify-between gap-3 group transition"
+                className="rounded-xl p-3 bg-card border-border hover:border-primary/40 hover:bg-card/90 transition-all duration-150 cursor-pointer flex items-center justify-between gap-3 group shadow-sm"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <FileCode2 className="w-4 h-4" />
+                  <div className="size-8 rounded-lg bg-secondary border border-border flex items-center justify-center text-muted-foreground group-hover:text-foreground transition shrink-0">
+                    <FileCode2 className="size-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-mono font-medium text-slate-200 group-hover:text-amber-400 truncate">
+                    <div className="text-xs font-mono font-medium text-foreground group-hover:text-primary truncate transition-colors">
                       {file.file_path}
                     </div>
-                    <div className="text-[10px] font-mono text-slate-500 mt-0.5">
-                      {file.line_count} lines • {file.language || 'code'}
+                    <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                      {file.line_count.toLocaleString()} lines • {file.language || 'text'}
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-amber-400 group-hover:translate-x-0.5 transition" />
-              </div>
+                <ChevronRight className="size-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition shrink-0" />
+              </Card>
             ))}
           </div>
         )}
@@ -238,19 +245,19 @@ export const RepositoryOverviewPage: React.FC = () => {
 
       {/* Floating Error Toast */}
       {indexError && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-[#27272a] text-white px-3.5 py-2.5 rounded-lg animate-fadeIn">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          <span className="text-xs text-zinc-200 pr-2">{indexError}</span>
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-border text-foreground px-3.5 py-2.5 rounded-lg animate-fadeIn shadow-lg">
+          <AlertCircle className="size-4 text-destructive shrink-0" />
+          <span className="text-xs text-foreground pr-2">{indexError}</span>
           <button
             onClick={() => setIndexError(null)}
-            className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-900 transition cursor-pointer"
+            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-accent transition cursor-pointer"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="size-3.5" />
           </button>
         </div>
       )}
 
-      {/* Add Gemini Key Modal */}
+      {/* Add OpenAI Key Modal */}
       {isKeyModalOpen && (
         <AddGeminiKeyModal
           isOpen={isKeyModalOpen}

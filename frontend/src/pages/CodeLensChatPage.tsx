@@ -411,7 +411,7 @@ export const CodeLensChatPage: React.FC = () => {
                     <div
                       key={idx}
                       onClick={() => handleSendMessage(prompt)}
-                      className="rounded-xl p-3.5 bg-[#09090b] border border-[#1f1f23] hover:border-amber-500/40 cursor-pointer text-xs text-slate-300 hover:text-white transition group"
+                      className="rounded-xl p-3.5 bg-card border border-border hover:border-primary/40 hover:bg-card/90 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition group"
                     >
                       <div className="flex items-start gap-2">
                         <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />

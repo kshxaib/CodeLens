@@ -12,6 +12,8 @@ EXCLUDED_DIRS = {
     "node_modules",
     "dist",
     "build",
+    "out",
+    "target",
     "coverage",
     "__pycache__",
     ".venv",
@@ -24,6 +26,13 @@ EXCLUDED_DIRS = {
     ".turbo",
     ".cache",
     ".pytest_cache",
+    "migrations",
+    "migration",
+    "alembic",
+    "generated",
+    ".gradle",
+    ".settings",
+    ".docusaurus",
 }
 
 EXCLUDED_EXTENSIONS = {
@@ -39,6 +48,12 @@ EXCLUDED_FILES = {
     "yarn.lock",
     "cargo.lock",
     "poetry.lock",
+    "composer.lock",
+    "gemfile.lock",
+    "flake.lock",
+    "bun.lockb",
+    "bun.lock",
+    "migration.sql",
     ".ds_store",
     "thumbs.db",
 }

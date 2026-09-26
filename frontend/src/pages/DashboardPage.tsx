@@ -64,6 +64,23 @@ export const DashboardPage: React.FC = () => {
     }
   }, [confirmationToast]);
 
+  // Always fetch fresh repository list on mount
+  useEffect(() => {
+    fetchRepositories(true);
+  }, [fetchRepositories]);
+
+  // Auto-poll when any repository is indexing
+  useEffect(() => {
+    const isAnyIndexing = repositories.some((r) => r.index_status === 'indexing');
+    if (!isAnyIndexing) return;
+
+    const interval = setInterval(() => {
+      fetchRepositories(true);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [repositories, fetchRepositories]);
+
   const totalRepos = repositories.length;
   const indexedCount = repositories.filter((r) => r.index_status === "indexed").length;
   const indexingCount = repositories.filter((r) => r.index_status === "indexing").length;

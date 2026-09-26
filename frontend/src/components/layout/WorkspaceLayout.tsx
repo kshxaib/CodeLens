@@ -25,7 +25,6 @@ interface WorkspaceLayoutProps {
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) => {
   const { user } = useAuthStore();
   const { repositories, selectedRepo, setSelectedRepo } = useWorkspaceStore();
-  const [isRepoDropdownOpen, setIsRepoDropdownOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -36,7 +35,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const navigate = useNavigate();
 
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const repoMenuRef = useRef<HTMLDivElement>(null);
 
   const activeRepo = selectedRepo || repositories[0] || null;
 
@@ -64,9 +62,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
         setIsProfileMenuOpen(false);
       }
-      if (repoMenuRef.current && !repoMenuRef.current.contains(e.target as Node)) {
-        setIsRepoDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -91,7 +86,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
       path: activeRepo ? `/repository/${activeRepo.id}/architecture` : '/repositories',
       icon: Network,
     },
-    { label: 'Profile / Settings', path: '/profile', icon: UserRoundCog },
+    { label: 'Profile & Settings', path: '/profile', icon: UserRoundCog },
   ];
 
   return (
@@ -176,58 +171,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
       {/* Top Header */}
       <header className="bg-[#050505] text-foreground flex sticky z-30 top-0 pl-20 pr-6 items-center h-16 border-b border-[#1f1f23]">
-        {/* Center Repository Selector Dropdown */}
-        <div className="-translate-x-1/2 flex absolute left-1/2 items-center" ref={repoMenuRef}>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsRepoDropdownOpen(!isRepoDropdownOpen)}
-              className="rounded-lg bg-[#121214] text-[#f4f4f5] text-sm border border-[#1f1f23] hover:border-amber-500/40 flex py-2 px-3 items-center gap-2 transition cursor-pointer"
-            >
-              <GitBranch className="text-slate-400 size-4" />
-              <span className="font-mono text-xs">{activeRepo ? activeRepo.name : 'Select Repository'}</span>
-              <ChevronDown className="text-slate-400 size-4" />
-            </button>
-
-            {isRepoDropdownOpen && (
-              <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 rounded-xl bg-[#09090b] border border-[#1f1f23] shadow-2xl p-2 z-50 animate-fadeIn">
-                <div className="text-[10px] uppercase font-mono text-slate-400 px-2 py-1">
-                  Your Repositories
-                </div>
-                {repositories.map((repo) => (
-                  <div
-                    key={repo.id}
-                    onClick={() => {
-                      setSelectedRepo(repo);
-                      setIsRepoDropdownOpen(false);
-                      navigate(`/repository/${repo.id}`);
-                    }}
-                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer hover:bg-[#18181b] transition ${
-                      repo.id === activeRepo?.id ? 'bg-[#18181b] text-amber-400 font-semibold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span className="truncate">{repo.name}</span>
-                    <span className="text-[10px] font-mono text-slate-500">
-                      {repo.file_count || 0} files
-                    </span>
-                  </div>
-                ))}
-                <div className="pt-2 mt-1 border-t border-[#1f1f23]">
-                  <button
-                    onClick={() => {
-                      setIsRepoDropdownOpen(false);
-                      setIsAddModalOpen(true);
-                    }}
-                    className="w-full text-left text-xs text-amber-400 font-semibold px-2 py-1.5 rounded hover:bg-[#18181b] transition cursor-pointer"
-                  >
-                    + Connect New Repository
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Right: Only Profile Avatar */}
         <div className="flex ml-auto items-center relative" ref={profileMenuRef}>
           <button
