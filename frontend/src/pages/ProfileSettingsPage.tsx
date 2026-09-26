@@ -37,6 +37,7 @@ export const ProfileSettingsPage: React.FC = () => {
       setFeedback(null);
       await updateGeminiKey(cleanKey);
       await refreshUser();
+      sessionStorage.setItem('gemini_key_just_verified', 'true');
       setFeedback({
         type: 'success',
         message: 'Gemini API key successfully verified and securely stored.',

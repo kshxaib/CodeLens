@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, X, AlertTriangle } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 

@@ -12,7 +12,6 @@ import {
   ScanLine,
   UserRound,
   UserRoundCog,
-  Shield,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
