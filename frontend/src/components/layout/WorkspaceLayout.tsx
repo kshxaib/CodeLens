@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FolderGit2, GitBranch, LayoutDashboard, LogOut, MessageCircle, Network, UserRoundCog } from 'lucide-react';
+import { FolderGit2, LayoutDashboard, LogOut, MessageCircle, Network, UserRoundCog } from 'lucide-react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
 import { LogoutConfirmModal } from '../common/LogoutConfirmModal';
@@ -46,18 +46,17 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Repositories', path: '/repositories', icon: GitBranch },
     ...(activeRepo
       ? [{ label: activeRepo.name, path: `/repository/${activeRepo.id}`, icon: FolderGit2 }]
       : []),
     {
       label: 'Chat',
-      path: activeRepo ? `/chat?repository=${activeRepo.id}` : '/repositories',
+      path: activeRepo ? `/chat?repository=${activeRepo.id}` : '/dashboard',
       icon: MessageCircle,
     },
     {
       label: 'Architecture',
-      path: activeRepo ? `/repository/${activeRepo.id}/architecture` : '/repositories',
+      path: activeRepo ? `/repository/${activeRepo.id}/architecture` : '/dashboard',
       icon: Network,
     },
     { label: 'Profile & Settings', path: '/profile', icon: UserRoundCog },

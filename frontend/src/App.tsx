@@ -7,7 +7,6 @@ import { useWorkspaceStore } from './store/useWorkspaceStore';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { RepositoriesPage } from './pages/RepositoriesPage';
 import { RepositoryOverviewPage } from './pages/RepositoryOverviewPage';
 import { ArchitectureMapPage } from './pages/ArchitectureMapPage';
 import { CodeLensChatPage } from './pages/CodeLensChatPage';
@@ -20,7 +19,7 @@ function ArchitectureRedirect() {
   if (targetId) {
     return <Navigate to={`/repository/${targetId}/architecture`} replace />;
   }
-  return <Navigate to="/repositories" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 function AppContent() {
@@ -97,7 +96,7 @@ function AppContent() {
           <Route path="/login" element={<Navigate to="/" replace />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/repositories" element={<ProtectedRoute><RepositoriesPage /></ProtectedRoute>} />
+          <Route path="/repositories" element={<Navigate to="/dashboard" replace />} />
           <Route path="/repository/:id" element={<ProtectedRoute><RepositoryOverviewPage /></ProtectedRoute>} />
           <Route path="/repository/:id/architecture" element={<ProtectedRoute><ArchitectureMapPage /></ProtectedRoute>} />
           <Route

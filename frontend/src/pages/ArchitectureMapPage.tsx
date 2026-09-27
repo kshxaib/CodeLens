@@ -488,8 +488,8 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
           type="repositories"
           title="No Repositories Connected"
           description="Connect a repository first to analyze and explore its Architecture Knowledge Graph."
-          actionText="View Repositories"
-          onAction={() => navigate('/repositories')}
+          actionText="Go to Dashboard"
+          onAction={() => navigate('/dashboard')}
         />
       </WorkspaceLayout>
     );
