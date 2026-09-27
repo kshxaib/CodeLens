@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, ReactFlowProvider, useReactFlow, useViewport, type Node, type Edge } from '@xyflow/react';
+import { ReactFlow, Controls, Background, useNodesState, useEdgesState, MarkerType, ReactFlowProvider, useReactFlow, useViewport, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Maximize2, X } from 'lucide-react';
 import { api } from '../api/client';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
@@ -17,7 +17,7 @@ import { ArchitectureToolbar } from '../components/architecture/ArchitectureTool
 import { CanvasSidebar } from '../components/architecture/CanvasSidebar';
 import { CanvasStatusBar } from '../components/architecture/CanvasStatusBar';
 import { getLayoutedElements } from '../components/architecture/layout';
-import { ARCH_TIERS, getNodeTier, getArchitectureSemantic } from '../components/architecture/constants';
+import { getNodeTier, getArchitectureSemantic } from '../components/architecture/constants';
 import { ArchitectureLegend } from '../components/architecture/ArchitectureLegend';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
@@ -79,7 +79,42 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFullscreenTip, setShowFullscreenTip] = useState(true);
   const zoom = useZoomLevel();
+
+  // 10-second auto-dismiss for fullscreen tip popup
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowFullscreenTip(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for native fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const active = !!document.fullscreenElement;
+      setIsFullscreen(active);
+      if (active) {
+        setShowFullscreenTip(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // In fullscreen mode, default zoom to 10% (0.10)
+  useEffect(() => {
+    if (isFullscreen) {
+      const timer = setTimeout(() => {
+        reactFlowInstance.fitView({ padding: 0.15, duration: 200 });
+        setTimeout(() => {
+          reactFlowInstance.zoomTo(0.10, { duration: 250 });
+        }, 220);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isFullscreen, reactFlowInstance]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
@@ -91,7 +126,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [legendCategory, setLegendCategory] = useState<string>('all');
 
   const [blastRadius, setBlastRadius] = useState<BlastRadiusResponse | null>(null);
-  const [blastLoading, setBlastLoading] = useState(false);
 
   const [codeViewerState, setCodeViewerState] = useState<{
     isOpen: boolean;
@@ -328,10 +362,15 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.15, duration: 400 });
+        if (isFullscreen) {
+          setTimeout(() => {
+            reactFlowInstance.zoomTo(0.10, { duration: 250 });
+          }, 400);
+        }
       }, 80);
       return () => clearTimeout(timer);
     }
-  }, [nodes.length, layoutDirection, viewMode, reactFlowInstance]);
+  }, [nodes.length, layoutDirection, viewMode, isFullscreen, reactFlowInstance]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -359,19 +398,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     setHoveredNodeId(null);
     setBlastRadius(null);
   }, []);
-
-  const handleAnalyzeBlastRadius = async (symbolName: string) => {
-    if (!symbolName) return;
-    try {
-      setBlastLoading(true);
-      const res = await api.getBlastRadius(repoId, symbolName);
-      setBlastRadius(res);
-    } catch (err: any) {
-      console.error('Blast radius calculation failed:', err);
-    } finally {
-      setBlastLoading(false);
-    }
-  };
 
   const handleOpenSource = (filePath: string, lineRange?: { start: number; end: number }) => {
     setCodeViewerState({
@@ -477,7 +503,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       ) : (
           <div
             ref={containerRef}
-            className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col select-none"
+            className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col select-none"
           >
             <style>{`
               .arc-sidebar {
@@ -530,7 +556,14 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   onViewModeChange={setViewMode}
                   layoutDirection={layoutDirection}
                   onToggleLayoutDirection={() => setLayoutDirection(d => d === 'TB' ? 'LR' : 'TB')}
-                  onFitView={() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 })}
+                  onFitView={() => {
+                    reactFlowInstance.fitView({ padding: 0.15, duration: 400 });
+                    if (isFullscreen) {
+                      setTimeout(() => {
+                        reactFlowInstance.zoomTo(0.10, { duration: 250 });
+                      }, 400);
+                    }
+                  }}
                   isFullscreen={isFullscreen}
                   onToggleFullscreen={handleToggleFullscreen}
                   onRebuildGraph={() => fetchKnowledgeGraph(true)}
@@ -545,6 +578,35 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   canvasRef={containerRef}
                   repoName={kgData?.metadata?.repository_name}
                 />
+
+                {/* 3-second fullscreen hint toast (Zero gradients, minimalist paper-and-ink dark slate) */}
+                {showFullscreenTip && !isFullscreen && (
+                  <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto">
+                    <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#19243B] text-white shadow-lg border border-[#2B3854]">
+                      <Maximize2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="text-xs font-mono font-medium text-slate-200">
+                        For the best view, use{' '}
+                        <button
+                          onClick={() => {
+                            handleToggleFullscreen();
+                            setShowFullscreenTip(false);
+                          }}
+                          className="font-bold text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer transition"
+                        >
+                          Full Screen
+                        </button>{' '}
+                        mode
+                      </span>
+                      <button
+                        onClick={() => setShowFullscreenTip(false)}
+                        className="ml-1 text-slate-400 hover:text-white transition p-0.5 rounded cursor-pointer"
+                        title="Dismiss"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex-1 min-h-0 pb-8">
                   <ReactFlow
@@ -577,15 +639,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                     <Controls
                       showInteractive={false}
                       className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
-                    />
-                    <MiniMap
-                      nodeColor={(n) => {
-                        const tierKey = (n.data as any)?.tier || 'application';
-                        return ARCH_TIERS[tierKey]?.dot || '#10b981';
-                      }}
-                      zoomable
-                      pannable
-                      className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
                     />
                   </ReactFlow>
 
@@ -625,9 +678,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                     repositoryId={repoId}
                     onClose={() => { setSelectedNodeId(null); setBlastRadius(null); }}
                     onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
-                    onOpenSource={handleOpenSource}
-                    onAnalyzeBlastRadius={handleAnalyzeBlastRadius}
-                    blastLoading={blastLoading}
                   />
                 )}
               </div>

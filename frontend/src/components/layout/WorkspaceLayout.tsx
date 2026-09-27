@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Network, UserRoundCog, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, Layers, UserRoundCog, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
@@ -21,9 +21,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const { repositories, selectedRepo } = useWorkspaceStore();
   const { user } = useAuthStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const isOpen = !isCollapsed || isHovered;
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,64 +29,29 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const isArchitectureRoute = location.pathname.includes('/architecture');
   const searchParams = new URLSearchParams(location.search);
   const currentSubView = searchParams.get('view') || 'architecture';
-  const [isArchExpanded, setIsArchExpanded] = useState(true);
+  const [isViewsExpanded, setIsViewsExpanded] = useState(true);
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#19243B]">
-      <aside
-        onMouseEnter={() => isCollapsed && setIsHovered(true)}
-        onMouseLeave={() => isCollapsed && setIsHovered(false)}
-        className={`bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-64 shadow-[0_4px_30px_rgba(25,36,59,0.08)]' : 'w-16 shadow-sm'
-        }`}
-      >
-        {/* Header Logo & Collapse Toggle */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
+      <aside className="bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 w-64 flex flex-col shadow-[0_4px_30px_rgba(25,36,59,0.08)]">
+        {/* Header Logo */}
+        <div className="h-16 flex items-center px-5 border-b border-[#E2E0D9] shrink-0">
           <Link
             to="/dashboard"
-            className="flex items-center overflow-hidden group cursor-pointer"
+            className="flex items-center group cursor-pointer"
             title="CodeLens Dashboard"
           >
-            <span
-              className="font-bold text-base tracking-tight text-[#19243B] whitespace-nowrap transition-all duration-300 font-mono"
-            >
-              {isOpen ? 'CodeLens' : 'CL'}
+            <span className="font-bold text-base tracking-tight text-[#19243B] font-mono">
+              CodeLens
             </span>
           </Link>
-
-          {isOpen ? (
-            <button
-              type="button"
-              onClick={() => {
-                setIsCollapsed(true);
-                setIsHovered(false);
-              }}
-              className="p-1.5 rounded-lg text-[#687184] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
-              title="Collapse sidebar"
-            >
-              <PanelLeftClose className="size-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setIsCollapsed(false);
-                setIsHovered(false);
-              }}
-              className="p-1.5 rounded-lg text-[#687184] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
-              title="Expand sidebar"
-            >
-              <PanelLeft className="size-4" />
-            </button>
-          )}
         </div>
 
         {/* Primary Navigation */}
-        <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        <nav aria-label="Primary navigation" className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
           {/* Dashboard Item */}
           <Link
             to="/dashboard"
-            title={!isOpen ? 'Dashboard' : undefined}
             className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
               location.pathname === '/dashboard'
                 ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
@@ -108,18 +70,12 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               />
             </div>
 
-            <span
-              className={`whitespace-nowrap transition-all duration-200 origin-left ${
-                isOpen
-                  ? 'opacity-100 max-w-none translate-x-0'
-                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
-              }`}
-            >
+            <span className="whitespace-nowrap">
               Dashboard
             </span>
           </Link>
 
-          {/* Architecture Collapsible Group */}
+          {/* Views Collapsible Group */}
           <div>
             <div
               className={`rounded-xl text-xs sm:text-sm flex py-2 px-2.5 items-center justify-between transition-colors font-medium relative group/item cursor-pointer select-none ${
@@ -127,15 +83,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                   ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
                   : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
               }`}
-              onClick={() => {
-                if (isCollapsed) {
-                  setIsCollapsed(false);
-                  navigate(activeRepo ? `/repository/${activeRepo.id}/architecture` : '/architecture');
-                } else {
-                  setIsArchExpanded((prev) => !prev);
-                }
-              }}
-              title={!isOpen ? 'Architecture' : undefined}
+              onClick={() => setIsViewsExpanded((prev) => !prev)}
             >
               {isArchitectureRoute && (
                 <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
@@ -143,45 +91,37 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                  <Network
+                  <Layers
                     className={`size-4.5 transition-colors ${
                       isArchitectureRoute ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
                     }`}
                   />
                 </div>
 
-                <span
-                  className={`whitespace-nowrap transition-all duration-200 origin-left ${
-                    isOpen
-                      ? 'opacity-100 max-w-none translate-x-0'
-                      : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
-                  }`}
-                >
-                  Architecture
+                <span className="whitespace-nowrap">
+                  Views
                 </span>
               </div>
 
-              {isOpen && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsArchExpanded((prev) => !prev);
-                  }}
-                  className="p-1 rounded-md text-[#687184] hover:text-[#19243B] transition"
-                  title={isArchExpanded ? 'Collapse sub-views' : 'Expand sub-views'}
-                >
-                  {isArchExpanded ? (
-                    <ChevronUp className="size-3.5" />
-                  ) : (
-                    <ChevronDown className="size-3.5" />
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsViewsExpanded((prev) => !prev);
+                }}
+                className="p-1 rounded-md text-[#687184] hover:text-[#19243B] transition cursor-pointer"
+                title={isViewsExpanded ? 'Collapse views' : 'Expand views'}
+              >
+                {isViewsExpanded ? (
+                  <ChevronUp className="size-3.5" />
+                ) : (
+                  <ChevronDown className="size-3.5" />
+                )}
+              </button>
             </div>
 
             {/* Tree Branch Sub-Items (Image 2 style) */}
-            {isArchExpanded && isOpen && (
+            {isViewsExpanded && (
               <div className="ml-5 pl-3.5 my-1.5 relative border-l border-[#E2E0D9] space-y-1">
                 {ARCHITECTURE_VIEWS.map((sub) => {
                   const isSubActive = isArchitectureRoute && currentSubView === sub.id;
@@ -222,11 +162,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </nav>
 
         {/* Bottom Profile & Settings Link */}
-        <div className="p-2 border-t border-[#E2E0D9] shrink-0">
+        <div className="p-3 border-t border-[#E2E0D9] shrink-0">
           <Link
             to="/profile"
-            title={!isOpen ? (user?.username ? `@${user.username}` : 'Profile & Settings') : undefined}
-            className={`w-full rounded-xl text-xs sm:text-sm flex py-2 px-2 items-center gap-3 transition-colors font-medium cursor-pointer relative group/profile ${
+            className={`w-full rounded-xl text-xs sm:text-sm flex py-2 px-2.5 items-center gap-3 transition-colors font-medium cursor-pointer relative group/profile ${
               location.pathname === '/profile'
                 ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
                 : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
@@ -250,13 +189,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               )}
             </div>
 
-            <div
-              className={`flex flex-col min-w-0 origin-left whitespace-nowrap transition-all duration-200 ${
-                isOpen
-                  ? 'opacity-100 max-w-none translate-x-0'
-                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
-              }`}
-            >
+            <div className="flex flex-col min-w-0">
               <span className="text-xs font-semibold text-[#19243B] truncate leading-tight">
                 {user?.username ? `@${user.username}` : 'Profile'}
               </span>
@@ -268,8 +201,20 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </div>
       </aside>
 
-      <main className={`pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4] transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <div className="mx-auto flex flex-col gap-6 max-w-[1600px]">
+      <main
+        className={
+          isArchitectureRoute
+            ? 'p-2.5 h-screen flex flex-col bg-[#F8F7F4] ml-64 overflow-hidden'
+            : 'pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4] ml-64'
+        }
+      >
+        <div
+          className={
+            isArchitectureRoute
+              ? 'flex-1 min-h-0 w-full flex flex-col'
+              : 'mx-auto flex flex-col gap-6 max-w-[1600px]'
+          }
+        >
           {children}
         </div>
       </main>

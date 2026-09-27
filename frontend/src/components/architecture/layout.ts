@@ -23,11 +23,11 @@ export const getLayoutedElements = (
 
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: isHorizontal ? 50 : 60,
-    ranksep: isHorizontal ? 100 : 110,
-    edgesep: 25,
-    marginx: 40,
-    marginy: 40,
+    nodesep: isHorizontal ? 60 : 55,
+    ranksep: isHorizontal ? 130 : 170,
+    edgesep: 30,
+    marginx: 50,
+    marginy: 50,
     acyclicer: 'greedy',
   });
 
