@@ -90,10 +90,10 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Listen for native fullscreen changes
+  // Listen for native fullscreen changes for this canvas
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const active = !!document.fullscreenElement;
+      const active = document.fullscreenElement === containerRef.current;
       setIsFullscreen(active);
       if (active) {
         setShowFullscreenTip(false);
@@ -103,9 +103,9 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // In fullscreen mode, default zoom to 10% (0.10)
+  // In fullscreen mode, default zoom to 10% (0.10) ONLY for architecture view
   useEffect(() => {
-    if (isFullscreen) {
+    if (isFullscreen && currentView === 'architecture') {
       const timer = setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.15, duration: 200 });
         setTimeout(() => {
@@ -114,7 +114,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, [isFullscreen, reactFlowInstance]);
+  }, [isFullscreen, currentView, reactFlowInstance]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
@@ -440,7 +440,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   if (loading || isRebuilding) {
     return (
       <WorkspaceLayout>
-        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex flex-col items-center justify-center p-6 text-center select-none">
           <div className="w-12 h-12 rounded-2xl bg-[#FEF7EC] border border-amber-200/80 flex items-center justify-center mb-4 shadow-2xs">
             <Loader2 className="w-6 h-6 animate-spin text-amber-700" />
           </div>
@@ -458,7 +458,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   if (error) {
     return (
       <WorkspaceLayout>
-        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex items-center justify-center p-6">
+        <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex items-center justify-center p-6">
           <ErrorState
             type="general"
             title="Knowledge Graph Generation Failed"

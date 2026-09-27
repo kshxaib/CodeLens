@@ -335,7 +335,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
   if (loading) {
     return (
-      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex items-center justify-center select-none">
+      <div className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex items-center justify-center select-none">
         <div className="flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
           <span className="text-sm font-medium text-[#19243B] font-mono">
@@ -348,7 +348,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
   if (error || !activeLifecycle) {
     return (
-      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col items-center justify-center p-8 select-none">
+      <div className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col items-center justify-center p-8 select-none">
         <div className="max-w-md text-center space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700">
             <RefreshCw className="w-6 h-6" />
@@ -381,7 +381,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
+      className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .lc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }

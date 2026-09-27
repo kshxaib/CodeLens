@@ -42,9 +42,18 @@ const getStepIcon = (type: string) => {
 export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected }) => {
   const cfg = getStepTypeCfg(data.step_type);
 
+  // Build dynamic execution highlight using the step type's own color
+  const executionRingStyle: React.CSSProperties | undefined = data.isCurrentExecutionStep
+    ? {
+        boxShadow: `0 0 0 4px ${cfg.dot}50, 0 0 28px ${cfg.dot}40`,
+        borderColor: cfg.dot,
+        transform: 'scale(1.05)',
+      }
+    : undefined;
+
   let ringClass = 'border-[#E2E0D9] hover:border-zinc-400 shadow-sm';
   if (data.isCurrentExecutionStep) {
-    ringClass = 'ring-4 ring-amber-500 border-amber-500 shadow-[0_0_25px_rgba(217,119,6,0.35)] scale-105 animate-pulse';
+    ringClass = 'animate-pulse';
   } else if (selected || data.isSelected) {
     ringClass = 'ring-2 ring-amber-600 border-amber-500 shadow-[0_4px_16px_rgba(217,119,6,0.2)]';
   } else if (data.isHovered) {
@@ -56,6 +65,7 @@ export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected 
   return (
     <div
       className={`relative w-[260px] rounded-xl bg-white/95 backdrop-blur-md border p-3 shadow-md transition-all duration-200 cursor-pointer select-none group ${ringClass} ${opacityClass}`}
+      style={executionRingStyle}
     >
       <Handle
         type="target"

@@ -324,7 +324,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
         <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-3" />
         <span className="text-sm font-medium text-[#19243B]">Analyzing Data Flow Lineage...</span>
       </div>
@@ -333,7 +333,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
 
   if (error) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 max-w-md text-center">
           <p className="font-bold text-sm mb-1">Failed to Load Data Flows</p>
           <p className="text-xs text-rose-600 mb-3">{error}</p>
@@ -351,7 +351,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
+      className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .df-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }

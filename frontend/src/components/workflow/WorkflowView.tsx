@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
+import { ReactFlow, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { WorkflowNode } from './WorkflowNode';
 import { WorkflowEdge } from './WorkflowEdge';
-import { WorkflowInspector } from './WorkflowInspector';
 import { WorkflowToolbar } from './WorkflowToolbar';
 import { getWorkflowLayoutedElements } from './layout';
 import { api } from '../../api/client';
-import type { WorkflowItem, WorkflowStep } from '../../types';
+import type { WorkflowItem } from '../../types';
 import { Loader2 } from 'lucide-react';
 
 interface WorkflowViewProps {
   repositoryId: number;
   currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
   onViewChange: (view: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle') => void;
-  onOpenSource: (filePath: string, lineRange?: { start: number; end: number }) => void;
+  onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;
 }
 
 const nodeTypes = {
@@ -28,7 +27,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   repositoryId,
   currentView,
   onViewChange,
-  onOpenSource,
+  onOpenSource: _onOpenSource,
 }) => {
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +44,26 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   const [pathFilter, setPathFilter] = useState<'all' | 'happy' | 'failure'>('all');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      reactFlowInstance.fitView({
+        padding: isFullscreen ? 0.15 : 0.2,
+        minZoom: isFullscreen ? 1.15 : 0.85,
+        maxZoom: isFullscreen ? 1.4 : 1.15,
+        duration: 300,
+      });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [isFullscreen, reactFlowInstance]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
@@ -90,10 +109,38 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         }
         return next;
       });
-    }, 1200);
+    }, 1400);
 
     return () => clearInterval(timer);
   }, [isPlaying, activeWorkflow]);
+
+  // Auto-focus and shift view to the executing node ONLY during playback
+  useEffect(() => {
+    if (!isPlaying || simulationIndex < 0 || !activeWorkflow?.steps?.length) return;
+
+    const activeStep = activeWorkflow.steps[simulationIndex];
+    if (!activeStep) return;
+
+    const timer = setTimeout(() => {
+      const targetNode = nodes.find((n) => n.id === activeStep.id);
+      if (targetNode) {
+        const nodeWidth = targetNode.measured?.width || (targetNode as any).width || 260;
+        const nodeHeight = targetNode.measured?.height || (targetNode as any).height || 90;
+        const centerX = targetNode.position.x + nodeWidth / 2;
+        const centerY = targetNode.position.y + nodeHeight / 2;
+
+        const currentZoom = reactFlowInstance.getZoom();
+        const targetZoom = Math.max(currentZoom, isFullscreen ? 1.15 : 1.0);
+
+        reactFlowInstance.setCenter(centerX, centerY, {
+          zoom: targetZoom,
+          duration: 500,
+        });
+      }
+    }, 60);
+
+    return () => clearTimeout(timer);
+  }, [isPlaying, simulationIndex, activeWorkflow, nodes, isFullscreen, reactFlowInstance]);
 
   useEffect(() => {
     if (!activeWorkflow) return;
@@ -101,9 +148,39 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     const rawSteps = activeWorkflow.steps || [];
     const rawTransitions = activeWorkflow.transitions || [];
 
+    // Build adjacency for failure-path reachability
+    const failureReachableIds = new Set<string>();
+    if (pathFilter === 'failure') {
+      // Seed: all failure/retry step nodes
+      const seeds = rawSteps
+        .filter((s) => s.step_type === 'failure' || s.step_type === 'retry')
+        .map((s) => s.id);
+      seeds.forEach((id) => failureReachableIds.add(id));
+
+      // Also seed targets of failure/retry transitions
+      rawTransitions
+        .filter((t) => t.transition_type === 'failure' || t.transition_type === 'retry')
+        .forEach((t) => {
+          failureReachableIds.add(t.source);
+          failureReachableIds.add(t.target);
+        });
+
+      // Walk backwards: find all ancestors that can reach a failure node
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const t of rawTransitions) {
+          if (failureReachableIds.has(t.target) && !failureReachableIds.has(t.source)) {
+            failureReachableIds.add(t.source);
+            changed = true;
+          }
+        }
+      }
+    }
+
     const filteredSteps = rawSteps.filter((s) => {
-      if (pathFilter === 'happy' && s.step_type === 'failure') return false;
-      if (pathFilter === 'failure' && s.step_type === 'end') return false;
+      if (pathFilter === 'happy' && (s.step_type === 'failure' || s.step_type === 'retry')) return false;
+      if (pathFilter === 'failure' && !failureReachableIds.has(s.id)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = s.name.toLowerCase().includes(q);
@@ -118,7 +195,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
 
     const filteredTransitions = rawTransitions.filter((t) => {
       if (!visibleStepIds.has(t.source) || !visibleStepIds.has(t.target)) return false;
-      if (pathFilter === 'happy' && t.transition_type === 'failure') return false;
+      if (pathFilter === 'happy' && (t.transition_type === 'failure' || t.transition_type === 'retry')) return false;
       if (pathFilter === 'failure' && t.transition_type === 'success') return false;
       return true;
     });
@@ -200,13 +277,20 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   ]);
 
   useEffect(() => {
+    // Don't re-fitView during simulation playback — let the auto-center effect handle it
+    if (isPlaying || simulationIndex >= 0) return;
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
-        reactFlowInstance.fitView({ padding: 0.15, duration: 400 });
+        reactFlowInstance.fitView({
+          padding: isFullscreen ? 0.15 : 0.2,
+          minZoom: isFullscreen ? 1.15 : 0.85,
+          maxZoom: isFullscreen ? 1.4 : 1.15,
+          duration: 400,
+        });
       }, 80);
       return () => clearTimeout(timer);
     }
-  }, [nodes.length, selectedWorkflowId, layoutDirection, reactFlowInstance]);
+  }, [nodes.length, selectedWorkflowId, layoutDirection, isFullscreen, reactFlowInstance, isPlaying, simulationIndex]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -252,14 +336,11 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  const selectedStepData: WorkflowStep | null = useMemo(() => {
-    if (!selectedStepId || !activeWorkflow) return null;
-    return activeWorkflow.steps.find((s) => s.id === selectedStepId) || null;
-  }, [selectedStepId, activeWorkflow]);
+
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
         <div className="w-12 h-12 rounded-2xl bg-white border border-[#E2E0D9] flex items-center justify-center mb-4 shadow-md">
           <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
         </div>
@@ -272,7 +353,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
 
   if (error || !activeWorkflow) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
         <p className="text-sm text-[#526078] font-mono mb-3">{error || 'No workflows found.'}</p>
         <button
           onClick={fetchWorkflows}
@@ -287,13 +368,8 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
+      className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
-      <style>{`
-        .wf-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
-        .wf-right.open  { width: 380px; opacity: 1; }
-        .wf-right.closed{ width: 0px; opacity: 0; pointer-events: none; overflow: hidden; }
-      `}</style>
 
       <WorkflowToolbar
         currentView={currentView}
@@ -311,10 +387,21 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         pathFilter={pathFilter}
         onPathFilterChange={setPathFilter}
         isPlaying={isPlaying}
-        onTogglePlay={() => setIsPlaying((p) => !p)}
+        onTogglePlay={() => {
+          if (!isPlaying && simulationIndex < 0) {
+            setSimulationIndex(0);
+          }
+          setIsPlaying((p) => !p);
+        }}
         onResetSimulator={() => {
           setIsPlaying(false);
           setSimulationIndex(-1);
+          reactFlowInstance.fitView({
+            padding: isFullscreen ? 0.15 : 0.2,
+            minZoom: isFullscreen ? 1.15 : 0.85,
+            maxZoom: isFullscreen ? 1.4 : 1.15,
+            duration: 400,
+          });
         }}
         currentStepIndex={simulationIndex}
         totalSteps={activeWorkflow.steps?.length || 0}
@@ -322,7 +409,14 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
         onToggleLayoutDirection={() =>
           setLayoutDirection((d) => (d === 'TB' ? 'LR' : 'TB'))
         }
-        onFitView={() => reactFlowInstance.fitView({ padding: 0.15, duration: 400 })}
+        onFitView={() =>
+          reactFlowInstance.fitView({
+            padding: isFullscreen ? 0.15 : 0.2,
+            minZoom: isFullscreen ? 1.15 : 0.85,
+            maxZoom: isFullscreen ? 1.4 : 1.15,
+            duration: 400,
+          })
+        }
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
         onExport={handleExport}
@@ -342,7 +436,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          fitViewOptions={{ padding: 0.15 }}
+          fitViewOptions={{ padding: 0.15, minZoom: 1.0, maxZoom: 1.4 }}
           panOnDrag={true}
           panOnScroll={false}
           zoomOnScroll={true}
@@ -350,41 +444,17 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
           nodesDraggable={true}
           nodesConnectable={false}
           elementsSelectable={true}
-          minZoom={0.05}
+          minZoom={0.2}
           maxZoom={2}
           proOptions={{ hideAttribution: true }}
-          className="bg-[#F8F7F4]"
+          className="bg-[#F8F7F4] h-full"
         >
           <Background color="#D5D2CA" gap={24} size={1.2} />
           <Controls
             showInteractive={false}
             className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
           />
-          <MiniMap
-            nodeColor="#D97706"
-            maskColor="rgba(248, 247, 244, 0.7)"
-            zoomable
-            pannable
-            className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
-          />
         </ReactFlow>
-      </div>
-
-      <div
-        className={`wf-right flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-2xl flex flex-col z-30 ${
-          selectedStepData ? 'open' : 'closed'
-        }`}
-      >
-        {selectedStepData && (
-          <WorkflowInspector
-            step={selectedStepData}
-            allSteps={activeWorkflow.steps || []}
-            transitions={activeWorkflow.transitions || []}
-            onClose={() => setSelectedStepId(null)}
-            onSelectStep={(stepId) => setSelectedStepId(stepId)}
-            onOpenSource={onOpenSource}
-          />
-        )}
       </div>
     </div>
   );

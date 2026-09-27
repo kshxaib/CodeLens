@@ -209,7 +209,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
         <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-3" />
         <span className="text-sm font-medium text-[#19243B]">Analyzing Runtime Sequence Order...</span>
       </div>
@@ -218,7 +218,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
 
   if (error || !activeSequence) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
+      <div className="w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 max-w-md text-center">
           <p className="font-bold text-sm mb-1">Failed to Load Sequences</p>
           <p className="text-xs text-rose-600 mb-3">{error || 'No sequence diagrams extracted.'}</p>
@@ -239,7 +239,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
+      className="relative w-full h-full min-h-[580px] flex-1 rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .seq-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
