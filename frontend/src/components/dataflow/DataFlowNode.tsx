@@ -69,31 +69,21 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
 
   return (
     <div
-      className={`relative group rounded-2xl transition-all duration-300 w-[280px] select-none cursor-pointer ${
-        isTrans ? 'rounded-3xl' : 'rounded-2xl'
+      className={`relative group rounded-2xl transition-all duration-300 w-[280px] select-none cursor-pointer bg-white shadow-md border ${
+        isTrans ? 'border-purple-300' : 'border-[#E2E0D9]'
       } ${
         isCurrentExecutionStep
-          ? 'ring-4 ring-amber-400/80 shadow-[0_0_35px_rgba(245,158,11,0.5)] scale-[1.03] z-30'
+          ? 'ring-4 ring-amber-500/80 shadow-[0_0_30px_rgba(217,119,6,0.35)] scale-[1.03] z-30'
           : isSelected || isLineageActive
-          ? 'ring-2 ring-sky-400 shadow-[0_0_28px_rgba(56,189,248,0.35)] scale-[1.02] z-20'
-          : 'hover:scale-[1.01] hover:border-zinc-500 shadow-xl'
+          ? 'ring-2 ring-amber-500 shadow-[0_4px_20px_rgba(217,119,6,0.2)] scale-[1.02] z-20'
+          : 'hover:scale-[1.01] hover:border-zinc-400 hover:shadow-lg'
       } ${isDimmed ? 'opacity-25 blur-[0.4px] scale-[0.98]' : 'opacity-100'}`}
-      style={{
-        backgroundColor: '#0c0c0e',
-      }}
     >
-      {(isLineageActive || isSelected || isCurrentExecutionStep) && (
-        <div
-          className="absolute -inset-0.5 rounded-2xl pointer-events-none opacity-40 blur-sm transition"
-          style={{ backgroundColor: cfg.dot }}
-        />
-      )}
-
       <div
-        className={`relative z-10 p-3.5 rounded-2xl border backdrop-blur-xl flex flex-col justify-between h-full ${
+        className={`relative z-10 p-3.5 rounded-2xl flex flex-col justify-between h-full ${
           isTrans
-            ? 'border-purple-500/40 bg-gradient-to-b from-purple-950/20 via-[#0c0c0e] to-[#0c0c0e]'
-            : 'border-[#1f1f23] bg-[#0c0c0e]'
+            ? 'bg-purple-50/30'
+            : 'bg-white'
         }`}
       >
         <div className="flex items-center justify-between gap-1.5 mb-2">
@@ -109,7 +99,7 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
 
           {sourceLabel && (
             <span
-              className="text-[9px] font-mono text-zinc-500 hover:text-amber-400 transition truncate max-w-[100px]"
+              className="text-[9px] font-mono text-[#687184] hover:text-amber-700 transition truncate max-w-[100px]"
               title={data.evidence?.file_path}
             >
               {sourceLabel}
@@ -130,25 +120,25 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-xs font-bold font-mono text-zinc-100 truncate leading-snug group-hover:text-amber-300 transition-colors">
+            <h3 className="text-xs font-bold font-mono text-[#19243B] truncate leading-snug group-hover:text-amber-700 transition-colors">
               {data.name}
             </h3>
-            <p className="text-[10px] font-mono text-zinc-400 truncate mt-0.5">
+            <p className="text-[10px] font-mono text-[#526078] truncate mt-0.5">
               {data.description || cfg.sub}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-[#1f1f23] text-[9px] font-mono">
+        <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-[#F0EEE9] text-[9px] font-mono">
           <div className="flex items-center gap-1.5 truncate">
             {data.format && (
-              <span className="px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-300 border border-zinc-700/50 uppercase">
+              <span className="px-1.5 py-0.5 rounded bg-[#F0EEE9] text-[#19243B] border border-[#E2E0D9] uppercase font-semibold">
                 {data.format}
               </span>
             )}
             {data.storage && (
               <span
-                className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 truncate max-w-[110px]"
+                className="px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200 truncate max-w-[110px]"
                 title={data.storage}
               >
                 {data.storage}
@@ -157,7 +147,7 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
           </div>
 
           {data.fields && data.fields.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 shrink-0 font-bold">
+            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-bold">
               {data.fields.length} {data.fields.length === 1 ? 'field' : 'fields'}
             </span>
           )}
@@ -168,26 +158,28 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
         type="target"
         position={Position.Top}
         id="target-top"
-        className="!w-2 !h-2 !bg-zinc-600 !border-none group-hover:!bg-sky-400 transition"
+        className="!w-2.5 !h-2.5 !bg-[#F0EEE9] !border-2 !border-[#D5D2CA] group-hover:!border-amber-500 group-hover:!bg-amber-400 transition"
       />
       <Handle
         type="target"
         position={Position.Left}
         id="target-left"
-        className="!w-2 !h-2 !bg-zinc-600 !border-none group-hover:!bg-sky-400 transition"
+        className="!w-2.5 !h-2.5 !bg-[#F0EEE9] !border-2 !border-[#D5D2CA] group-hover:!border-amber-500 group-hover:!bg-amber-400 transition"
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="source-bottom"
-        className="!w-2 !h-2 !bg-zinc-600 !border-none group-hover:!bg-amber-400 transition"
+        className="!w-2.5 !h-2.5 !bg-[#F0EEE9] !border-2 !border-[#D5D2CA] group-hover:!border-amber-500 group-hover:!bg-amber-400 transition"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="source-right"
-        className="!w-2 !h-2 !bg-zinc-600 !border-none group-hover:!bg-amber-400 transition"
+        className="!w-2.5 !h-2.5 !bg-[#F0EEE9] !border-2 !border-[#D5D2CA] group-hover:!border-amber-500 group-hover:!bg-amber-400 transition"
       />
     </div>
   );
 });
+
+DataFlowNode.displayName = 'DataFlowNode';

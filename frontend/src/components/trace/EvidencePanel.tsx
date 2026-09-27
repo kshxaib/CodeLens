@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AlertTriangle, CheckCircle2, HelpCircle, FileCode2, ExternalLink, ZapOff, Zap, Database, Globe, Settings, GitMerge, Cpu, BrainCircuit } from 'lucide-react';
 import type { SourceEvidence, EvidenceType, EvidenceVerification } from '../../types';
@@ -15,14 +14,14 @@ const EVIDENCE_TYPE_LABELS: Record<EvidenceType, string> = {
 };
 
 const EVIDENCE_TYPE_COLORS: Record<EvidenceType, { bg: string; text: string; border: string }> = {
-  ast: { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30' },
-  import: { bg: 'bg-sky-500/15', text: 'text-sky-300', border: 'border-sky-500/30' },
-  function_call: { bg: 'bg-violet-500/15', text: 'text-violet-300', border: 'border-violet-500/30' },
-  route: { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30' },
-  db_access: { bg: 'bg-rose-500/15', text: 'text-rose-300', border: 'border-rose-500/30' },
-  configuration: { bg: 'bg-orange-500/15', text: 'text-orange-300', border: 'border-orange-500/30' },
-  inferred: { bg: 'bg-zinc-500/15', text: 'text-zinc-400', border: 'border-zinc-500/30' },
-  llm_inferred: { bg: 'bg-indigo-500/15', text: 'text-indigo-300', border: 'border-indigo-500/30' },
+  ast: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200' },
+  import: { bg: 'bg-sky-50', text: 'text-sky-800', border: 'border-sky-200' },
+  function_call: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' },
+  route: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
+  db_access: { bg: 'bg-rose-50', text: 'text-rose-800', border: 'border-rose-200' },
+  configuration: { bg: 'bg-orange-50', text: 'text-orange-800', border: 'border-orange-200' },
+  inferred: { bg: 'bg-[#F0EEE9]', text: 'text-[#526078]', border: 'border-[#E2E0D9]' },
+  llm_inferred: { bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-200' },
 };
 
 const EVIDENCE_TYPE_ICONS: Record<EvidenceType, React.FC<{ className?: string }>> = {
@@ -67,22 +66,22 @@ export const VerificationBadge: React.FC<VerificationBadgeProps> = ({ status, co
   const configs: Record<EvidenceVerification['status'], { label: string; classes: string; Icon: React.FC<{className?: string}> }> = {
     VERIFIED: {
       label: 'Verified',
-      classes: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
       Icon: ({ className }) => <CheckCircle2 className={className} />,
     },
     INFERRED: {
       label: 'Inferred',
-      classes: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      classes: 'bg-amber-50 text-amber-800 border-amber-200',
       Icon: ({ className }) => <AlertTriangle className={className} />,
     },
     PARTIAL: {
       label: 'Partial',
-      classes: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
+      classes: 'bg-orange-50 text-orange-800 border-orange-200',
       Icon: ({ className }) => <HelpCircle className={className} />,
     },
     NOT_FOUND: {
       label: 'Not Found',
-      classes: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+      classes: 'bg-[#F0EEE9] text-[#526078] border-[#E2E0D9]',
       Icon: ({ className }) => <ZapOff className={className} />,
     },
   };
@@ -109,19 +108,19 @@ interface ConfidenceBarProps {
 
 export const ConfidenceBar: React.FC<ConfidenceBarProps> = ({ value, label }) => {
   const color =
-    value >= 85 ? 'bg-emerald-500' :
-    value >= 55 ? 'bg-amber-500' :
-    'bg-rose-500';
+    value >= 85 ? 'bg-emerald-600' :
+    value >= 55 ? 'bg-amber-600' :
+    'bg-rose-600';
 
   return (
     <div className="space-y-1">
       {label && (
         <div className="flex justify-between items-center">
-          <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">{label}</span>
-          <span className="text-[11px] font-bold font-mono text-zinc-300">{value}%</span>
+          <span className="text-[10px] text-[#526078] font-mono uppercase tracking-wider font-bold">{label}</span>
+          <span className="text-[11px] font-bold font-mono text-[#19243B]">{value}%</span>
         </div>
       )}
-      <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-[#E2E0D9] overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
@@ -138,11 +137,11 @@ interface InferredWarningProps {
 export const InferredWarning: React.FC<InferredWarningProps> = ({ warning }) => {
   if (!warning) return null;
   return (
-    <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.07]">
-      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+    <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-200 bg-amber-50">
+      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
       <div>
-        <p className="text-[11px] font-bold text-amber-300 mb-0.5">Inferred Relationship</p>
-        <p className="text-[10px] text-amber-200/70 leading-relaxed">
+        <p className="text-[11px] font-bold text-amber-900 mb-0.5">Inferred Relationship</p>
+        <p className="text-[10px] text-amber-800 leading-relaxed">
           {warning.replace(/⚠\s?/, '')}
         </p>
       </div>
@@ -167,18 +166,18 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
 
   return (
     <div
-      className={`rounded-xl border transition-colors ${
+      className={`rounded-xl border transition-colors shadow-sm ${
         isInferred
-          ? 'border-zinc-700/50 bg-zinc-900/40'
-          : 'border-zinc-800 bg-[#0c0c0e]'
+          ? 'border-[#E2E0D9] bg-[#F8F7F4]'
+          : 'border-[#E2E0D9] bg-white'
       }`}
     >
-      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-zinc-800/60">
+      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b border-[#F0EEE9]">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] text-zinc-500 font-mono shrink-0">#{index + 1}</span>
+          <span className="text-[10px] text-[#687184] font-mono shrink-0">#{index + 1}</span>
           <EvidenceTypeBadge type={evType} />
           {evidence.symbol && (
-            <code className="text-[10px] text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20 font-mono truncate max-w-[120px]">
+            <code className="text-[10px] text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-mono truncate max-w-[120px]">
               {evidence.symbol}
             </code>
           )}
@@ -187,7 +186,7 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
         {hasLocation && onOpenSource && (
           <button
             onClick={() => onOpenSource(evidence.file_path, { start: evidence.start_line, end: evidence.end_line })}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[10px] font-bold border border-indigo-500/20 transition shrink-0 cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200 transition shrink-0 cursor-pointer shadow-sm"
           >
             Open Source
             <ExternalLink className="w-3 h-3" />
@@ -197,22 +196,22 @@ export const EvidenceItemCard: React.FC<EvidenceItemCardProps> = ({
 
       {hasLocation ? (
         <div className="px-3.5 py-2 flex items-center gap-1.5">
-          <FileCode2 className="w-3 h-3 text-zinc-500 shrink-0" />
-          <span className="text-[10px] text-zinc-400 font-mono truncate">
+          <FileCode2 className="w-3 h-3 text-[#687184] shrink-0" />
+          <span className="text-[10px] text-[#526078] font-mono truncate">
             {evidence.file_path}
-            <span className="text-zinc-600 mx-1">:</span>
-            <span className="text-sky-400">L{evidence.start_line}–{evidence.end_line}</span>
+            <span className="text-[#687184] mx-1">:</span>
+            <span className="text-sky-700 font-semibold">L{evidence.start_line}–{evidence.end_line}</span>
           </span>
         </div>
       ) : (
         <div className="px-3.5 py-2 flex items-center gap-1.5">
-          <ZapOff className="w-3 h-3 text-zinc-600 shrink-0" />
-          <span className="text-[10px] text-zinc-600 italic">No direct file reference — heuristic inference</span>
+          <ZapOff className="w-3 h-3 text-[#687184] shrink-0" />
+          <span className="text-[10px] text-[#687184] italic">No direct file reference — heuristic inference</span>
         </div>
       )}
 
       {(evidence.snippet || evidence.code_snippet) && (
-        <pre className="mx-3.5 mb-3 px-3 py-2.5 rounded-lg bg-black/60 border border-zinc-800 text-[10px] text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed font-mono">
+        <pre className="mx-3.5 mb-3 px-3 py-2.5 rounded-lg bg-[#F8F7F4] border border-[#E2E0D9] text-[10px] text-[#19243B] overflow-x-auto whitespace-pre leading-relaxed font-mono shadow-inner">
           {evidence.snippet || evidence.code_snippet}
         </pre>
       )}
@@ -245,11 +244,11 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
     <div className="space-y-3 font-mono text-xs">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{title}</span>
-          <span className="text-[10px] text-zinc-600">({evidence.length})</span>
+          <Zap className="w-3.5 h-3.5 text-amber-600" />
+          <span className="text-[10px] font-bold text-[#526078] uppercase tracking-wider">{title}</span>
+          <span className="text-[10px] text-[#687184]">({evidence.length})</span>
           {directCount > 0 && (
-            <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="text-[9px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200 font-bold">
               {directCount} direct
             </span>
           )}
@@ -283,11 +282,11 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           ))}
         </div>
       ) : (
-        <div className="p-4 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20 text-center space-y-2">
-          <AlertTriangle className="w-5 h-5 text-amber-400 mx-auto" />
-          <p className="text-zinc-500 text-[11px]">No direct source evidence available.</p>
-          <p className="text-zinc-600 text-[10px]">
-            This relationship is an <span className="text-amber-400">inferred connection</span> based on
+        <div className="p-4 rounded-xl border border-dashed border-[#E2E0D9] bg-[#F8F7F4] text-center space-y-2">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mx-auto" />
+          <p className="text-[#526078] text-[11px] font-semibold">No direct source evidence available.</p>
+          <p className="text-[#687184] text-[10px]">
+            This relationship is an <span className="text-amber-700 font-bold">inferred connection</span> based on
             naming patterns or graph topology — not a verified code reference.
           </p>
         </div>

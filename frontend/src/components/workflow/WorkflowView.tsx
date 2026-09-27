@@ -276,11 +276,11 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex flex-col items-center justify-center p-6 text-center select-none">
-        <div className="w-12 h-12 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center mb-4 shadow-xl">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-12 h-12 rounded-2xl bg-white border border-[#E2E0D9] flex items-center justify-center mb-4 shadow-md">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
         </div>
-        <h3 className="text-base font-bold text-white font-mono tracking-tight">
+        <h3 className="text-base font-bold text-[#19243B] font-mono tracking-tight">
           Extracting System Workflows
         </h3>
       </div>
@@ -289,11 +289,11 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
 
   if (error || !activeWorkflow) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex flex-col items-center justify-center p-6 text-center select-none">
-        <p className="text-sm text-zinc-400 font-mono mb-3">{error || 'No workflows found.'}</p>
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#F8F7F4] flex flex-col items-center justify-center p-6 text-center select-none">
+        <p className="text-sm text-[#526078] font-mono mb-3">{error || 'No workflows found.'}</p>
         <button
           onClick={fetchWorkflows}
-          className="px-4 py-2 rounded-xl bg-amber-500 text-zinc-950 font-bold text-xs font-mono cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs font-mono cursor-pointer hover:bg-amber-700 transition shadow-sm"
         >
           Retry Extraction
         </button>
@@ -304,7 +304,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .wf-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
@@ -370,24 +370,25 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
           minZoom={0.05}
           maxZoom={2}
           proOptions={{ hideAttribution: true }}
-          className="bg-[#000000]"
+          className="bg-[#F8F7F4]"
         >
-          <Background color="rgba(255,255,255,0.03)" gap={24} size={1} />
+          <Background color="#D5D2CA" gap={24} size={1.2} />
           <Controls
             showInteractive={false}
-            className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
+            className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
           />
           <MiniMap
-            nodeColor="#f59e0b"
+            nodeColor="#D97706"
+            maskColor="rgba(248, 247, 244, 0.7)"
             zoomable
             pannable
-            className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
+            className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
           />
         </ReactFlow>
       </div>
 
       <div
-        className={`wf-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
+        className={`wf-right flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-2xl flex flex-col z-30 ${
           selectedStepData ? 'open' : 'closed'
         }`}
       >

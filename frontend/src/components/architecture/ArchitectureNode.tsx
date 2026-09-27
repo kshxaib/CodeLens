@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Server, Database, Cloud, Layers, Globe, HardDrive, Cpu, FileCode, Box, Terminal, Activity, CheckCircle2, Sparkles } from 'lucide-react';
-import { ARCH_TIERS, getNodeTier } from './constants';
+import { CheckCircle2, Sparkles } from 'lucide-react';
+import { getArchifySemantic, type ArchifySemanticKind } from './constants';
 import type { ArchKGNode } from '../../types';
 
 interface NodeProps {
@@ -19,85 +19,186 @@ interface NodeProps {
   selected?: boolean;
 }
 
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'application':
-      return <Terminal className="w-3.5 h-3.5" />;
-    case 'service':
-      return <Cpu className="w-3.5 h-3.5" />;
-    case 'api_endpoint':
-      return <Globe className="w-3.5 h-3.5" />;
-    case 'component':
-      return <Layers className="w-3.5 h-3.5" />;
+// Crisp Archify Semantic Sigils (matching archify SVG sigil specs)
+const renderSemanticSigil = (kind: ArchifySemanticKind, color: string) => {
+  switch (kind) {
+    case 'backend':
+      // Code brackets <>
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M6 3 3 8l3 5M10 3l3 5-3 5" />
+        </svg>
+      );
     case 'database':
-      return <Database className="w-3.5 h-3.5" />;
-    case 'database_model':
-      return <Box className="w-3.5 h-3.5" />;
-    case 'external_service':
-      return <Cloud className="w-3.5 h-3.5" />;
-    case 'storage':
-      return <HardDrive className="w-3.5 h-3.5" />;
-    case 'worker':
-    case 'queue':
-      return <Server className="w-3.5 h-3.5" />;
-    case 'lifecycle_entity':
-      return <Activity className="w-3.5 h-3.5" />;
+      // Cylinder with layered disks
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2.5 4.5c0-1.2 2.5-2 5.5-2s5.5.8 5.5 2v7c0 1.2-2.5 2-5.5 2s-5.5-.8-5.5-2v-7z" />
+          <path d="M2.5 8c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2" />
+          <path d="M2.5 11.5c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2" />
+        </svg>
+      );
+    case 'cloud':
+      // Cloud outline
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M4.5 12h7a3 3 0 0 0 1-5.8 4 4 0 0 0-7.5-1.2A3 3 0 0 0 4.5 12z" />
+        </svg>
+      );
+    case 'security':
+      // Shield with lock notch
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M8 14s5-2.5 5-6.5V3.5L8 2 3 3.5v4c0 4 5 6.5 5 6.5z" />
+        </svg>
+      );
+    case 'messagebus':
+      // 3 horizontal bars with 3 offset circles
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" />
+          <circle cx="5" cy="4.5" r="1.1" fill={color} />
+          <circle cx="10.5" cy="8" r="1.1" fill={color} />
+          <circle cx="7" cy="11.5" r="1.1" fill={color} />
+        </svg>
+      );
+    case 'external':
     default:
-      return <FileCode className="w-3.5 h-3.5" />;
+      // Client display / browser window
+      return (
+        <svg
+          className="w-3.5 h-3.5 shrink-0"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="2" y="3.5" width="12" height="8" rx="1.5" />
+          <path d="M1 13h14" />
+        </svg>
+      );
   }
 };
 
 export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) => {
-  const tierKey = data.tier || getNodeTier(data.type, data.layer);
-  const tierCfg = ARCH_TIERS[tierKey] || ARCH_TIERS.application;
+  const semantic = getArchifySemantic(data.type, data.layer, data.name);
 
-  let ringClass = 'border-[#1f1f23] hover:border-[#38383f]';
+  let ringClass = '';
   if (data.isPathActiveStep) {
-    ringClass = 'ring-4 ring-sky-400 border-sky-400 shadow-[0_0_30px_rgba(56,189,248,0.7)] scale-105 z-30';
+    ringClass = 'ring-4 ring-sky-500 scale-105 z-30 shadow-[0_0_24px_rgba(14,165,233,0.35)]';
   } else if (data.isPathNode) {
-    ringClass = 'ring-2 ring-sky-400/90 border-sky-400/70 shadow-[0_0_18px_rgba(56,189,248,0.35)]';
-  } else if (data.isBlastTarget || selected) {
-    ringClass = 'ring-2 ring-amber-400 border-amber-400/80 shadow-[0_0_20px_rgba(245,158,11,0.25)]';
+    ringClass = 'ring-2 ring-sky-500/90 shadow-[0_0_12px_rgba(14,165,233,0.2)]';
+  } else if (data.isBlastTarget || selected || data.isSelected) {
+    ringClass = 'ring-2 ring-amber-500 shadow-[0_0_16px_rgba(217,119,6,0.25)]';
   } else if (data.isUpstream) {
-    ringClass = 'ring-2 ring-amber-400/80 border-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
+    ringClass = 'ring-2 ring-amber-500/80 shadow-sm';
   } else if (data.isDownstream) {
-    ringClass = 'ring-2 ring-sky-400/80 border-sky-400/50 shadow-[0_0_15px_rgba(56,189,248,0.2)]';
+    ringClass = 'ring-2 ring-sky-500/80 shadow-sm';
   } else if (data.isHovered) {
-    ringClass = 'ring-1 ring-white/40 border-white/30 shadow-lg';
+    ringClass = 'shadow-md';
   }
 
   const opacityClass = data.isDimmed ? 'opacity-20 grayscale pointer-events-none' : 'opacity-100';
-
   const isDeterministic = data.confidence_level === 'deterministic' || data.confidence >= 0.99;
+
+  // Build context subtitle like Archify (e.g. "FastAPI :8000", "primary :5432", "cache :6379")
+  const primaryName = data.display_name || data.name || 'Component';
+  let sublabel = data.type ? data.type.replace(/_/g, ' ') : semantic.label;
+  if (data.source_files && data.source_files.length > 0) {
+    const fileName = data.source_files[0].split(/[/\\]/).pop();
+    if (fileName && fileName !== primaryName) {
+      sublabel = fileName;
+    }
+  }
 
   return (
     <div
-      className={`relative w-[260px] rounded-xl bg-[#09090b]/95 backdrop-blur-md border p-3 shadow-xl transition-all duration-200 cursor-pointer select-none group ${ringClass} ${opacityClass}`}
+      className={`relative w-[210px] h-[68px] rounded-lg border-[1.5px] px-2.5 py-1.5 flex flex-col justify-between select-none shadow-xs transition-all duration-200 cursor-pointer group bg-white/95 backdrop-blur-xs ${ringClass} ${opacityClass}`}
+      style={{
+        backgroundColor: semantic.fill,
+        borderColor: data.isHovered || selected ? semantic.strokeFocus : semantic.stroke,
+      }}
     >
+      {/* 4 Handles for orthogonal and smooth step connections */}
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-2 !h-2 !bg-[#27272a] !border !border-[#3f3f46] hover:!bg-amber-400 transition"
+        className="!w-2 !h-2 !bg-white !border !border-[#B8B5AB] hover:!bg-amber-500 transition"
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-2 !h-2 !bg-[#27272a] !border !border-[#3f3f46] hover:!bg-amber-400 transition"
+        className="!w-2 !h-2 !bg-white !border !border-[#B8B5AB] hover:!bg-amber-500 transition"
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className="!w-2 !h-2 !bg-white !border !border-[#B8B5AB] hover:!bg-amber-500 transition"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className="!w-2 !h-2 !bg-white !border !border-[#B8B5AB] hover:!bg-amber-500 transition"
       />
 
-      <div className="flex items-center justify-between gap-1 mb-2">
-        <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border ${tierCfg.badgeBg}`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: tierCfg.dot }} />
-          {tierCfg.label}
-        </span>
+      {/* Top Header: Semantic Sigil + Tag Pill */}
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-1.5" style={{ color: semantic.sigilColor }}>
+          {renderSemanticSigil(semantic.kind, semantic.sigilColor)}
+          <span className="text-[9px] font-mono uppercase tracking-wider font-semibold opacity-90">
+            {semantic.label}
+          </span>
+        </div>
 
         <div className="flex items-center gap-1">
           {isDeterministic ? (
             <span
               title="Deterministic (Proven by AST)"
-              className="inline-flex items-center gap-1 text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20"
+              className="inline-flex items-center gap-0.5 text-[8px] font-mono font-bold text-emerald-800 bg-white/80 px-1 py-0.2 rounded border border-emerald-300"
             >
               <CheckCircle2 className="w-2.5 h-2.5" />
               100%
@@ -105,7 +206,7 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
           ) : (
             <span
               title={`Inferred: ${Math.round((data.confidence || 0.85) * 100)}%`}
-              className="inline-flex items-center gap-1 text-[9px] font-mono text-amber-400/90 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20"
+              className="inline-flex items-center gap-0.5 text-[8px] font-mono font-bold text-amber-800 bg-white/80 px-1 py-0.2 rounded border border-amber-300"
             >
               <Sparkles className="w-2.5 h-2.5" />
               {Math.round((data.confidence || 0.85) * 100)}%
@@ -114,46 +215,23 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         </div>
       </div>
 
-      <div className="flex items-start gap-2.5">
+      {/* Center & Bottom: Title + Subtitle context */}
+      <div className="flex flex-col min-w-0 pr-0.5">
         <div
-          className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 ${tierCfg.bg} ${tierCfg.border} ${tierCfg.color}`}
+          className="text-[12px] font-bold font-mono tracking-tight truncate leading-tight transition-colors group-hover:text-amber-800"
+          style={{ color: semantic.textPrimary }}
+          title={primaryName}
         >
-          {getTypeIcon(data.type)}
+          {primaryName}
         </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-bold text-white font-mono truncate tracking-tight group-hover:text-amber-300 transition-colors">
-            {data.name || data.display_name}
-          </div>
-
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[9px] uppercase tracking-wider font-mono text-zinc-400 font-semibold">
-              {data.type.replace('_', ' ')}
-            </span>
-            {data.symbols && data.symbols.length > 0 && (
-              <>
-                <span className="text-zinc-600 text-[10px]">•</span>
-                <span className="text-[10px] text-zinc-500 font-mono">
-                  {data.symbols.length} symbol{data.symbols.length > 1 ? 's' : ''}
-                </span>
-              </>
-            )}
-          </div>
+        <div
+          className="text-[9.5px] font-mono truncate leading-tight mt-0.5 opacity-80"
+          style={{ color: semantic.textMuted }}
+          title={sublabel}
+        >
+          {sublabel}
         </div>
       </div>
-
-      {data.source_files && data.source_files.length > 0 && (
-        <div className="mt-2 pt-1.5 border-t border-[#18181b] flex items-center justify-between text-[10px] text-zinc-500 font-mono">
-          <span className="truncate max-w-[190px]" title={data.source_files[0]}>
-            {data.source_files[0].split(/[/\\]/).pop()}
-          </span>
-          {data.source_files.length > 1 && (
-            <span className="text-zinc-400 bg-zinc-800/60 px-1 rounded text-[9px]">
-              +{data.source_files.length - 1}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 });

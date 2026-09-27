@@ -29,10 +29,10 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
             className="flex-shrink-0 flex flex-col items-center relative"
           >
             <div
-              className={`pointer-events-auto z-20 w-[190px] p-3 rounded-2xl bg-[#0c0c0e]/95 backdrop-blur-xl border transition-all duration-300 shadow-xl flex flex-col items-center text-center ${
+              className={`pointer-events-auto z-20 w-[190px] p-3 rounded-2xl bg-white/95 backdrop-blur-xl border transition-all duration-300 shadow-md flex flex-col items-center text-center ${
                 isActive
-                  ? 'border-sky-400 ring-2 ring-sky-400/40 shadow-[0_0_25px_rgba(56,189,248,0.25)] scale-105'
-                  : 'border-[#1f1f23] hover:border-zinc-500'
+                  ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-[0_4px_20px_rgba(217,119,6,0.15)] scale-105'
+                  : 'border-[#E2E0D9] hover:border-zinc-400'
               }`}
             >
               <div
@@ -49,12 +49,12 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
                 >
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="text-xs font-bold text-white font-mono truncate" title={p.name}>
+                <h3 className="text-xs font-bold text-[#19243B] font-mono truncate" title={p.name}>
                   {p.name}
                 </h3>
               </div>
 
-              <p className="text-[10px] font-mono text-zinc-500 truncate w-full" title={p.description || cfg.sub}>
+              <p className="text-[10px] font-mono text-[#526078] truncate w-full" title={p.description || cfg.sub}>
                 {p.description || cfg.sub}
               </p>
             </div>
@@ -62,10 +62,10 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
             <div
               style={{
                 height: `${diagramHeight}px`,
-                borderColor: isActive ? '#38bdf8' : '#27272a',
+                borderColor: isActive ? '#D97706' : '#D5D2CA',
               }}
               className={`absolute top-[88px] w-0 border-l border-dashed transition-colors duration-200 z-0 ${
-                isActive ? 'border-sky-400 opacity-80' : 'border-zinc-800 opacity-60'
+                isActive ? 'border-amber-600 opacity-90' : 'border-[#D5D2CA] opacity-80'
               }`}
             />
           </div>

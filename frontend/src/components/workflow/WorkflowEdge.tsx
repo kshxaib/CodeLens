@@ -40,11 +40,11 @@ export const WorkflowEdge: React.FC<EdgeProps> = memo(({
   let strokeWidth = cfg.width;
 
   if (edgeData.isHighlighted) {
-    strokeColor = '#f59e0b';
+    strokeColor = '#D97706';
     strokeWidth = 2.5;
   }
 
-  const opacity = edgeData.isDimmed ? 0.15 : 0.85;
+  const opacity = edgeData.isDimmed ? 0.2 : 0.9;
   const labelText = edgeData.label || cfg.label;
 
   return (
@@ -75,16 +75,16 @@ export const WorkflowEdge: React.FC<EdgeProps> = memo(({
             className="group transition-opacity duration-200"
           >
             <div
-              className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase border shadow-md transition-all ${
+              className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase border shadow-sm transition-all ${
                 transType === 'failure'
-                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  ? 'bg-rose-50 text-rose-800 border-rose-200 shadow-sm'
                   : transType === 'success'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-sm'
                   : transType === 'retry'
-                  ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
+                  ? 'bg-orange-50 text-orange-800 border-orange-200 shadow-sm'
                   : transType === 'async'
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                  : 'bg-[#09090b]/90 text-zinc-400 border-[#27272a]'
+                  ? 'bg-sky-50 text-sky-800 border-sky-200 shadow-sm'
+                  : 'bg-white/95 text-[#526078] border-[#E2E0D9] shadow-sm'
               }`}
             >
               {labelText}

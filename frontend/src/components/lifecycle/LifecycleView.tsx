@@ -351,10 +351,10 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
   if (loading) {
     return (
-      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex items-center justify-center select-none">
+      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex items-center justify-center select-none">
         <div className="flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-          <span className="text-sm font-medium text-zinc-300 font-mono">
+          <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
+          <span className="text-sm font-medium text-[#19243B] font-mono">
             Analyzing Lifecycle State Machine...
           </span>
         </div>
@@ -364,13 +364,13 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
 
   if (error || !activeLifecycle) {
     return (
-      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex flex-col items-center justify-center p-8 select-none">
+      <div className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col items-center justify-center p-8 select-none">
         <div className="max-w-md text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mx-auto text-indigo-400">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700">
             <RefreshCw className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-white font-mono">No Entity Lifecycles Found</h3>
-          <p className="text-xs text-zinc-400 font-mono">
+          <h3 className="text-base font-bold text-[#19243B] font-mono">No Entity Lifecycles Found</h3>
+          <p className="text-xs text-[#526078] font-mono">
             {error || 'No state machines, enums, or status updates were identified in this codebase.'}
           </p>
           <button
@@ -385,7 +385,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
                 .catch((e) => setError(e.message))
                 .finally(() => setLoading(false));
             }}
-            className="px-4 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 text-xs font-mono font-bold transition cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-mono font-bold transition cursor-pointer shadow-sm"
           >
             Extract Lifecycle State Machine
           </button>
@@ -397,7 +397,7 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .lc-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
@@ -454,24 +454,25 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
           minZoom={0.1}
           maxZoom={2.2}
           proOptions={{ hideAttribution: true }}
-          className="bg-[#000000]"
+          className="bg-[#F8F7F4]"
         >
-          <Background color="rgba(255,255,255,0.03)" gap={24} size={1} />
+          <Background color="#D5D2CA" gap={24} size={1.2} />
           <Controls
             showInteractive={false}
-            className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
+            className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
           />
           <MiniMap
-            nodeColor="#6366f1"
+            nodeColor="#D97706"
+            maskColor="rgba(248, 247, 244, 0.7)"
             zoomable
             pannable
-            className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
+            className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
           />
         </ReactFlow>
       </div>
 
       <div
-        className={`lc-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
+        className={`lc-right flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-2xl flex flex-col z-30 ${
           selectedStateData || selectedTransition ? 'open' : 'closed'
         }`}
       >

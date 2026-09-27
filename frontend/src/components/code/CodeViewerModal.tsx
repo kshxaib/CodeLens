@@ -68,21 +68,21 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
   const lines = fileData?.content ? fileData.content.split('\n') : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-5xl h-[85vh] glass-card rounded-2xl border border-white/[0.12] shadow-2xl flex flex-col overflow-hidden relative">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1f1f23] bg-[#09090b]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/40 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-5xl h-[85vh] bg-white rounded-2xl border border-[#E2E0D9] shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#E2E0D9] bg-[#F8F7F4]/90">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-200 shrink-0">
-              <FileCode2 className="w-4 h-4 text-amber-400" />
+            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shrink-0">
+              <FileCode2 className="w-4 h-4 text-amber-700" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-bold text-white truncate font-mono">
+              <div className="text-xs sm:text-sm font-bold text-[#19243B] truncate font-mono">
                 {fileData?.file_path || filePath || 'Source File Viewer'}
               </div>
-              <div className="text-[11px] text-slate-400 font-mono">
+              <div className="text-[11px] text-[#526078] font-mono">
                 {fileData ? `${fileData.line_count} lines • ${fileData.language || 'text'}` : 'Loading metadata...'}
                 {highlightLines && (
-                  <span className="ml-2 text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  <span className="ml-2 text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-bold">
                     Lines {highlightLines.start}-{highlightLines.end}
                   </span>
                 )}
@@ -94,29 +94,29 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
             <button
               onClick={handleCopy}
               disabled={!fileData?.content}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition text-xs flex items-center gap-1.5 cursor-pointer"
+              className="p-2 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition text-xs flex items-center gap-1.5 cursor-pointer"
               title="Copy Code"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+              className="p-2 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-[#0a0c10] font-mono text-xs text-slate-200">
+        <div className="flex-1 overflow-auto bg-[#F8F7F4] font-mono text-xs text-[#19243B]">
           {loading ? (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-zinc-400 gap-2 select-none">
-              <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+            <div className="h-full flex flex-col items-center justify-center p-8 text-[#526078] gap-2 select-none">
+              <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
               <span className="text-xs font-mono">Loading source...</span>
             </div>
           ) : error ? (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-rose-300 gap-3 text-center">
-              <AlertCircle className="w-8 h-8 text-rose-400" />
+            <div className="h-full flex flex-col items-center justify-center p-8 text-rose-800 gap-3 text-center">
+              <AlertCircle className="w-8 h-8 text-rose-600" />
               <p className="max-w-md">{error}</p>
             </div>
           ) : (
@@ -132,14 +132,14 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
                   <div
                     key={lineNum}
                     id={`line-${lineNum}`}
-                    className={`flex items-start px-4 py-0.5 leading-5 hover:bg-white/[0.03] transition-colors ${
-                      isHighlighted ? 'bg-purple-500/20 border-l-2 border-purple-400' : ''
+                    className={`flex items-start px-4 py-0.5 leading-5 hover:bg-amber-50/50 transition-colors ${
+                      isHighlighted ? 'bg-amber-100/60 border-l-2 border-amber-600' : ''
                     }`}
                   >
-                    <span className="w-12 shrink-0 select-none text-right pr-4 text-slate-600">
+                    <span className="w-12 shrink-0 select-none text-right pr-4 text-[#687184]">
                       {lineNum}
                     </span>
-                    <pre className="flex-1 overflow-x-auto whitespace-pre font-mono text-slate-200">
+                    <pre className="font-mono text-xs whitespace-pre select-text flex-1">
                       {line || ' '}
                     </pre>
                   </div>

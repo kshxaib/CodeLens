@@ -223,22 +223,22 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] flex flex-col items-center justify-center bg-[#070709] text-zinc-400 font-mono">
-        <Loader2 className="w-8 h-8 animate-spin text-sky-400 mb-3" />
-        <span className="text-sm font-medium text-zinc-200">Analyzing Runtime Sequence Order...</span>
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-3" />
+        <span className="text-sm font-medium text-[#19243B]">Analyzing Runtime Sequence Order...</span>
       </div>
     );
   }
 
   if (error || !activeSequence) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] flex flex-col items-center justify-center bg-[#070709] text-zinc-400 font-mono p-6">
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 max-w-md text-center">
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 max-w-md text-center">
           <p className="font-bold text-sm mb-1">Failed to Load Sequences</p>
-          <p className="text-xs text-rose-400 mb-3">{error || 'No sequence diagrams extracted.'}</p>
+          <p className="text-xs text-rose-600 mb-3">{error || 'No sequence diagrams extracted.'}</p>
           <button
             onClick={fetchSequences}
-            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer shadow-sm"
           >
             Retry Extraction
           </button>
@@ -253,7 +253,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .seq-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
@@ -294,8 +294,8 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         ref={scrollAreaRef}
         className="flex-1 h-full w-full overflow-auto pt-32 pb-16 px-8 relative"
         style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, #18181b 1px, transparent 0)',
-          backgroundSize: '28px 28px',
+          backgroundImage: 'radial-gradient(circle at 1px 1px, #D5D2CA 1.2px, transparent 0)',
+          backgroundSize: '24px 24px',
         }}
       >
         <div
@@ -305,7 +305,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
           }}
           className="relative mx-auto flex flex-col"
         >
-          <div className="sticky top-0 z-30 pt-2 pb-4 bg-[#000000]/95 backdrop-blur-md">
+          <div className="sticky top-0 z-30 pt-2 pb-4 bg-[#F8F7F4]/95 backdrop-blur-md">
             <SequenceParticipantHeader
               participants={activeSequence.participants}
               columnWidth={COLUMN_WIDTH}
@@ -341,7 +341,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
             })}
 
             {filteredMessages.length === 0 && (
-              <div className="text-center py-16 text-zinc-500 font-mono text-xs">
+              <div className="text-center py-16 text-[#687184] font-mono text-xs">
                 No interaction steps match the current search or filter.
               </div>
             )}
@@ -350,7 +350,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
       </div>
 
       <div
-        className={`seq-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
+        className={`seq-right flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-2xl flex flex-col z-30 ${
           activeSelectedMessage ? 'open' : 'closed'
         }`}
       >

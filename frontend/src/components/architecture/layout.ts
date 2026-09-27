@@ -1,8 +1,8 @@
 import dagre from 'dagre';
 import { Position, type Node, type Edge } from '@xyflow/react';
 
-const NODE_WIDTH = 260;
-const NODE_HEIGHT = 90;
+const NODE_WIDTH = 210;
+const NODE_HEIGHT = 68;
 
 export interface LayoutOptions {
   direction?: 'TB' | 'LR';
@@ -23,11 +23,11 @@ export const getLayoutedElements = (
 
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: isHorizontal ? 60 : 70,
-    ranksep: isHorizontal ? 120 : 130,
-    edgesep: 30,
-    marginx: 50,
-    marginy: 50,
+    nodesep: isHorizontal ? 50 : 60,
+    ranksep: isHorizontal ? 100 : 110,
+    edgesep: 25,
+    marginx: 40,
+    marginy: 40,
     acyclicer: 'greedy',
   });
 

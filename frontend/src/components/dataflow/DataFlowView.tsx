@@ -341,22 +341,22 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] flex flex-col items-center justify-center bg-[#070709] text-zinc-400 font-mono">
-        <Loader2 className="w-8 h-8 animate-spin text-sky-400 mb-3" />
-        <span className="text-sm font-medium text-zinc-200">Analyzing Data Flow Lineage...</span>
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-3" />
+        <span className="text-sm font-medium text-[#19243B]">Analyzing Data Flow Lineage...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] flex flex-col items-center justify-center bg-[#070709] text-zinc-400 font-mono p-6">
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 max-w-md text-center">
+      <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] flex flex-col items-center justify-center bg-[#F8F7F4] text-[#526078] font-mono p-6">
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 max-w-md text-center">
           <p className="font-bold text-sm mb-1">Failed to Load Data Flows</p>
-          <p className="text-xs text-rose-400 mb-3">{error}</p>
+          <p className="text-xs text-rose-600 mb-3">{error}</p>
           <button
             onClick={fetchDataFlows}
-            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer shadow-sm"
           >
             Retry Extraction
           </button>
@@ -368,7 +368,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex select-none"
+      className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex select-none"
     >
       <style>{`
         .df-right { transition: width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
@@ -432,11 +432,13 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
           nodesConnectable={false}
           elementsSelectable={true}
           proOptions={{ hideAttribution: true }}
+          className="bg-[#F8F7F4]"
         >
-          <Background color="#1f1f23" gap={20} size={1} />
+          <Background color="#D5D2CA" gap={24} size={1.2} />
           <Controls
             position="bottom-left"
-            className="!bg-[#0c0c0e] !border-[#1f1f23] !rounded-xl !overflow-hidden [&>button]:!bg-[#0c0c0e] [&>button]:!border-[#1f1f23] [&>button]:!text-zinc-400 [&>button:hover]:!bg-white/[0.06] [&>button:hover]:!text-white"
+            showInteractive={false}
+            className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
           />
           <MiniMap
             position="bottom-right"
@@ -444,16 +446,16 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
             pannable
             nodeColor={(n) => {
               const data = n.data as any;
-              return data?.is_transformation ? '#c084fc' : '#38bdf8';
+              return data?.is_transformation ? '#9333ea' : '#D97706';
             }}
-            maskColor="rgba(7, 7, 9, 0.75)"
-            className="!bg-[#09090b] !border !border-[#1f1f23] !rounded-xl !overflow-hidden !m-4"
+            maskColor="rgba(248, 247, 244, 0.7)"
+            className="!bg-white !border-[#E2E0D9] !rounded-xl !overflow-hidden shadow-md !m-4"
           />
         </ReactFlow>
       </div>
 
       <div
-        className={`df-right flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl flex flex-col z-30 ${
+        className={`df-right flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-2xl flex flex-col z-30 ${
           activeSelectedDataNode ? 'open' : 'closed'
         }`}
       >

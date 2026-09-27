@@ -50,14 +50,14 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
 }) => {
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-      <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl flex-wrap">
-        <div className="flex items-center bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[11px] font-mono">
+      <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-xl flex-wrap">
+        <div className="flex items-center bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[11px] font-mono">
           <button
             onClick={() => onViewChange('architecture')}
             className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
               currentView === 'architecture'
-                ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
+                : 'text-[#526078] hover:text-[#19243B]'
             }`}
           >
             Architecture
@@ -66,8 +66,8 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
             onClick={() => onViewChange('workflow')}
             className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
               currentView === 'workflow'
-                ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
+                : 'text-[#526078] hover:text-[#19243B]'
             }`}
           >
             Workflow
@@ -76,8 +76,8 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
             onClick={() => onViewChange('sequence')}
             className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
               currentView === 'sequence'
-                ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
+                : 'text-[#526078] hover:text-[#19243B]'
             }`}
           >
             Sequence
@@ -86,8 +86,8 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
             onClick={() => onViewChange('dataflow')}
             className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
               currentView === 'dataflow'
-                ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
+                : 'text-[#526078] hover:text-[#19243B]'
             }`}
           >
             Data Flow
@@ -96,8 +96,8 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
             onClick={() => onViewChange('lifecycle')}
             className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
               currentView === 'lifecycle'
-                ? 'bg-indigo-500/25 text-indigo-300 font-bold border border-indigo-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
+                : 'text-[#526078] hover:text-[#19243B]'
             }`}
           >
             Lifecycle
@@ -108,10 +108,10 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           <select
             value={selectedLifecycleId}
             onChange={(e) => onSelectLifecycle(e.target.value)}
-            className="bg-[#121214] text-indigo-300 text-xs font-bold rounded-xl px-2.5 py-1.5 border border-indigo-500/30 font-mono focus:outline-none focus:border-indigo-400 cursor-pointer max-w-[240px] truncate"
+            className="bg-white text-[#B45309] text-xs font-bold rounded-xl px-2.5 py-1.5 border border-[#E2E0D9] font-mono focus:outline-none focus:border-amber-500 cursor-pointer max-w-[240px] truncate shadow-sm"
           >
             {lifecycles.map((lc) => (
-              <option key={lc.id} value={lc.id} className="bg-[#121214] text-white">
+              <option key={lc.id} value={lc.id} className="bg-white text-[#19243B]">
                 {lc.entity_name} ({lc.states?.length || 0} states)
               </option>
             ))}
@@ -119,25 +119,25 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
         )}
 
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-[#687184] absolute left-2.5 pointer-events-none" />
           <input
             type="text"
             placeholder="Search states, events..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-[#121214] text-zinc-200 text-xs pl-8 pr-3 py-1.5 rounded-xl border border-[#27272a] focus:outline-none focus:border-indigo-500/50 w-36 sm:w-48 font-mono placeholder:text-zinc-600"
+            className="bg-white text-[#19243B] text-xs pl-8 pr-3 py-1.5 rounded-xl border border-[#E2E0D9] focus:outline-none focus:border-amber-500 w-36 sm:w-48 font-mono placeholder:text-[#687184] shadow-sm"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-[#141416] p-0.5 rounded-xl border border-[#27272a] text-[10px] font-mono">
+        <div className="flex items-center gap-1 bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[10px] font-mono">
           {LIFECYCLE_FILTERS.map((f) => (
             <button
               key={f.id}
               onClick={() => onFilterChange(f.id)}
               className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
                 activeFilter === f.id
-                  ? 'bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white text-[#19243B] font-bold shadow-sm'
+                  : 'text-[#526078] hover:text-[#19243B]'
               }`}
             >
               {f.label}
@@ -146,15 +146,15 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pointer-events-auto bg-[#09090b]/90 backdrop-blur-xl border border-[#1f1f23] p-1.5 rounded-2xl shadow-2xl">
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#141416] border border-[#27272a]">
+      <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-xl">
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#F0EEE9] border border-[#E2E0D9]">
           <button
             onClick={onTogglePlay}
             disabled={totalSimSteps <= 1}
             className={`p-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
               isPlaying
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.06]'
+                ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
             } disabled:opacity-40 disabled:cursor-not-allowed`}
             title={isPlaying ? 'Pause Simulation' : 'Play Lifecycle Simulation'}
           >
@@ -165,16 +165,16 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           </button>
 
           {totalSimSteps > 1 && (
-            <div className="text-[10px] font-mono text-zinc-400 px-1 border-l border-zinc-800">
-              <span className="text-indigo-400 font-bold">{currentSimIndex + 1}</span>
-              <span className="text-zinc-600"> of </span>
+            <div className="text-[10px] font-mono text-[#526078] px-1 border-l border-[#D5D2CA]">
+              <span className="text-amber-700 font-bold">{currentSimIndex + 1}</span>
+              <span className="text-[#687184]"> of </span>
               <span>{totalSimSteps}</span>
             </div>
           )}
 
           <button
             onClick={onResetSimulator}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+            className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] transition cursor-pointer"
             title="Reset Simulation"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -183,35 +183,35 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
 
         <button
           onClick={onToggleLayoutDirection}
-          className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
+          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title={`Switch to ${layoutDirection === 'LR' ? 'Top-to-Bottom' : 'Left-to-Right'} layout`}
         >
           {layoutDirection === 'LR' ? (
-            <ArrowUpDown className="w-4 h-4" />
+            <ArrowUpDown className="w-4 h-4 text-amber-700" />
           ) : (
-            <ArrowLeftRight className="w-4 h-4" />
+            <ArrowLeftRight className="w-4 h-4 text-indigo-700" />
           )}
         </button>
 
         <button
           onClick={onFitView}
-          className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
+          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title="Fit to view"
         >
-          <Compass className="w-4 h-4" />
+          <Compass className="w-4 h-4 text-amber-700" />
         </button>
 
         <button
           onClick={onExport}
-          className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
+          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title="Export Lifecycle State Machine (JSON)"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4 text-amber-700" />
         </button>
 
         <button
           onClick={onToggleFullscreen}
-          className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-transparent hover:border-[#27272a] transition cursor-pointer"
+          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
         >
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

@@ -47,16 +47,16 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
   let strokeWidth = cfg.width;
 
   if (edgeData.isPathEdge) {
-    strokeColor = '#38bdf8';
+    strokeColor = '#0284C7';
     strokeWidth = 3.5;
   } else if (edgeData.isUpstream) {
-    strokeColor = '#f59e0b';
+    strokeColor = '#D97706';
     strokeWidth = 2.5;
   } else if (edgeData.isDownstream) {
-    strokeColor = '#38bdf8';
+    strokeColor = '#0284C7';
     strokeWidth = 2.5;
   } else if (edgeData.isHovered || edgeData.isSelected) {
-    strokeColor = '#fcd34d';
+    strokeColor = '#B45309';
     strokeWidth = 2.5;
   }
 
@@ -93,18 +93,18 @@ export const ArchitectureEdge: React.FC<EdgeProps> = memo(({
               e.stopPropagation();
               edgeData.onWhyClick?.();
             }}
-            className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase border shadow-md transition-all cursor-pointer ${
+            className={`px-1.5 py-0.5 rounded-[3px] text-[8px] font-mono font-bold tracking-wider uppercase border shadow-xs transition-all cursor-pointer select-none ${
               edgeData.isPathEdge
-                ? 'bg-sky-500 text-zinc-950 border-sky-300 font-extrabold shadow-lg ring-2 ring-sky-400/60'
+                ? 'bg-sky-600 text-white border-sky-700 font-extrabold shadow-md ring-2 ring-sky-300'
                 : edgeData.isUpstream
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 ring-1 ring-amber-400/50'
+                ? 'bg-amber-50 text-amber-900 border-amber-300 ring-1 ring-amber-300'
                 : edgeData.isDownstream
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 ring-1 ring-sky-400/50'
+                ? 'bg-sky-50 text-sky-900 border-sky-300 ring-1 ring-sky-300'
                 : edgeData.isHovered
-                ? 'bg-white/10 text-white border-white/30 ring-1 ring-white/30'
-                : 'bg-[#09090b]/90 text-zinc-400 border-[#27272a] hover:border-zinc-500 hover:text-zinc-200'
+                ? 'bg-white text-[#15181B] border-[#15181B] shadow-sm'
+                : 'bg-[#F8F7F4] text-[#60686D] border-[#E2E0D9] hover:border-[#15181B] hover:text-[#15181B]'
             }`}
-            title={`Why: ${relType} (${edgeData.confidence_level || 'deterministic'}). Click to inspect evidence.`}
+            title={`Evidence: ${relType} (${edgeData.confidence_level || 'deterministic'}). Click to inspect.`}
           >
             {cfg.label}
           </div>

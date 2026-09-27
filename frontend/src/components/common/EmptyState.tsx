@@ -49,16 +49,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const displayAction = actionText || defaults.actionText;
 
   return (
-    <div className="rounded-2xl p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 bg-[#09090b] border border-[#1f1f23]">
-      <div className="w-12 h-12 rounded-xl bg-[#141416] border border-[#27272a] flex items-center justify-center text-slate-300 mb-4">
+    <div className="rounded-2xl p-10 text-center flex flex-col items-center justify-center max-w-md mx-auto my-12 bg-[#FFFFFF] border border-[#E2E0D9] shadow-xs">
+      <div className="w-12 h-12 rounded-2xl bg-[#FEF7EC] border border-amber-200/80 flex items-center justify-center text-amber-700 mb-4 shadow-2xs">
         <Icon className="w-6 h-6" />
       </div>
-      <h4 className="text-base font-semibold text-white mb-1.5">{displayTitle}</h4>
-      <p className="text-xs text-slate-400 mb-5 leading-relaxed">{displayDesc}</p>
+      <h4 className="text-base font-bold text-[#19243B] mb-1.5 tracking-tight">{displayTitle}</h4>
+      <p className="text-xs text-[#526078] mb-5 leading-relaxed">{displayDesc}</p>
       {displayAction && onAction && (
         <button
           onClick={onAction}
-          className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-[#0d1017] text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/10 transition cursor-pointer"
+          className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           {displayAction}

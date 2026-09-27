@@ -27,7 +27,7 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
   const dataType = (data?.data_type as string) || 'Data';
   const transformation = (data?.transformation as string) || '';
 
-  const strokeColor = isLineageActive || isHighlighted ? '#38bdf8' : '#52525b';
+  const strokeColor = isLineageActive || isHighlighted ? '#D97706' : '#A3A29E';
   const strokeWidth = isLineageActive || isHighlighted ? 2.5 : 1.5;
 
   return (
@@ -41,7 +41,7 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
           strokeWidth,
           strokeDasharray: isLineageActive || isHighlighted ? '6 4' : undefined,
           animation: isLineageActive || isHighlighted ? 'dashflow 1.5s linear infinite' : undefined,
-          opacity: isDimmed ? 0.2 : 1,
+          opacity: isDimmed ? 0.2 : 0.9,
           transition: 'all 0.3s ease',
         }}
       />
@@ -58,10 +58,10 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
           }`}
         >
           <div
-            className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight shadow-lg border backdrop-blur-md transition-all cursor-pointer ${
+            className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight shadow-sm border backdrop-blur-md transition-all cursor-pointer ${
               isLineageActive || isHighlighted
-                ? 'bg-sky-950/90 text-sky-300 border-sky-500/50 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
-                : 'bg-[#0f0f12]/90 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200'
+                ? 'bg-amber-50 text-amber-900 border-amber-300 shadow-[0_2px_8px_rgba(217,119,6,0.15)]'
+                : 'bg-white/95 text-[#526078] border-[#E2E0D9] hover:border-zinc-400 hover:text-[#19243B]'
             }`}
             title={transformation ? `${dataType} — ${transformation}` : dataType}
           >
@@ -69,7 +69,7 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
           </div>
 
           {(isLineageActive || isHighlighted) && transformation && (
-            <span className="mt-1 px-1.5 py-0.2 rounded bg-black/80 text-[8px] font-mono text-zinc-400 border border-zinc-800 max-w-[140px] truncate">
+            <span className="mt-1 px-1.5 py-0.2 rounded bg-[#F0EEE9] text-[8px] font-mono text-[#526078] border border-[#E2E0D9] max-w-[140px] truncate shadow-sm">
               {transformation}
             </span>
           )}
@@ -78,3 +78,5 @@ export const DataFlowEdge: React.FC<EdgeProps> = memo(({
     </>
   );
 });
+
+DataFlowEdge.displayName = 'DataFlowEdge';

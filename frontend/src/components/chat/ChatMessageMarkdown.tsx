@@ -25,13 +25,13 @@ const CodeBlock: React.FC<{
   };
 
   return (
-    <div className="my-3 rounded-xl border border-zinc-800 bg-[#0d1117] overflow-hidden text-xs">
-      <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-900/90 border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
-        <span className="text-zinc-400">{language || 'text'}</span>
+    <div className="my-3 rounded-xl border border-[#2B3545] bg-[#1E2532] overflow-hidden text-xs shadow-xs">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#161C28] border-b border-[#2B3545] text-slate-300 font-mono text-[11px]">
+        <span className="text-slate-300 font-medium">{language || 'text'}</span>
         <button
           onClick={handleCopy}
           type="button"
-          className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 transition py-0.5 px-1.5 rounded hover:bg-zinc-800 cursor-pointer"
+          className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white transition py-0.5 px-1.5 rounded hover:bg-white/10 cursor-pointer"
           title="Copy code"
         >
           {copied ? (
@@ -47,7 +47,7 @@ const CodeBlock: React.FC<{
           )}
         </button>
       </div>
-      <div className="p-3.5 overflow-x-auto font-mono text-zinc-200 leading-relaxed">
+      <div className="p-3.5 overflow-x-auto font-mono text-[#F3F4F6] leading-relaxed">
         <pre className="!bg-transparent !p-0 !m-0 font-mono text-xs">
           <code>{children}</code>
         </pre>
@@ -58,37 +58,37 @@ const CodeBlock: React.FC<{
 
 export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ content }) => {
   return (
-    <div className="text-sm leading-relaxed text-zinc-200 space-y-2.5">
+    <div className="text-sm leading-relaxed text-[#19243B] space-y-2.5">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="text-lg font-bold text-white mt-4 mb-2 pb-1 border-b border-zinc-800">
+            <h1 className="text-lg font-bold text-[#19243B] mt-4 mb-2 pb-1 border-b border-[#E2E0D9]">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-base font-semibold text-white mt-3.5 mb-1.5 pb-0.5 border-b border-zinc-800/60">
+            <h2 className="text-base font-semibold text-[#19243B] mt-3.5 mb-1.5 pb-0.5 border-b border-[#E2E0D9]">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-sm font-semibold text-zinc-100 mt-2.5 mb-1">
+            <h3 className="text-sm font-semibold text-[#19243B] mt-2.5 mb-1">
               {children}
             </h3>
           ),
           p: ({ children }) => (
-            <p className="mb-2.5 last:mb-0 leading-relaxed text-zinc-300 font-normal">
+            <p className="mb-2.5 last:mb-0 leading-relaxed text-[#2C384E] font-normal">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc pl-5 space-y-1 mb-2.5 text-zinc-300">
+            <ul className="list-disc pl-5 space-y-1 mb-2.5 text-[#2C384E]">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal pl-5 space-y-1 mb-2.5 text-zinc-300">
+            <ol className="list-decimal pl-5 space-y-1 mb-2.5 text-[#2C384E]">
               {children}
             </ol>
           ),
@@ -96,50 +96,50 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ conten
             <li className="leading-relaxed pl-0.5">{children}</li>
           ),
           strong: ({ children }) => (
-            <strong className="font-semibold text-zinc-100">{children}</strong>
+            <strong className="font-semibold text-[#19243B]">{children}</strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-zinc-300">{children}</em>
+            <em className="italic text-[#526078]">{children}</em>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-amber-500/50 pl-3.5 py-0.5 my-2.5 text-zinc-400 italic bg-amber-500/5 rounded-r">
+            <blockquote className="border-l-2 border-amber-500 pl-3.5 py-1 my-2.5 text-[#526078] italic bg-[#FEF7EC] rounded-r">
               {children}
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className="my-3 overflow-x-auto rounded-lg border border-zinc-800">
-              <table className="min-w-full divide-y divide-zinc-800 text-xs">
+            <div className="my-3 overflow-x-auto rounded-lg border border-[#E2E0D9] bg-white">
+              <table className="min-w-full divide-y divide-[#E2E0D9] text-xs">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-zinc-900 text-zinc-300 font-medium">
+            <thead className="bg-[#F0EEE9] text-[#19243B] font-medium">
               {children}
             </thead>
           ),
           tbody: ({ children }) => (
-            <tbody className="divide-y divide-zinc-800/60 bg-zinc-950/40">
+            <tbody className="divide-y divide-[#E2E0D9] bg-white">
               {children}
             </tbody>
           ),
           tr: ({ children }) => (
-            <tr className="hover:bg-zinc-900/30 transition">{children}</tr>
+            <tr className="hover:bg-[#F8F7F4] transition">{children}</tr>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2 text-left text-xs font-semibold text-zinc-200">
+            <th className="px-3 py-2 text-left text-xs font-semibold text-[#19243B]">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 text-zinc-300">{children}</td>
+            <td className="px-3 py-2 text-[#526078]">{children}</td>
           ),
           a: ({ href, children }) => (
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-400 hover:text-amber-300 underline underline-offset-2 transition"
+              className="text-amber-700 hover:text-amber-800 underline underline-offset-2 transition font-medium"
             >
               {children}
             </a>
@@ -151,7 +151,7 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ conten
             if (isInline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded-md bg-zinc-800/80 text-amber-300 font-mono text-[12px] border border-zinc-700/40"
+                  className="px-1.5 py-0.5 rounded-md bg-[#F0EEE9] text-[#B45309] font-mono text-[12px] border border-[#E2E0D9]"
                   {...props}
                 >
                   {children}

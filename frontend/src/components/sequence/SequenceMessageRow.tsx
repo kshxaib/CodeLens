@@ -48,18 +48,18 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
       style={{ height: `${rowHeight}px` }}
       className={`relative w-full transition-all duration-200 cursor-pointer group select-none ${
         isActiveSimulationStep
-          ? 'bg-amber-400/[0.07] z-20 ring-1 ring-amber-400/40'
+          ? 'bg-amber-500/[0.08] z-20 ring-1 ring-amber-500/40'
           : isSelected
-          ? 'bg-sky-500/[0.06] z-10 ring-1 ring-sky-500/30'
-          : 'hover:bg-white/[0.02]'
+          ? 'bg-amber-500/[0.04] z-10 ring-1 ring-amber-500/30'
+          : 'hover:bg-amber-500/[0.02]'
       }`}
     >
       <div
         style={{ left: `${callerX - 5}px`, top: '10px', height: `${rowHeight - 20}px` }}
         className={`absolute w-2.5 rounded-sm transition-all z-10 ${
           isActiveSimulationStep || isSelected
-            ? 'bg-sky-400 border border-white shadow-[0_0_12px_rgba(56,189,248,0.6)]'
-            : 'bg-[#18181b] border border-zinc-700'
+            ? 'bg-amber-500 border border-amber-600 shadow-sm'
+            : 'bg-[#E2E0D9] border border-[#D5D2CA]'
         }`}
       />
       {!isSelf && (
@@ -67,8 +67,8 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
           style={{ left: `${calleeX - 5}px`, top: '10px', height: `${rowHeight - 20}px` }}
           className={`absolute w-2.5 rounded-sm transition-all z-10 ${
             isActiveSimulationStep || isSelected
-              ? 'bg-sky-400 border border-white shadow-[0_0_12px_rgba(56,189,248,0.6)]'
-              : 'bg-[#18181b] border border-zinc-700'
+              ? 'bg-amber-500 border border-amber-600 shadow-sm'
+              : 'bg-[#E2E0D9] border border-[#D5D2CA]'
           }`}
         />
       )}
@@ -89,7 +89,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
           >
             <path
               d={isLeftToRight ? 'M 0 1 L 10 5 L 0 9 z' : 'M 10 1 L 0 5 L 10 9 z'}
-              fill={message.is_error ? '#f43f5e' : cfg.color}
+              fill={message.is_error ? '#e11d48' : cfg.color}
             />
           </marker>
         </defs>
@@ -100,7 +100,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
               yCenter + 25
             }, ${startX + 5} ${yCenter + 10}`}
             fill="none"
-            stroke={message.is_error ? '#f43f5e' : cfg.color}
+            stroke={message.is_error ? '#e11d48' : cfg.color}
             strokeWidth={isActiveSimulationStep || isSelected ? '2.5' : '1.75'}
             strokeDasharray={cfg.strokeDasharray}
             markerEnd={`url(#arrow-${message.id})`}
@@ -112,7 +112,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
             y1={yCenter}
             x2={isLeftToRight ? endX - 5 : endX + 5}
             y2={yCenter}
-            stroke={message.is_error ? '#f43f5e' : cfg.color}
+            stroke={message.is_error ? '#e11d48' : cfg.color}
             strokeWidth={isActiveSimulationStep || isSelected ? '2.5' : '1.75'}
             strokeDasharray={cfg.strokeDasharray}
             markerEnd={`url(#arrow-${message.id})`}
@@ -132,26 +132,26 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
         <div
           className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border backdrop-blur-md transition-all shadow-md ${
             isActiveSimulationStep
-              ? 'bg-amber-500/20 border-amber-400 text-amber-200 ring-2 ring-amber-400/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+              ? 'bg-amber-50 border-amber-300 text-amber-900 ring-2 ring-amber-400/40 shadow-[0_2px_12px_rgba(217,119,6,0.2)]'
               : isSelected
-              ? 'bg-[#18181b] border-sky-400 text-white ring-1 ring-sky-400/40 shadow-lg'
-              : 'bg-[#0e0e11]/90 border-[#27272a] text-zinc-300 hover:border-zinc-500'
+              ? 'bg-white border-amber-500 text-[#19243B] ring-1 ring-amber-400/40 shadow-md'
+              : 'bg-white/95 border-[#E2E0D9] text-[#19243B] hover:border-zinc-400 shadow-sm'
           }`}
         >
           <span
             className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
               isActiveSimulationStep
-                ? 'bg-amber-400 text-zinc-950'
+                ? 'bg-amber-600 text-white'
                 : isSelected
-                ? 'bg-sky-400 text-zinc-950'
-                : 'bg-zinc-800 text-zinc-300'
+                ? 'bg-amber-600 text-white'
+                : 'bg-[#F0EEE9] text-[#526078]'
             }`}
           >
             {message.step_number}
           </span>
 
           {!isSelf && (
-            <span className="text-[10px] text-zinc-500">
+            <span className="text-[10px] text-[#687184]">
               {isLeftToRight ? <ArrowRight className="w-3 h-3 inline" /> : <ArrowLeft className="w-3 h-3 inline" />}
             </span>
           )}
@@ -162,7 +162,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
 
           {message.payload && (
             <span
-              className="px-1.5 py-0.5 rounded bg-zinc-800/80 text-[10px] text-zinc-400 border border-zinc-700/50 truncate max-w-[120px]"
+              className="px-1.5 py-0.5 rounded bg-[#F0EEE9] text-[10px] text-[#526078] border border-[#E2E0D9] truncate max-w-[120px]"
               title={`Payload: ${message.payload}`}
             >
               {message.payload}
@@ -170,14 +170,14 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
           )}
 
           {message.is_async && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
               <Zap className="w-2.5 h-2.5" />
               Async
             </span>
           )}
 
           {message.is_error && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
               <AlertTriangle className="w-2.5 h-2.5" />
               Error
             </span>
@@ -185,7 +185,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
 
           {message.is_inferred && (
             <span
-              className="text-[9px] text-zinc-500 italic"
+              className="text-[9px] text-[#687184] italic"
               title="Inferred from architecture boundary"
             >
               (inferred)
@@ -201,7 +201,7 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
                   end: message.evidence!.end_line,
                 });
               }}
-              className="ml-1 inline-flex items-center gap-1 text-[9px] text-zinc-500 hover:text-amber-400 transition cursor-pointer"
+              className="ml-1 inline-flex items-center gap-1 text-[9px] text-[#687184] hover:text-amber-700 transition cursor-pointer"
               title={`View ${message.evidence?.file_path}:${message.evidence?.start_line}`}
             >
               <FileCode2 className="w-3 h-3" />

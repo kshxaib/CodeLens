@@ -14,6 +14,15 @@ import { CodeLensChatPage } from './pages/CodeLensChatPage';
 import { ProfileSettingsPage } from './pages/ProfileSettingsPage';
 import { ErrorState } from './components/common/ErrorState';
 
+function ArchitectureRedirect() {
+  const { repositories, selectedRepo } = useWorkspaceStore();
+  const targetId = selectedRepo?.id || repositories[0]?.id;
+  if (targetId) {
+    return <Navigate to={`/repository/${targetId}/architecture`} replace />;
+  }
+  return <Navigate to="/repositories" replace />;
+}
+
 function AppContent() {
   const { user, handleCallback, refreshUser } = useAuthStore();
   const fetchRepositories = useWorkspaceStore((state) => state.fetchRepositories);
@@ -64,11 +73,11 @@ function AppContent() {
 
   if (isProcessingOAuth) {
     return (
-      <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col items-center justify-center p-6 text-center select-none">
-        <div className="w-12 h-12 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center mb-4 shadow-xl">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      <div className="min-h-screen bg-[#F8F7F4] text-[#19243B] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-12 h-12 rounded-2xl bg-white border border-[#E2E0D9] flex items-center justify-center mb-4 shadow-sm">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
         </div>
-        <h3 className="text-sm font-bold text-white font-mono tracking-tight">
+        <h3 className="text-sm font-bold text-[#19243B] font-mono tracking-tight">
           Authenticating Session
         </h3>
       </div>
@@ -76,9 +85,9 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#f4f4f5] flex flex-col font-sans" data-appearance="dark">
+    <div className="min-h-screen bg-[#F8F7F4] text-[#19243B] flex flex-col font-sans">
       {oauthError && (
-        <div className="bg-rose-500/10 border-b border-rose-500/30 text-rose-300 text-xs py-2.5 px-4 text-center font-mono">
+        <div className="bg-rose-50 border-b border-rose-200 text-rose-700 text-xs py-2.5 px-4 text-center font-mono">
           ⚠ {oauthError}
         </div>
       )}
@@ -91,6 +100,14 @@ function AppContent() {
           <Route path="/repositories" element={<ProtectedRoute><RepositoriesPage /></ProtectedRoute>} />
           <Route path="/repository/:id" element={<ProtectedRoute><RepositoryOverviewPage /></ProtectedRoute>} />
           <Route path="/repository/:id/architecture" element={<ProtectedRoute><ArchitectureMapPage /></ProtectedRoute>} />
+          <Route
+            path="/architecture"
+            element={
+              <ProtectedRoute>
+                <ArchitectureRedirect />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/chat" element={<ProtectedRoute><CodeLensChatPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
 

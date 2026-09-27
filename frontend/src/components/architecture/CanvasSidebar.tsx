@@ -105,28 +105,28 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full min-w-[260px] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f1f23] shrink-0">
-        <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider font-mono">
+    <div className="flex flex-col h-full min-w-[260px] overflow-hidden bg-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#E2E0D9] shrink-0">
+        <span className="text-[11px] font-bold text-[#19243B] uppercase tracking-wider font-mono">
           Graph Explorer
         </span>
         <button
           onClick={onClose}
-          className="p-1 rounded text-zinc-500 hover:text-white transition cursor-pointer"
+          className="p-1 rounded text-[#526078] hover:text-[#19243B] transition cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      <div className="flex border-b border-[#1f1f23] shrink-0">
+      <div className="flex border-b border-[#E2E0D9] shrink-0">
         {tabs.map(({ id, label, Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[9px] font-mono font-bold uppercase tracking-wide transition cursor-pointer ${
               tab === id
-                ? 'text-amber-300 border-b-2 border-amber-400'
-                : 'text-zinc-500 hover:text-zinc-300 border-b-2 border-transparent'
+                ? 'text-amber-800 border-b-2 border-amber-600'
+                : 'text-[#526078] hover:text-[#19243B] border-b-2 border-transparent'
             }`}
           >
             <Icon className="w-3.5 h-3.5" />
@@ -139,14 +139,14 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
 
         {tab === 'layers' && (
           <>
-            <div className="mb-3 p-2.5 rounded-xl border border-[#1f1f23] bg-[#0a0a0c] space-y-2">
-              <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider font-mono">
+            <div className="mb-3 p-2.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
+              <p className="text-[9px] font-bold text-[#526078] uppercase tracking-wider font-mono">
                 Evidence Coverage
               </p>
               <div className="flex gap-1.5">
-                <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full bg-[#E2E0D9] overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    className="h-full bg-emerald-600 rounded-full transition-all"
                     style={{
                       width: evidenceStats.total
                         ? `${Math.round((evidenceStats.verified / evidenceStats.total) * 100)}%`
@@ -156,18 +156,18 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                 </div>
               </div>
               <div className="flex justify-between text-[9px] font-mono">
-                <span className="text-emerald-400 flex items-center gap-1">
+                <span className="text-emerald-700 flex items-center gap-1">
                   <CheckCircle2 className="w-2.5 h-2.5" />
                   {evidenceStats.verified} verified
                 </span>
-                <span className="text-amber-400 flex items-center gap-1">
+                <span className="text-amber-700 flex items-center gap-1">
                   <AlertTriangle className="w-2.5 h-2.5" />
                   {evidenceStats.inferred} inferred
                 </span>
               </div>
             </div>
 
-            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider font-mono px-0.5">
+            <p className="text-[9px] font-bold text-[#526078] uppercase tracking-wider font-mono px-0.5">
               Click to filter by layer
             </p>
             {Object.entries(ARCH_TIERS)
@@ -181,8 +181,8 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                     onClick={() => onTierChange(isActive ? 'all' : key)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition cursor-pointer text-left ${
                       isActive
-                        ? 'bg-amber-400/8 border-amber-400/40'
-                        : 'bg-[#0c0c0e] border-[#1a1a1f] hover:border-[#2f2f35]'
+                        ? 'bg-amber-50 border-amber-300'
+                        : 'bg-[#F8F7F4] border-[#E2E0D9] hover:border-[#19243B]/30 hover:bg-[#F0EEE9]'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -194,12 +194,12 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                         <p className={`text-[11px] font-bold font-mono ${tier.color}`}>
                           {tier.label}
                         </p>
-                        <p className="text-[9px] text-zinc-600 font-mono truncate mt-0.5">
+                        <p className="text-[9px] text-[#526078] font-mono truncate mt-0.5">
                           {tier.sub}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800/60 border border-zinc-700/50 ml-2 shrink-0">
+                    <span className="text-[10px] font-mono font-bold text-[#19243B] px-1.5 py-0.5 rounded bg-white border border-[#E2E0D9] ml-2 shrink-0 shadow-xs">
                       {count}
                     </span>
                   </button>
@@ -210,7 +210,7 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
 
         {tab === 'nodes' && (
           <>
-            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider font-mono px-0.5">
+            <p className="text-[9px] font-bold text-[#526078] uppercase tracking-wider font-mono px-0.5">
               Click to filter by type
             </p>
             {Object.entries(nodeTypeStats)
@@ -225,17 +225,17 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                     onClick={() => onTypeChange(isActive ? 'all' : type)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition cursor-pointer ${
                       isActive
-                        ? 'bg-amber-400/8 border-amber-400/40'
-                        : 'bg-[#0c0c0e] border-[#1a1a1f] hover:border-[#2f2f35]'
+                        ? 'bg-amber-50 border-amber-300'
+                        : 'bg-[#F8F7F4] border-[#E2E0D9] hover:border-[#19243B]/30 hover:bg-[#F0EEE9]'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Icon className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="text-[11px] font-mono text-zinc-300 capitalize">
+                      <Icon className="w-3.5 h-3.5 text-[#526078]" />
+                      <span className="text-[11px] font-mono text-[#19243B] capitalize">
                         {label}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800/60 border border-zinc-700/50">
+                    <span className="text-[10px] font-mono text-[#19243B] px-1.5 py-0.5 rounded bg-white border border-[#E2E0D9] shadow-xs">
                       {count}
                     </span>
                   </button>
@@ -246,7 +246,7 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
 
         {tab === 'edges' && (
           <>
-            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider font-mono px-0.5">
+            <p className="text-[9px] font-bold text-[#526078] uppercase tracking-wider font-mono px-0.5">
               Click to filter by relationship
             </p>
             {Object.entries(edgeTypeStats)
@@ -260,8 +260,8 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                     onClick={() => onRelChange(isActive ? 'all' : rel)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition cursor-pointer ${
                       isActive
-                        ? 'bg-amber-400/8 border-amber-400/40'
-                        : 'bg-[#0c0c0e] border-[#1a1a1f] hover:border-[#2f2f35]'
+                        ? 'bg-amber-50 border-amber-300'
+                        : 'bg-[#F8F7F4] border-[#E2E0D9] hover:border-[#19243B]/30 hover:bg-[#F0EEE9]'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -272,9 +272,9 @@ export const CanvasSidebar: React.FC<CanvasSidebarProps> = ({
                           borderTop: cfg?.strokeDasharray ? '1px dashed' : 'none',
                         }}
                       />
-                      <span className="text-[10px] font-mono text-zinc-300 font-bold">{rel}</span>
+                      <span className="text-[10px] font-mono text-[#19243B] font-bold">{rel}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800/60 border border-zinc-700/50">
+                    <span className="text-[10px] font-mono text-[#19243B] px-1.5 py-0.5 rounded bg-white border border-[#E2E0D9] shadow-xs">
                       {count}
                     </span>
                   </button>

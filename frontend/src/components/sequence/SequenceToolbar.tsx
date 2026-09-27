@@ -52,13 +52,13 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-col gap-2.5 pointer-events-none select-none">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl pointer-events-auto">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl pointer-events-auto">
           <button
             onClick={() => onViewChange('architecture')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
               currentView === 'architecture'
-                ? 'bg-white/10 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'bg-amber-50 text-[#B45309] border border-amber-200 shadow-sm font-bold'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
             }`}
           >
             <Network className="w-3.5 h-3.5" />
@@ -69,11 +69,11 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
             onClick={() => onViewChange('workflow')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
               currentView === 'workflow'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'bg-amber-50 text-[#B45309] border border-amber-200 shadow-sm font-bold'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
             }`}
           >
-            <GitBranch className="w-3.5 h-3.5 text-amber-400" />
+            <GitBranch className="w-3.5 h-3.5 text-amber-600" />
             <span>Workflow</span>
           </button>
 
@@ -81,11 +81,11 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
             onClick={() => onViewChange('sequence')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
               currentView === 'sequence'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'bg-amber-50 text-[#B45309] border border-amber-200 shadow-sm font-bold'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
             }`}
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-sky-400" />
+            <ArrowRightLeft className="w-3.5 h-3.5 text-sky-600" />
             <span>Sequence</span>
           </button>
 
@@ -93,11 +93,11 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
             onClick={() => onViewChange('dataflow')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
               currentView === 'dataflow'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'bg-amber-50 text-[#B45309] border border-amber-200 shadow-sm font-bold'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
             }`}
           >
-            <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+            <Share2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>Data Flow</span>
           </button>
 
@@ -105,27 +105,27 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
             onClick={() => onViewChange('lifecycle')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
               currentView === 'lifecycle'
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                ? 'bg-amber-50 text-[#B45309] border border-amber-200 shadow-sm font-bold'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
             }`}
           >
-            <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+            <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
             <span>Lifecycle</span>
           </button>
         </div>
 
         {sequences.length > 0 && (
-          <div className="flex items-center gap-2 p-1 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl pointer-events-auto">
-            <span className="text-[11px] font-mono font-medium text-zinc-400 pl-2 shrink-0">
+          <div className="flex items-center gap-2 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl pointer-events-auto">
+            <span className="text-[11px] font-mono font-medium text-[#526078] pl-2 shrink-0">
               Sequence:
             </span>
             <select
               value={selectedSequenceId}
               onChange={(e) => onSelectSequence(e.target.value)}
-              className="bg-transparent text-white font-mono text-xs font-semibold px-2 py-1 rounded-lg border-0 outline-none cursor-pointer hover:bg-white/[0.04] max-w-[260px] truncate"
+              className="bg-transparent text-[#19243B] font-mono text-xs font-semibold px-2 py-1 rounded-lg border-0 outline-none cursor-pointer hover:bg-[#F0EEE9] max-w-[260px] truncate"
             >
               {sequences.map((s) => (
-                <option key={s.id} value={s.id} className="bg-[#121215] text-white">
+                <option key={s.id} value={s.id} className="bg-white text-[#19243B]">
                   {s.title} ({s.total_steps} steps)
                 </option>
               ))}
@@ -134,18 +134,18 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
         )}
 
         <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl">
-            <Search className="w-3.5 h-3.5 text-zinc-400" />
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl">
+            <Search className="w-3.5 h-3.5 text-[#687184]" />
             <input
               type="text"
               placeholder="Search steps..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="bg-transparent text-white text-xs font-mono outline-none w-28 focus:w-40 transition-all placeholder:text-zinc-600"
+              className="bg-transparent text-[#19243B] text-xs font-mono outline-none w-28 focus:w-40 transition-all placeholder:text-[#687184]"
             />
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl">
             {(
               [
                 { id: 'all', label: 'All' },
@@ -160,8 +160,8 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
                 onClick={() => onFilterChange(f.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition cursor-pointer ${
                   filterType === f.id
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-amber-50 text-[#B45309] border border-amber-200 font-bold shadow-sm'
+                    : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
                 }`}
               >
                 {f.label}
@@ -172,11 +172,11 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 pointer-events-auto">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl">
           <button
             onClick={onStepPrev}
             disabled={currentStepIndex <= 0}
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            className="p-1 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
             title="Previous Step"
           >
             <SkipBack className="w-3.5 h-3.5" />
@@ -186,8 +186,8 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
             onClick={onTogglePlay}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold transition cursor-pointer ${
               isPlaying
-                ? 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
-                : 'bg-sky-500 text-white hover:bg-sky-400'
+                ? 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
+                : 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm'
             }`}
           >
             {isPlaying ? (
@@ -206,19 +206,19 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
           <button
             onClick={onStepNext}
             disabled={currentStepIndex >= totalSteps - 1}
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            className="p-1 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
             title="Next Step"
           >
             <SkipForward className="w-3.5 h-3.5" />
           </button>
 
-          <div className="px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[11px] font-mono text-zinc-200">
+          <div className="px-2 py-0.5 rounded-md bg-[#F0EEE9] border border-[#E2E0D9] text-[11px] font-mono text-[#19243B] font-semibold">
             {currentStepIndex >= 0 ? `Step ${currentStepIndex + 1} / ${totalSteps}` : `0 / ${totalSteps} Steps`}
           </div>
 
           <button
             onClick={onChangeSpeed}
-            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-zinc-400 hover:text-white hover:bg-white/[0.06] border border-zinc-800 transition cursor-pointer"
+            className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] border border-[#E2E0D9] transition cursor-pointer"
             title="Change Playback Speed"
           >
             {playbackSpeed}x
@@ -226,24 +226,24 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
 
           <button
             onClick={onResetSimulator}
-            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06] transition cursor-pointer"
+            className="p-1 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
             title="Reset Simulation"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#0c0c0e]/90 backdrop-blur-xl border border-[#1f1f23] shadow-2xl">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-xl">
           <button
             onClick={onExport}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+            className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
             title="Export Sequence JSON"
           >
             <Download className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition cursor-pointer"
+            className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}

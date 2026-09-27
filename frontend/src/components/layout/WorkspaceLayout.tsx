@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, FolderGit2, GitBranch, KeyRound, LayoutDashboard, LogOut, MessageCircle, Network, ScanLine, UserRound, UserRoundCog } from 'lucide-react';
+import { ChevronDown, FolderGit2, GitBranch, KeyRound, LayoutDashboard, LogOut, MessageCircle, Network, UserRound, UserRoundCog } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
@@ -76,32 +76,25 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   ];
 
   return (
-    <div data-appearance="dark" className="min-h-screen bg-[#000000] text-[#f4f4f5]">
+    <div className="min-h-screen bg-[#F8F7F4] text-[#19243B]">
       <aside
         onMouseEnter={handleMouseEnterSidebar}
         onMouseLeave={handleMouseLeaveSidebar}
-        className={`bg-[#050505] border-r border-[#1f1f23] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
-          isSidebarHovered ? 'w-64 shadow-[0_0_35px_rgba(0,0,0,0.9)]' : 'w-16 shadow-lg'
+        className={`bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
+          isSidebarHovered ? 'w-64 shadow-[0_4px_30px_rgba(25,36,59,0.08)]' : 'w-16 shadow-sm'
         }`}
       >
-        <div className="h-16 flex items-center px-3.5 border-b border-[#1f1f23] shrink-0 overflow-hidden">
+        <div className="h-16 flex items-center px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/dashboard"
             onClick={() => setIsSidebarHovered(false)}
-            className="flex items-center gap-3 overflow-hidden group cursor-pointer"
+            className="flex items-center overflow-hidden group cursor-pointer"
             title="CodeLens Dashboard"
           >
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 transition-colors group-hover:bg-amber-500/20">
-              <ScanLine className="text-amber-400 size-5" />
-            </div>
             <span
-              className={`font-semibold text-base tracking-tight text-white whitespace-nowrap transition-all duration-300 origin-left ${
-                isSidebarHovered
-                  ? 'opacity-100 max-w-[160px] translate-x-0'
-                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
-              }`}
+              className="font-bold text-base tracking-tight text-[#19243B] whitespace-nowrap transition-all duration-300 font-mono"
             >
-              CodeLens
+              {isSidebarHovered ? 'CodeLens' : 'CL'}
             </span>
           </Link>
         </div>
@@ -120,18 +113,18 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                 title={!isSidebarHovered ? item.label : undefined}
                 className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
                   isActive
-                    ? 'bg-[#18181b] text-white font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-[#121214]'
+                    ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
+                    : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
                 }`}
               >
                 {isActive && (
-                  <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-400 rounded-r" />
+                  <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
                 )}
 
                 <div className="w-7 h-7 flex items-center justify-center shrink-0">
                   <Icon
                     className={`size-4.5 transition-colors ${
-                      isActive ? 'text-amber-400' : 'text-slate-400 group-hover/item:text-white'
+                      isActive ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
                     }`}
                   />
                 </div>
@@ -151,7 +144,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </nav>
       </aside>
 
-      <header className="bg-[#050505] text-foreground flex sticky z-30 top-0 pl-20 pr-6 items-center h-16 border-b border-[#1f1f23]">
+      <header className="bg-white/95 backdrop-blur-md text-[#19243B] flex sticky z-30 top-0 pl-20 pr-6 items-center h-16 border-b border-[#E2E0D9]">
         <div className="flex ml-auto items-center relative" ref={profileMenuRef}>
           <button
             type="button"
@@ -159,42 +152,42 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
             className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-amber-500/40 transition cursor-pointer focus:outline-none"
             aria-label="User menu"
           >
-            <div className="font-medium rounded-full bg-[#121214] text-foreground text-sm flex justify-center items-center size-9 border border-[#1f1f23] overflow-hidden">
+            <div className="font-medium rounded-full bg-[#F0EEE9] text-[#19243B] text-sm flex justify-center items-center size-9 border border-[#E2E0D9] overflow-hidden">
               {user?.avatar_url ? (
                 <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
               ) : (
-                <UserRound className="size-4 text-amber-400" />
+                <UserRound className="size-4 text-amber-600" />
               )}
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-[#687184] transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-12 w-64 rounded-2xl bg-[#09090b] border border-[#1f1f23] shadow-2xl p-2 z-50 animate-fadeIn">
-              <div className="p-3 border-b border-[#1f1f23]">
+            <div className="absolute right-0 top-12 w-64 rounded-2xl bg-white border border-[#E2E0D9] shadow-xl p-2 z-50 animate-fadeIn">
+              <div className="p-3 border-b border-[#E2E0D9]">
                 <div className="flex items-center gap-3">
                   {user?.avatar_url ? (
                     <img src={user.avatar_url} alt={user.username} className="size-9 rounded-full border border-amber-500/30 object-cover" />
                   ) : (
-                    <div className="size-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-sm">
+                    <div className="size-9 rounded-full bg-amber-500/15 text-amber-700 flex items-center justify-center font-bold text-sm">
                       {(user?.username || 'U').charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate">{user?.username || 'Developer'}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{user?.email || 'GitHub User'}</p>
+                    <p className="text-xs font-bold text-[#19243B] truncate">{user?.username || 'Developer'}</p>
+                    <p className="text-[11px] text-[#526078] truncate">{user?.email || 'GitHub User'}</p>
                   </div>
                 </div>
 
-                <div className="mt-2.5 pt-2 border-t border-[#18181b] flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <KeyRound className="w-3 h-3 text-amber-400" />
+                <div className="mt-2.5 pt-2 border-t border-[#F0EEE9] flex items-center justify-between">
+                  <span className="text-[10px] text-[#526078] flex items-center gap-1">
+                    <KeyRound className="w-3 h-3 text-amber-600" />
                     OpenAI Key:
                   </span>
                   <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-medium ${
                     user?.has_openai_key || user?.has_gemini_key
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
                   }`}>
                     {user?.has_openai_key || user?.has_gemini_key ? 'Configured ✓' : 'Required ⚠'}
                   </span>
@@ -205,9 +198,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                 <Link
                   to="/profile"
                   onClick={() => setIsProfileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-[#18181b] transition font-medium"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition font-medium"
                 >
-                  <UserRoundCog className="w-4 h-4 text-slate-400" />
+                  <UserRoundCog className="w-4 h-4 text-[#687184]" />
                   <span>Profile & Settings</span>
                 </Link>
 
@@ -217,7 +210,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                     setIsProfileMenuOpen(false);
                     setIsLogoutModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition font-medium cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition font-medium cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Log Out</span>
@@ -228,7 +221,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </div>
       </header>
 
-      <main className="ml-16 pt-6 px-6 pb-10 min-h-[calc(100vh-4rem)]">
+      <main className="ml-16 pt-6 px-6 pb-10 min-h-[calc(100vh-4rem)] bg-[#F8F7F4]">
         <div className="mx-auto flex flex-col gap-6 max-w-[1600px]">
           {children}
         </div>

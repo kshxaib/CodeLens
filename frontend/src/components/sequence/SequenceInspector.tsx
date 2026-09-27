@@ -30,11 +30,11 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
   const CalleeIcon = calleeCfg?.icon;
 
   return (
-    <div className="flex flex-col h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl overflow-hidden min-w-[360px] max-w-[420px] z-30 select-text">
-      <div className="px-5 py-4 border-b border-[#1f1f23] bg-[#0c0c0e]/80 backdrop-blur-md flex items-start justify-between gap-3">
+    <div className="flex flex-col h-full bg-white border-l border-[#E2E0D9] shadow-2xl overflow-hidden min-w-[360px] max-w-[420px] z-30 select-text">
+      <div className="px-5 py-4 border-b border-[#E2E0D9] bg-[#F8F7F4]/90 backdrop-blur-md flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-800 text-zinc-200 border border-zinc-700">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#F0EEE9] text-[#19243B] border border-[#E2E0D9]">
               Step {message.step_number}
             </span>
 
@@ -48,8 +48,8 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold border ${
                 message.confidence_level === 'deterministic'
-                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                  : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
               }`}
             >
               <ShieldCheck className="w-2.5 h-2.5" />
@@ -57,14 +57,14 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
             </span>
           </div>
 
-          <h2 className="text-base font-bold text-white font-mono break-all leading-tight">
+          <h2 className="text-base font-bold text-[#19243B] font-mono break-all leading-tight">
             {message.method}
           </h2>
         </div>
 
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/[0.06] transition cursor-pointer shrink-0"
+          className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer shrink-0"
           title="Close Inspector"
         >
           <X className="w-4 h-4" />
@@ -80,15 +80,15 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
                 end: message.evidence!.end_line,
               })
             }
-            className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-sky-500/15 to-sky-600/10 hover:from-sky-500/25 hover:to-sky-600/20 border border-sky-500/30 text-sky-300 font-bold flex items-center justify-between transition cursor-pointer shadow-md group"
+            className="w-full py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm group"
           >
             <div className="flex items-center gap-2 truncate">
-              <FileCode2 className="w-4 h-4 text-sky-400 shrink-0" />
+              <FileCode2 className="w-4 h-4 text-amber-700 shrink-0" />
               <span className="truncate text-xs">
                 {message.evidence.file_path.split(/[/\\]/).pop()}:{message.evidence.start_line}-{message.evidence.end_line}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-sky-400/80 group-hover:text-sky-300 shrink-0">
+            <div className="flex items-center gap-1 text-[11px] text-amber-700 group-hover:text-amber-900 shrink-0">
               <span>Open Source</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </div>
@@ -102,49 +102,49 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
               target: message.callee_id,
             })
           }
-          className="w-full py-2 px-3.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold flex items-center justify-between transition cursor-pointer shadow-sm text-xs"
+          className="w-full py-2 px-3.5 rounded-xl bg-amber-50/60 hover:bg-amber-100/80 border border-amber-200 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm text-xs"
         >
           <div className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>Why does this interaction exist?</span>
           </div>
-          <span className="text-[10px] text-amber-400/80 font-mono">Verify AST & Evidence</span>
+          <span className="text-[10px] text-amber-700 font-mono">Verify AST & Evidence</span>
         </button>
 
-        <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-3">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
+        <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-3">
+          <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold block">
             Interaction Participants
           </span>
 
           <div className="flex items-center gap-2.5">
             <div
               onClick={() => selectTraceNode(caller?.id || message.caller_id)}
-              className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-sky-500/10 border border-[#27272a] hover:border-sky-500/40 text-center cursor-pointer transition group"
+              className="flex-1 p-2.5 rounded-lg bg-white hover:bg-amber-50/50 border border-[#E2E0D9] hover:border-amber-300 text-center cursor-pointer transition group shadow-sm"
               title="Click to Trace Caller"
             >
-              <div className="flex items-center justify-between text-[9px] text-zinc-500 mb-1">
+              <div className="flex items-center justify-between text-[9px] text-[#526078] mb-1">
                 <span>CALLER</span>
-                <Compass className="w-2.5 h-2.5 text-zinc-500 group-hover:text-sky-400" />
+                <Compass className="w-2.5 h-2.5 text-[#687184] group-hover:text-amber-700" />
               </div>
-              <div className="flex items-center justify-center gap-1.5 text-zinc-200 group-hover:text-sky-300 font-semibold truncate">
-                {CallerIcon && <CallerIcon className="w-3 h-3 text-sky-400 shrink-0" />}
+              <div className="flex items-center justify-center gap-1.5 text-[#19243B] group-hover:text-amber-800 font-semibold truncate">
+                {CallerIcon && <CallerIcon className="w-3 h-3 text-sky-600 shrink-0" />}
                 <span className="truncate text-xs">{caller?.name || message.caller_id}</span>
               </div>
             </div>
 
-            <ArrowRight className="w-4 h-4 text-zinc-500 shrink-0" />
+            <ArrowRight className="w-4 h-4 text-[#687184] shrink-0" />
 
             <div
               onClick={() => selectTraceNode(callee?.id || message.callee_id)}
-              className="flex-1 p-2.5 rounded-lg bg-[#141417] hover:bg-emerald-500/10 border border-[#27272a] hover:border-emerald-500/40 text-center cursor-pointer transition group"
+              className="flex-1 p-2.5 rounded-lg bg-white hover:bg-amber-50/50 border border-[#E2E0D9] hover:border-amber-300 text-center cursor-pointer transition group shadow-sm"
               title="Click to Trace Callee"
             >
-              <div className="flex items-center justify-between text-[9px] text-zinc-500 mb-1">
+              <div className="flex items-center justify-between text-[9px] text-[#526078] mb-1">
                 <span>CALLEE</span>
-                <Compass className="w-2.5 h-2.5 text-zinc-500 group-hover:text-emerald-400" />
+                <Compass className="w-2.5 h-2.5 text-[#687184] group-hover:text-emerald-700" />
               </div>
-              <div className="flex items-center justify-center gap-1.5 text-zinc-200 group-hover:text-emerald-300 font-semibold truncate">
-                {CalleeIcon && <CalleeIcon className="w-3 h-3 text-emerald-400 shrink-0" />}
+              <div className="flex items-center justify-center gap-1.5 text-[#19243B] group-hover:text-emerald-800 font-semibold truncate">
+                {CalleeIcon && <CalleeIcon className="w-3 h-3 text-emerald-600 shrink-0" />}
                 <span className="truncate text-xs">{callee?.name || message.callee_id}</span>
               </div>
             </div>
@@ -152,52 +152,52 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
         </div>
 
         {message.description && (
-          <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-1.5">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
+          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-1.5">
+            <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold block">
               Step Description
             </span>
-            <p className="text-zinc-300 text-xs leading-relaxed">{message.description}</p>
+            <p className="text-[#19243B] text-xs leading-relaxed">{message.description}</p>
           </div>
         )}
 
         {message.payload && (
-          <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
-              <Code2 className="w-3.5 h-3.5 text-sky-400" />
+          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
+            <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5 text-sky-600" />
               Request Payload
             </span>
-            <div className="p-2.5 rounded-lg bg-[#070709] border border-[#18181b] overflow-x-auto text-[11px] text-sky-300 font-mono">
+            <div className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] overflow-x-auto text-[11px] text-sky-800 font-mono shadow-inner">
               <pre>{message.payload}</pre>
             </div>
           </div>
         )}
 
         {message.response_payload && (
-          <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
-              <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
+            <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5 text-emerald-600" />
               Response
             </span>
-            <div className="p-2.5 rounded-lg bg-[#070709] border border-[#18181b] overflow-x-auto text-[11px] text-emerald-300 font-mono">
+            <div className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] overflow-x-auto text-[11px] text-emerald-800 font-mono shadow-inner">
               <pre>{message.response_payload}</pre>
             </div>
           </div>
         )}
 
         {(message.is_async || message.is_error) && (
-          <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block">
+          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
+            <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold block">
               Runtime Characteristics
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               {message.is_async && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                   <Zap className="w-3.5 h-3.5" />
                   Asynchronous Task
                 </span>
               )}
               {message.is_error && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   Alternative Failure Branch
                 </span>
@@ -207,17 +207,17 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
         )}
 
         {message.evidence && (
-          <div className="p-3.5 rounded-xl border border-[#1f1f23] bg-[#0c0c0e] space-y-2">
+          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">
+              <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold">
                 Traceable Evidence
               </span>
-              <span className="text-[10px] text-sky-400">
+              <span className="text-[10px] text-amber-700 font-bold">
                 Lines {message.evidence.start_line}-{message.evidence.end_line}
               </span>
             </div>
             {message.evidence.snippet && (
-              <div className="p-2.5 rounded-lg bg-[#070709] border border-[#18181b] overflow-x-auto text-[10px] text-zinc-300 font-mono">
+              <div className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] overflow-x-auto text-[10px] text-[#19243B] font-mono shadow-inner">
                 <pre className="whitespace-pre-wrap">{message.evidence.snippet}</pre>
               </div>
             )}

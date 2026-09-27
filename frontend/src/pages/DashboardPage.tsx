@@ -204,22 +204,24 @@ export const DashboardPage: React.FC = () => {
               </section>
 
               {!hasKey && (
-                <section className="rounded-xl bg-black border border-[#27272a] flex flex-col sm:flex-row p-4 justify-between items-start sm:items-center gap-4">
+                <section className="rounded-2xl bg-[#FEF7EC] border border-amber-200/90 flex flex-col sm:flex-row p-4 sm:p-5 justify-between items-start sm:items-center gap-4 shadow-xs">
                   <div className="flex items-center gap-3">
-                    <KeyRound className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="size-9 rounded-xl bg-amber-100/70 border border-amber-200/80 flex items-center justify-center shrink-0">
+                      <KeyRound className="w-4 h-4 text-amber-700" />
+                    </div>
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-sm text-white">
+                      <span className="font-semibold text-sm text-[#19243B]">
                         OpenAI API Key Required
                       </span>
-                      <span className="text-zinc-400 text-xs">
-                        Configure your OpenAI API key to enable repository indexing and AI chat.
+                      <span className="text-[#526078] text-xs">
+                        Configure your OpenAI API key to enable repository indexing and AI Copilot.
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <Button
                       onClick={() => setIsKeyModalOpen(true)}
-                      className="rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-medium px-3.5 h-8 transition cursor-pointer"
+                      className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 h-8 transition shadow-xs cursor-pointer"
                     >
                       Add Key
                     </Button>
@@ -548,12 +550,12 @@ export const DashboardPage: React.FC = () => {
       )}
 
       {confirmationToast && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-black border border-[#27272a] text-white px-3.5 py-2.5 rounded-lg animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span className="text-xs text-zinc-200 pr-2">{confirmationToast}</span>
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-[#FFFFFF] border border-[#E2E0D9] text-[#19243B] px-4 py-3 rounded-xl shadow-lg animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="text-xs text-[#19243B] font-medium pr-2">{confirmationToast}</span>
           <button
             onClick={() => setConfirmationToast(null)}
-            className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-900 transition cursor-pointer"
+            className="text-[#687184] hover:text-[#19243B] p-1 rounded hover:bg-[#F0EEE9] transition cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

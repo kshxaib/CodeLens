@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, ReactFlowProvider, useReactFlow, useViewport, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { Loader2 } from 'lucide-react';
 import { api } from '../api/client';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import type { KnowledgeGraphData, BlastRadiusResponse } from '../types';
 import { ErrorState } from '../components/common/ErrorState';
+import { EmptyState } from '../components/common/EmptyState';
 import { ArchitectureNode } from '../components/architecture/ArchitectureNode';
 import { ArchitectureEdge } from '../components/architecture/ArchitectureEdge';
 import { ArchitectureInspector } from '../components/architecture/ArchitectureInspector';
@@ -15,7 +17,8 @@ import { ArchitectureToolbar } from '../components/architecture/ArchitectureTool
 import { CanvasSidebar } from '../components/architecture/CanvasSidebar';
 import { CanvasStatusBar } from '../components/architecture/CanvasStatusBar';
 import { getLayoutedElements } from '../components/architecture/layout';
-import { ARCH_TIERS, getNodeTier } from '../components/architecture/constants';
+import { ARCH_TIERS, getNodeTier, getArchifySemantic } from '../components/architecture/constants';
+import { ArchifyLegend } from '../components/architecture/ArchifyLegend';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
@@ -51,8 +54,25 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const repoId = parseInt(id || '0', 10);
+  const navigate = useNavigate();
+  const { repositories, fetchRepositories, selectedRepo, setSelectedRepo } = useWorkspaceStore();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (repositories.length === 0) {
+      fetchRepositories(true);
+    }
+  }, [repositories.length, fetchRepositories]);
+
+  useEffect(() => {
+    if (repositories.length > 0 && repoId) {
+      const current = repositories.find((r) => r.id === repoId);
+      if (current && selectedRepo?.id !== current.id) {
+        setSelectedRepo(current);
+      }
+    }
+  }, [repositories, repoId, selectedRepo, setSelectedRepo]);
 
   const {
     selectedNodeId,
@@ -98,6 +118,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [scopeFilter, setScopeFilter] = useState<'all' | 'internal' | 'external'>('all');
   const [viewMode, setViewMode] = useState<'system' | 'full'>('system');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('TB');
+  const [legendCategory, setLegendCategory] = useState<string>('all');
 
   const [blastRadius, setBlastRadius] = useState<BlastRadiusResponse | null>(null);
   const [blastLoading, setBlastLoading] = useState(false);
@@ -149,12 +170,21 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
         setViewFiles(allFiles);
       }
     } catch (err: any) {
+      const errMsg = (err?.message || '').toLowerCase();
+      if ((errMsg.includes('not found') || errMsg.includes('404')) && repositories.length > 0) {
+        const fallback = selectedRepo && selectedRepo.id !== repoId ? selectedRepo : repositories.find((r) => r.id !== repoId) || repositories[0];
+        if (fallback && fallback.id !== repoId) {
+          setSelectedRepo(fallback);
+          navigate(`/repository/${fallback.id}/architecture`, { replace: true });
+          return;
+        }
+      }
       setError(err.message || 'Failed to generate Architecture Knowledge Graph.');
     } finally {
       setLoading(false);
       setIsRebuilding(false);
     }
-  }, [repoId, setViewNodes, setViewFiles]);
+  }, [repoId, repositories, selectedRepo, setSelectedRepo, navigate, setViewNodes, setViewFiles]);
 
   useEffect(() => {
     if (repoId) {
@@ -179,6 +209,11 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       }
 
       if (selectedTier !== 'all' && tierKey !== selectedTier) return false;
+
+      if (legendCategory !== 'all') {
+        const semantic = getArchifySemantic(n.type, n.layer, n.name);
+        if (semantic.kind !== legendCategory) return false;
+      }
 
       if (selectedType !== 'all') {
         if (selectedType === 'queue' && n.type !== 'queue' && n.type !== 'worker') return false;
@@ -357,6 +392,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     scopeFilter,
     viewMode,
     layoutDirection,
+    legendCategory,
     selectedNodeId,
     hoveredNodeId,
     blastRadius,
@@ -445,16 +481,33 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return kgData.nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, kgData]);
 
-  if (loading) {
+  if (repositories.length === 0 && !loading && !error) {
     return (
       <WorkspaceLayout>
-        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex flex-col items-center justify-center p-6 text-center select-none">
-          <div className="w-12 h-12 rounded-2xl bg-[#141416] border border-[#27272a] flex items-center justify-center mb-4 shadow-xl">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+        <EmptyState
+          type="repositories"
+          title="No Repositories Connected"
+          description="Connect a repository first to analyze and explore its Architecture Knowledge Graph."
+          actionText="View Repositories"
+          onAction={() => navigate('/repositories')}
+        />
+      </WorkspaceLayout>
+    );
+  }
+
+  if (loading || isRebuilding) {
+    return (
+      <WorkspaceLayout>
+        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex flex-col items-center justify-center p-6 text-center select-none">
+          <div className="w-12 h-12 rounded-2xl bg-[#FEF7EC] border border-amber-200/80 flex items-center justify-center mb-4 shadow-2xs">
+            <Loader2 className="w-6 h-6 animate-spin text-amber-700" />
           </div>
-          <h3 className="text-base font-bold text-white font-mono tracking-tight">
+          <h3 className="text-base font-bold text-[#19243B] font-mono tracking-tight mb-1">
             Analyzing Architecture Knowledge Graph
           </h3>
+          <p className="text-xs text-[#526078] max-w-sm">
+            Synthesizing multi-layer AST dependencies and deterministic components...
+          </p>
         </div>
       </WorkspaceLayout>
     );
@@ -463,7 +516,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   if (error) {
     return (
       <WorkspaceLayout>
-        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] bg-[#000000] flex items-center justify-center p-6">
+        <div className="w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] bg-[#FFFFFF] shadow-xs flex items-center justify-center p-6">
           <ErrorState
             type="general"
             title="Knowledge Graph Generation Failed"
@@ -508,7 +561,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       ) : (
           <div
             ref={containerRef}
-            className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#1f1f23] overflow-hidden bg-[#000000] flex flex-col select-none"
+            className="relative w-full h-[calc(100vh-10rem)] rounded-2xl border border-[#E2E0D9] overflow-hidden bg-[#F8F7F4] flex flex-col select-none"
           >
             <style>{`
               .arc-sidebar {
@@ -527,7 +580,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
 
             <div className="flex flex-1 min-h-0">
 
-              <div className={`arc-sidebar flex-shrink-0 h-full bg-[#09090b] border-r border-[#1f1f23] z-30 ${leftOpen ? 'open' : 'closed'}`}>
+              <div className={`arc-sidebar flex-shrink-0 h-full bg-white border-r border-[#E2E0D9] z-30 ${leftOpen ? 'open' : 'closed'}`}>
                 {leftOpen && (
                   <CanvasSidebar
                     kgData={kgData}
@@ -542,7 +595,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                 )}
               </div>
 
-              <div className="flex-1 relative min-w-0 h-full flex flex-col">
+              <div className="flex-1 relative min-w-0 h-full flex flex-col bg-[#F8F7F4]">
 
                 <ArchitectureToolbar
                   currentView={currentView}
@@ -614,12 +667,12 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                     minZoom={0.05}
                     maxZoom={2}
                     proOptions={{ hideAttribution: true }}
-                    className="bg-[#000000] h-full"
+                    className="bg-[#F8F7F4] h-full"
                   >
-                    <Background color="rgba(255,255,255,0.025)" gap={24} size={1} />
+                    <Background color="#D5D2CA" gap={24} size={1.2} />
                     <Controls
                       showInteractive={false}
-                      className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl !text-zinc-300 shadow-xl"
+                      className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
                     />
                     <MiniMap
                       nodeColor={(n) => {
@@ -628,9 +681,18 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                       }}
                       zoomable
                       pannable
-                      className="!bg-[#09090b] !border-[#1f1f23] !rounded-xl overflow-hidden shadow-xl"
+                      className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
                     />
                   </ReactFlow>
+
+                  {/* Archify Interactive Legend Strip */}
+                  <div className="absolute bottom-10 left-4 z-20 pointer-events-auto">
+                    <ArchifyLegend
+                      nodes={kgData?.nodes || []}
+                      activeCategory={legendCategory}
+                      onSelectCategory={setLegendCategory}
+                    />
+                  </div>
                 </div>
 
                 <CanvasStatusBar
@@ -650,7 +712,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                 />
               </div>
 
-              <div className={`arc-inspector flex-shrink-0 h-full bg-[#09090b] border-l border-[#1f1f23] shadow-2xl z-30 ${activeSelectedNode ? 'open' : 'closed'}`}>
+              <div className={`arc-inspector flex-shrink-0 h-full bg-white border-l border-[#E2E0D9] shadow-xl z-30 ${activeSelectedNode ? 'open' : 'closed'}`}>
                 {activeSelectedNode && (
                   <ArchitectureInspector
                     node={activeSelectedNode}
@@ -710,8 +772,31 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
 
 export const ArchitectureMapPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const repoId = parseInt(id || '0', 10);
+  const navigate = useNavigate();
+  const { repositories, selectedRepo, setSelectedRepo, fetchRepositories } = useWorkspaceStore();
   const [currentView, setCurrentView] = useState<'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle'>('architecture');
+
+  const rawRepoId = parseInt(id || '0', 10);
+
+  useEffect(() => {
+    if (repositories.length === 0) {
+      fetchRepositories(true);
+    }
+  }, [repositories.length, fetchRepositories]);
+
+  useEffect(() => {
+    if (repositories.length > 0) {
+      const exists = repositories.some((r) => r.id === rawRepoId);
+      if (!exists) {
+        const fallback = selectedRepo && repositories.some((r) => r.id === selectedRepo.id) ? selectedRepo : repositories[0];
+        setSelectedRepo(fallback);
+        navigate(`/repository/${fallback.id}/architecture`, { replace: true });
+      }
+    }
+  }, [repositories, rawRepoId, selectedRepo, setSelectedRepo, navigate]);
+
+  const activeRepoObj = repositories.find((r) => r.id === rawRepoId) || selectedRepo || repositories[0];
+  const repoId = activeRepoObj?.id || rawRepoId;
 
   return (
     <ReactFlowProvider>

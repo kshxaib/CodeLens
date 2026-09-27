@@ -1,10 +1,11 @@
 import React from 'react';
 
-export const GithubIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+export const GithubIcon: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className = 'w-4 h-4', style }) => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"
     className={className}
+    style={style}
     aria-hidden="true"
   >
     <path
