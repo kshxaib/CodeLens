@@ -8,7 +8,6 @@ import { getWorkflowLayoutedElements } from './layout';
 import { api } from '../../api/client';
 import type { WorkflowItem, WorkflowStep } from '../../types';
 import { Loader2 } from 'lucide-react';
-import { useTrace } from '../../store/useTraceStore';
 
 interface WorkflowViewProps {
   repositoryId: number;
@@ -31,7 +30,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
-  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -79,18 +77,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     return workflows.find((w) => w.id === selectedWorkflowId) || workflows[0] || null;
   }, [workflows, selectedWorkflowId]);
 
-  useEffect(() => {
-    if (activeWorkflow?.steps) {
-      setViewNodes(
-        activeWorkflow.steps.map((s) => ({
-          id: s.id,
-          name: s.name,
-          type: s.step_type,
-          layer: 'application',
-        }))
-      );
-    }
-  }, [activeWorkflow, setViewNodes]);
 
   useEffect(() => {
     if (!isPlaying || !activeWorkflow || !activeWorkflow.steps.length) return;
@@ -225,16 +211,13 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedStepId((prev) => (prev === node.id ? null : node.id));
-      selectTraceNode(node.id);
     },
-    [selectTraceNode]
+    []
   );
 
   const handleEdgeClick = useCallback(
-    (_: React.MouseEvent, edge: Edge) => {
-      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
-    },
-    [openWhy]
+    (_: React.MouseEvent, _edge: Edge) => {},
+    []
   );
 
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {

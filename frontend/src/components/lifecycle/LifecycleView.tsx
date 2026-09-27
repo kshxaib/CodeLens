@@ -9,7 +9,6 @@ import { api } from '../../api/client';
 import type { EntityLifecycle, LifecycleTransition } from '../../types';
 import type { LifecycleFilterType } from './constants';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { useTrace } from '../../store/useTraceStore';
 
 interface LifecycleViewProps {
   repositoryId: number;
@@ -32,7 +31,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
-  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,18 +86,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setSimulationIndex(-1);
   }, [selectedLifecycleId]);
 
-  useEffect(() => {
-    if (activeLifecycle?.states) {
-      setViewNodes(
-        activeLifecycle.states.map((s) => ({
-          id: s.id,
-          name: s.name,
-          type: s.state_type,
-          layer: 'domain',
-        }))
-      );
-    }
-  }, [activeLifecycle, setViewNodes]);
 
   const simulationTransitions = useMemo(() => {
     if (!activeLifecycle) return [];
@@ -272,9 +258,8 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     (_: React.MouseEvent, node: Node) => {
       setSelectedStateId(node.id);
       setSelectedTransition(null);
-      selectTraceNode(node.id);
     },
-    [selectTraceNode]
+    []
   );
 
   const handleEdgeClick = useCallback(
@@ -284,9 +269,8 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
         setSelectedTransition(t);
         setSelectedStateId(null);
       }
-      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
     },
-    [openWhy]
+    []
   );
 
   const handlePaneClick = useCallback(() => {

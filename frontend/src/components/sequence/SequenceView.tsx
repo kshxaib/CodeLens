@@ -6,7 +6,6 @@ import { SequenceToolbar } from './SequenceToolbar';
 import { SequenceParticipantHeader } from './SequenceParticipantHeader';
 import { SequenceMessageRow } from './SequenceMessageRow';
 import { SequenceInspector } from './SequenceInspector';
-import { useTrace } from '../../store/useTraceStore';
 
 interface SequenceViewProps {
   repositoryId: number;
@@ -24,7 +23,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
-  const { setViewNodes, selectTraceNode } = useTrace();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -69,18 +67,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return sequences.find((s) => s.id === selectedSequenceId) || sequences[0] || null;
   }, [sequences, selectedSequenceId]);
 
-  useEffect(() => {
-    if (activeSequence?.participants) {
-      setViewNodes(
-        activeSequence.participants.map((p) => ({
-          id: p.id,
-          name: p.name,
-          type: p.participant_type,
-          layer: 'service',
-        }))
-      );
-    }
-  }, [activeSequence, setViewNodes]);
 
   const filteredMessages = useMemo(() => {
     if (!activeSequence) return [];
@@ -333,7 +319,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
                   isActiveSimulationStep={isActiveSim}
                   onSelectMessage={(m) => {
                     setSelectedMessageId((prev) => (prev === m.id ? null : m.id));
-                    selectTraceNode(m.caller_id);
                   }}
                   onOpenSource={onOpenSource}
                 />

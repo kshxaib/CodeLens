@@ -3,8 +3,8 @@ import { Search, Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, M
 import type { DataPipeline } from '../../types';
 
 interface DataFlowToolbarProps {
-  currentView: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
-  onViewChange: (view: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle') => void;
+  currentView?: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle';
+  onViewChange?: (view: 'architecture' | 'workflow' | 'sequence' | 'dataflow' | 'lifecycle') => void;
   pipelines: DataPipeline[];
   selectedPipelineId: string;
   onSelectPipeline: (id: string) => void;
@@ -26,8 +26,8 @@ interface DataFlowToolbarProps {
 }
 
 export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
-  currentView,
-  onViewChange,
+  currentView: _currentView,
+  onViewChange: _onViewChange,
   pipelines,
   selectedPipelineId,
   onSelectPipeline,
@@ -50,57 +50,9 @@ export const DataFlowToolbar: React.FC<DataFlowToolbarProps> = ({
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
       <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-xl flex-wrap">
-        <div className="flex items-center bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[11px] font-mono">
-          <button
-            onClick={() => onViewChange('architecture')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              currentView === 'architecture'
-                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
-                : 'text-[#526078] hover:text-[#19243B]'
-            }`}
-          >
-            Architecture
-          </button>
-          <button
-            onClick={() => onViewChange('workflow')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              currentView === 'workflow'
-                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
-                : 'text-[#526078] hover:text-[#19243B]'
-            }`}
-          >
-            Workflow
-          </button>
-          <button
-            onClick={() => onViewChange('sequence')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              currentView === 'sequence'
-                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
-                : 'text-[#526078] hover:text-[#19243B]'
-            }`}
-          >
-            Sequence
-          </button>
-          <button
-            onClick={() => onViewChange('dataflow')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              currentView === 'dataflow'
-                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
-                : 'text-[#526078] hover:text-[#19243B]'
-            }`}
-          >
-            Data Flow
-          </button>
-          <button
-            onClick={() => onViewChange('lifecycle')}
-            className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              currentView === 'lifecycle'
-                ? 'bg-white text-[#B45309] font-bold border border-amber-200 shadow-sm'
-                : 'text-[#526078] hover:text-[#19243B]'
-            }`}
-          >
-            Lifecycle
-          </button>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E2E0D9] bg-white text-xs font-mono font-bold text-[#19243B] shadow-xs">
+          <span className="text-[10px] tracking-wider text-[#8A94A6] bg-[#F0EEE9] px-1.5 py-0.5 rounded">T·04</span>
+          <span>Data Flow</span>
         </div>
 
         {pipelines.length > 0 && (

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuthStore } from './store/useAuthStore';
 import { useWorkspaceStore } from './store/useWorkspaceStore';
@@ -7,11 +7,15 @@ import { useWorkspaceStore } from './store/useWorkspaceStore';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { RepositoryOverviewPage } from './pages/RepositoryOverviewPage';
 import { ArchitectureMapPage } from './pages/ArchitectureMapPage';
 import { CodeLensChatPage } from './pages/CodeLensChatPage';
 import { ProfileSettingsPage } from './pages/ProfileSettingsPage';
 import { ErrorState } from './components/common/ErrorState';
+
+function RepositoryRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/repository/${id}/architecture`} replace />;
+}
 
 function ArchitectureRedirect() {
   const { repositories, selectedRepo } = useWorkspaceStore();
@@ -97,7 +101,7 @@ function AppContent() {
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/repositories" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/repository/:id" element={<ProtectedRoute><RepositoryOverviewPage /></ProtectedRoute>} />
+          <Route path="/repository/:id" element={<ProtectedRoute><RepositoryRedirect /></ProtectedRoute>} />
           <Route path="/repository/:id/architecture" element={<ProtectedRoute><ArchitectureMapPage /></ProtectedRoute>} />
           <Route
             path="/architecture"

@@ -1,159 +1,274 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FolderGit2, LayoutDashboard, LogOut, MessageCircle, Network, UserRoundCog } from 'lucide-react';
+import { LayoutDashboard, Network, UserRoundCog, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
-import { LogoutConfirmModal } from '../common/LogoutConfirmModal';
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
 }
 
+const ARCHITECTURE_VIEWS = [
+  { id: 'architecture', label: 'Architecture', code: 'T·01' },
+  { id: 'workflow', label: 'Workflow', code: 'T·02' },
+  { id: 'sequence', label: 'Sequence', code: 'T·03' },
+  { id: 'dataflow', label: 'Data Flow', code: 'T·04' },
+  { id: 'lifecycle', label: 'Lifecycle', code: 'T·05' },
+];
+
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) => {
   const { repositories, selectedRepo } = useWorkspaceStore();
+  const { user } = useAuthStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isOpen = !isCollapsed || isHovered;
 
   const location = useLocation();
   const navigate = useNavigate();
 
   const activeRepo = selectedRepo || repositories[0] || null;
-
-  const handleMouseEnterSidebar = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    setIsSidebarHovered(true);
-  };
-
-  const handleMouseLeaveSidebar = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsSidebarHovered(false);
-    }, 180);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    };
-  }, []);
-
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    ...(activeRepo
-      ? [{ label: activeRepo.name, path: `/repository/${activeRepo.id}`, icon: FolderGit2 }]
-      : []),
-    {
-      label: 'Chat',
-      path: activeRepo ? `/chat?repository=${activeRepo.id}` : '/dashboard',
-      icon: MessageCircle,
-    },
-    {
-      label: 'Architecture',
-      path: activeRepo ? `/repository/${activeRepo.id}/architecture` : '/dashboard',
-      icon: Network,
-    },
-    { label: 'Profile & Settings', path: '/profile', icon: UserRoundCog },
-  ];
+  const isArchitectureRoute = location.pathname.includes('/architecture');
+  const searchParams = new URLSearchParams(location.search);
+  const currentSubView = searchParams.get('view') || 'architecture';
+  const [isArchExpanded, setIsArchExpanded] = useState(true);
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#19243B]">
       <aside
-        onMouseEnter={handleMouseEnterSidebar}
-        onMouseLeave={handleMouseLeaveSidebar}
+        onMouseEnter={() => isCollapsed && setIsHovered(true)}
+        onMouseLeave={() => isCollapsed && setIsHovered(false)}
         className={`bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
-          isSidebarHovered ? 'w-64 shadow-[0_4px_30px_rgba(25,36,59,0.08)]' : 'w-16 shadow-sm'
+          isOpen ? 'w-64 shadow-[0_4px_30px_rgba(25,36,59,0.08)]' : 'w-16 shadow-sm'
         }`}
       >
-        <div className="h-16 flex items-center px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
+        {/* Header Logo & Collapse Toggle */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/dashboard"
-            onClick={() => setIsSidebarHovered(false)}
             className="flex items-center overflow-hidden group cursor-pointer"
             title="CodeLens Dashboard"
           >
             <span
               className="font-bold text-base tracking-tight text-[#19243B] whitespace-nowrap transition-all duration-300 font-mono"
             >
-              {isSidebarHovered ? 'CodeLens' : 'CL'}
+              {isOpen ? 'CodeLens' : 'CL'}
             </span>
           </Link>
+
+          {isOpen ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsCollapsed(true);
+                setIsHovered(false);
+              }}
+              className="p-1.5 rounded-lg text-[#687184] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsCollapsed(false);
+                setIsHovered(false);
+              }}
+              className="p-1.5 rounded-lg text-[#687184] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+              title="Expand sidebar"
+            >
+              <PanelLeft className="size-4" />
+            </button>
+          )}
         </div>
 
-        <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1 overflow-y-auto overflow-x-hidden">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              location.pathname === item.path ||
-              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-            return (
-              <Link
-                key={item.label}
-                to={item.path}
-                onClick={() => setIsSidebarHovered(false)}
-                title={!isSidebarHovered ? item.label : undefined}
-                className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
-                  isActive
-                    ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
-                    : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
-                }`}
-              >
-                {isActive && (
-                  <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
-                )}
+        {/* Primary Navigation */}
+        <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1.5 overflow-y-auto overflow-x-hidden">
+          {/* Dashboard Item */}
+          <Link
+            to="/dashboard"
+            title={!isOpen ? 'Dashboard' : undefined}
+            className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
+              location.pathname === '/dashboard'
+                ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
+            }`}
+          >
+            {location.pathname === '/dashboard' && (
+              <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
+            )}
 
+            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+              <LayoutDashboard
+                className={`size-4.5 transition-colors ${
+                  location.pathname === '/dashboard' ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
+                }`}
+              />
+            </div>
+
+            <span
+              className={`whitespace-nowrap transition-all duration-200 origin-left ${
+                isOpen
+                  ? 'opacity-100 max-w-none translate-x-0'
+                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
+              Dashboard
+            </span>
+          </Link>
+
+          {/* Architecture Collapsible Group */}
+          <div>
+            <div
+              className={`rounded-xl text-xs sm:text-sm flex py-2 px-2.5 items-center justify-between transition-colors font-medium relative group/item cursor-pointer select-none ${
+                isArchitectureRoute
+                  ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
+                  : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
+              }`}
+              onClick={() => {
+                if (isCollapsed) {
+                  setIsCollapsed(false);
+                  navigate(activeRepo ? `/repository/${activeRepo.id}/architecture` : '/architecture');
+                } else {
+                  setIsArchExpanded((prev) => !prev);
+                }
+              }}
+              title={!isOpen ? 'Architecture' : undefined}
+            >
+              {isArchitectureRoute && (
+                <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
+              )}
+
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                  <Icon
+                  <Network
                     className={`size-4.5 transition-colors ${
-                      isActive ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
+                      isArchitectureRoute ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
                     }`}
                   />
                 </div>
 
                 <span
-                  className={`truncate whitespace-nowrap transition-all duration-300 origin-left ${
-                    isSidebarHovered
-                      ? 'opacity-100 max-w-[180px] translate-x-0'
+                  className={`whitespace-nowrap transition-all duration-200 origin-left ${
+                    isOpen
+                      ? 'opacity-100 max-w-none translate-x-0'
                       : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
                   }`}
                 >
-                  {item.label}
+                  Architecture
                 </span>
-              </Link>
-            );
-          })}
+              </div>
+
+              {isOpen && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsArchExpanded((prev) => !prev);
+                  }}
+                  className="p-1 rounded-md text-[#687184] hover:text-[#19243B] transition"
+                  title={isArchExpanded ? 'Collapse sub-views' : 'Expand sub-views'}
+                >
+                  {isArchExpanded ? (
+                    <ChevronUp className="size-3.5" />
+                  ) : (
+                    <ChevronDown className="size-3.5" />
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Tree Branch Sub-Items (Image 2 style) */}
+            {isArchExpanded && isOpen && (
+              <div className="ml-5 pl-3.5 my-1.5 relative border-l border-[#E2E0D9] space-y-1">
+                {ARCHITECTURE_VIEWS.map((sub) => {
+                  const isSubActive = isArchitectureRoute && currentSubView === sub.id;
+                  const targetPath = sub.id === 'architecture'
+                    ? (activeRepo ? `/repository/${activeRepo.id}/architecture` : '/architecture')
+                    : (activeRepo ? `/repository/${activeRepo.id}/architecture?view=${sub.id}` : `/architecture?view=${sub.id}`);
+
+                  return (
+                    <div key={sub.id} className="relative group/tree">
+                      {/* Branch connector curve from vertical tree line to item */}
+                      <div className="absolute -left-[15px] top-[14px] w-3 h-2.5 border-b border-l border-[#E2E0D9] rounded-bl-md pointer-events-none group-hover/tree:border-[#19243B]/40 transition-colors" />
+
+                      <Link
+                        to={targetPath}
+                        className={`flex items-center justify-between px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
+                          isSubActive
+                            ? 'bg-white text-[#19243B] font-bold shadow-xs border border-[#E2E0D9]'
+                            : 'text-[#526078] hover:text-[#19243B] hover:bg-[#FAF9F5]'
+                        }`}
+                      >
+                        <span className="truncate">{sub.label}</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                            isSubActive
+                              ? 'bg-[#111419] text-white'
+                              : 'bg-[#F0EEE9] text-[#687184]'
+                          }`}
+                        >
+                          {sub.code}
+                        </span>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
+        {/* Bottom Profile & Settings Link */}
         <div className="p-2 border-t border-[#E2E0D9] shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsLogoutModalOpen(true)}
-            title={!isSidebarHovered ? 'Log Out' : undefined}
-            className="w-full rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors font-medium cursor-pointer"
+          <Link
+            to="/profile"
+            title={!isOpen ? (user?.username ? `@${user.username}` : 'Profile & Settings') : undefined}
+            className={`w-full rounded-xl text-xs sm:text-sm flex py-2 px-2 items-center gap-3 transition-colors font-medium cursor-pointer relative group/profile ${
+              location.pathname === '/profile'
+                ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
+                : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
+            }`}
           >
+            {location.pathname === '/profile' && (
+              <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
+            )}
+
             <div className="w-7 h-7 flex items-center justify-center shrink-0">
-              <LogOut className="size-4.5 text-rose-500" />
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.username || 'User avatar'}
+                  className="size-6.5 rounded-full object-cover border border-[#E2E0D9]"
+                />
+              ) : (
+                <div className="size-6.5 rounded-full bg-[#FAF9F5] border border-[#E2E0D9] flex items-center justify-center text-[#526078]">
+                  <UserRoundCog className="size-4" />
+                </div>
+              )}
             </div>
-            <span
-              className={`truncate whitespace-nowrap transition-all duration-300 origin-left ${
-                isSidebarHovered
-                  ? 'opacity-100 max-w-[180px] translate-x-0'
+
+            <div
+              className={`flex flex-col min-w-0 origin-left whitespace-nowrap transition-all duration-200 ${
+                isOpen
+                  ? 'opacity-100 max-w-none translate-x-0'
                   : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
               }`}
             >
-              Log Out
-            </span>
-          </button>
+              <span className="text-xs font-semibold text-[#19243B] truncate leading-tight">
+                {user?.username ? `@${user.username}` : 'Profile'}
+              </span>
+              <span className="text-[10px] text-[#687184] truncate leading-tight font-mono">
+                Settings
+              </span>
+            </div>
+          </Link>
         </div>
       </aside>
 
-      <main className="ml-16 pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4]">
+      <main className={`pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4] transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
         <div className="mx-auto flex flex-col gap-6 max-w-[1600px]">
           {children}
         </div>
@@ -164,15 +279,10 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={(newId) => {
-            navigate(`/repository/${newId}`);
+            navigate(`/repository/${newId}/architecture`);
           }}
         />
       )}
-
-      <LogoutConfirmModal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-      />
     </div>
   );
 };

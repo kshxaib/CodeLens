@@ -1,8 +1,7 @@
 import React from 'react';
-import { X, ExternalLink, FileCode2, ArrowRight, Zap, AlertTriangle, ShieldCheck, Code2, HelpCircle, Compass } from 'lucide-react';
+import { X, ExternalLink, FileCode2, ArrowRight, Zap, AlertTriangle, ShieldCheck, Code2 } from 'lucide-react';
 import type { SequenceMessage, SequenceParticipant } from '../../types';
 import { getInteractionConfig, getParticipantConfig } from './constants';
-import { useTrace } from '../../store/useTraceStore';
 
 interface SequenceInspectorProps {
   message: SequenceMessage;
@@ -17,7 +16,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
   onClose,
   onOpenSource,
 }) => {
-  const { openWhy, selectTraceNode } = useTrace();
   const cfg = getInteractionConfig(message.interaction_type);
 
   const caller = participants.find((p) => p.id === message.caller_id);
@@ -95,38 +93,17 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
           </button>
         )}
 
-        <button
-          onClick={() =>
-            openWhy({
-              source: message.caller_id,
-              target: message.callee_id,
-            })
-          }
-          className="w-full py-2 px-3.5 rounded-xl bg-amber-50/60 hover:bg-amber-100/80 border border-amber-200 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm text-xs"
-        >
-          <div className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>Why does this interaction exist?</span>
-          </div>
-          <span className="text-[10px] text-amber-700 font-mono">Verify AST & Evidence</span>
-        </button>
-
         <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-3">
           <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold block">
             Interaction Participants
           </span>
 
           <div className="flex items-center gap-2.5">
-            <div
-              onClick={() => selectTraceNode(caller?.id || message.caller_id)}
-              className="flex-1 p-2.5 rounded-lg bg-white hover:bg-amber-50/50 border border-[#E2E0D9] hover:border-amber-300 text-center cursor-pointer transition group shadow-sm"
-              title="Click to Trace Caller"
-            >
+            <div className="flex-1 p-2.5 rounded-lg bg-white border border-[#E2E0D9] text-center shadow-xs">
               <div className="flex items-center justify-between text-[9px] text-[#526078] mb-1">
                 <span>CALLER</span>
-                <Compass className="w-2.5 h-2.5 text-[#687184] group-hover:text-amber-700" />
               </div>
-              <div className="flex items-center justify-center gap-1.5 text-[#19243B] group-hover:text-amber-800 font-semibold truncate">
+              <div className="flex items-center justify-center gap-1.5 text-[#19243B] font-semibold truncate">
                 {CallerIcon && <CallerIcon className="w-3 h-3 text-sky-600 shrink-0" />}
                 <span className="truncate text-xs">{caller?.name || message.caller_id}</span>
               </div>
@@ -134,16 +111,11 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
 
             <ArrowRight className="w-4 h-4 text-[#687184] shrink-0" />
 
-            <div
-              onClick={() => selectTraceNode(callee?.id || message.callee_id)}
-              className="flex-1 p-2.5 rounded-lg bg-white hover:bg-amber-50/50 border border-[#E2E0D9] hover:border-amber-300 text-center cursor-pointer transition group shadow-sm"
-              title="Click to Trace Callee"
-            >
+            <div className="flex-1 p-2.5 rounded-lg bg-white border border-[#E2E0D9] text-center shadow-xs">
               <div className="flex items-center justify-between text-[9px] text-[#526078] mb-1">
                 <span>CALLEE</span>
-                <Compass className="w-2.5 h-2.5 text-[#687184] group-hover:text-emerald-700" />
               </div>
-              <div className="flex items-center justify-center gap-1.5 text-[#19243B] group-hover:text-emerald-800 font-semibold truncate">
+              <div className="flex items-center justify-center gap-1.5 text-[#19243B] font-semibold truncate">
                 {CalleeIcon && <CalleeIcon className="w-3 h-3 text-emerald-600 shrink-0" />}
                 <span className="truncate text-xs">{callee?.name || message.callee_id}</span>
               </div>

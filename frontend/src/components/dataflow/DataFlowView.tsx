@@ -8,7 +8,6 @@ import { getDataFlowLayoutedElements } from './layout';
 import { api } from '../../api/client';
 import type { DataPipeline } from '../../types';
 import { Loader2 } from 'lucide-react';
-import { useTrace } from '../../store/useTraceStore';
 
 interface DataFlowViewProps {
   repositoryId: number;
@@ -31,7 +30,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   onViewChange,
   onOpenSource,
 }) => {
-  const { setViewNodes, selectTraceNode, openWhy } = useTrace();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -79,18 +77,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     return pipelines.find((p) => p.id === selectedPipelineId) || pipelines[0] || null;
   }, [pipelines, selectedPipelineId]);
 
-  useEffect(() => {
-    if (activePipeline?.nodes) {
-      setViewNodes(
-        activePipeline.nodes.map((n) => ({
-          id: n.id,
-          name: n.name,
-          type: n.data_classification,
-          layer: 'data',
-        }))
-      );
-    }
-  }, [activePipeline, setViewNodes]);
 
   useEffect(() => {
     if (!isPlaying || !activePipeline || !activePipeline.nodes.length) return;
@@ -283,16 +269,13 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNodeId((prev) => (prev === node.id ? null : node.id));
-      selectTraceNode(node.id);
     },
-    [selectTraceNode]
+    []
   );
 
   const handleEdgeClick = useCallback(
-    (_: React.MouseEvent, edge: Edge) => {
-      openWhy({ edgeId: edge.id, source: edge.source, target: edge.target });
-    },
-    [openWhy]
+    (_: React.MouseEvent, _edge: Edge) => {},
+    []
   );
 
   const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {

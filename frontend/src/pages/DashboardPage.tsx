@@ -328,7 +328,7 @@ export const DashboardPage: React.FC = () => {
                         <button
                           onClick={() => {
                             setSelectedRepo(repo);
-                            navigate(`/repository/${repo.id}`);
+                            navigate(`/repository/${repo.id}/architecture`);
                           }}
                           className="font-bold text-sm sm:text-base text-[#19243B] hover:text-amber-700 transition truncate text-left cursor-pointer"
                         >
@@ -436,7 +436,7 @@ export const DashboardPage: React.FC = () => {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={(newId) => {
-            navigate(`/repository/${newId}`);
+            navigate(`/repository/${newId}/architecture`);
           }}
         />
       )}
