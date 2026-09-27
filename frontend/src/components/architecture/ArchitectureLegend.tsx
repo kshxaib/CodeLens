@@ -1,20 +1,20 @@
 import React from 'react';
-import { ARCHIFY_SEMANTICS, type ArchifySemanticKind } from './constants';
+import { ARCHITECTURE_SEMANTICS, type ArchitectureSemanticKind } from './constants';
 import type { ArchKGNode } from '../../types';
 
-interface ArchifyLegendProps {
+export interface ArchitectureLegendProps {
   nodes: ArchKGNode[];
   activeCategory: string; // 'all' or semantic kind
   onSelectCategory: (category: string) => void;
 }
 
-export const ArchifyLegend: React.FC<ArchifyLegendProps> = ({
+export const ArchitectureLegend: React.FC<ArchitectureLegendProps> = ({
   nodes,
   activeCategory,
   onSelectCategory,
 }) => {
   // Count nodes per semantic kind
-  const counts: Record<ArchifySemanticKind, number> = {
+  const counts: Record<ArchitectureSemanticKind, number> = {
     backend: 0,
     database: 0,
     cloud: 0,
@@ -43,7 +43,7 @@ export const ArchifyLegend: React.FC<ArchifyLegendProps> = ({
     }
   });
 
-  const categories: ArchifySemanticKind[] = [
+  const categories: ArchitectureSemanticKind[] = [
     'backend',
     'database',
     'cloud',
@@ -72,7 +72,7 @@ export const ArchifyLegend: React.FC<ArchifyLegendProps> = ({
       {categories.map((cat) => {
         const count = counts[cat];
         if (count === 0) return null;
-        const cfg = ARCHIFY_SEMANTICS[cat];
+        const cfg = ARCHITECTURE_SEMANTICS[cat];
         const isActive = activeCategory === cat;
 
         return (

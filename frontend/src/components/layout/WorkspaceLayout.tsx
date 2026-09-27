@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, FolderGit2, GitBranch, KeyRound, LayoutDashboard, LogOut, MessageCircle, Network, UserRound, UserRoundCog } from 'lucide-react';
+import { FolderGit2, GitBranch, LayoutDashboard, LogOut, MessageCircle, Network, UserRoundCog } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
@@ -13,7 +13,6 @@ interface WorkspaceLayoutProps {
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) => {
   const { user } = useAuthStore();
   const { repositories, selectedRepo } = useWorkspaceStore();
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
@@ -21,8 +20,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
   const location = useLocation();
   const navigate = useNavigate();
-
-  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const activeRepo = selectedRepo || repositories[0] || null;
 
@@ -44,14 +41,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
   }, []);
@@ -142,86 +132,31 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
             );
           })}
         </nav>
-      </aside>
 
-      <header className="bg-white/95 backdrop-blur-md text-[#19243B] flex sticky z-30 top-0 pl-20 pr-6 items-center h-16 border-b border-[#E2E0D9]">
-        <div className="flex ml-auto items-center relative" ref={profileMenuRef}>
+        <div className="p-2 border-t border-[#E2E0D9] shrink-0">
           <button
             type="button"
-            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-amber-500/40 transition cursor-pointer focus:outline-none"
-            aria-label="User menu"
+            onClick={() => setIsLogoutModalOpen(true)}
+            title={!isSidebarHovered ? 'Log Out' : undefined}
+            className="w-full rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors font-medium cursor-pointer"
           >
-            <div className="font-medium rounded-full bg-[#F0EEE9] text-[#19243B] text-sm flex justify-center items-center size-9 border border-[#E2E0D9] overflow-hidden">
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
-              ) : (
-                <UserRound className="size-4 text-amber-600" />
-              )}
+            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+              <LogOut className="size-4.5 text-rose-500" />
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-[#687184] transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+            <span
+              className={`truncate whitespace-nowrap transition-all duration-300 origin-left ${
+                isSidebarHovered
+                  ? 'opacity-100 max-w-[180px] translate-x-0'
+                  : 'opacity-0 max-w-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
+              Log Out
+            </span>
           </button>
-
-          {isProfileMenuOpen && (
-            <div className="absolute right-0 top-12 w-64 rounded-2xl bg-white border border-[#E2E0D9] shadow-xl p-2 z-50 animate-fadeIn">
-              <div className="p-3 border-b border-[#E2E0D9]">
-                <div className="flex items-center gap-3">
-                  {user?.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.username} className="size-9 rounded-full border border-amber-500/30 object-cover" />
-                  ) : (
-                    <div className="size-9 rounded-full bg-amber-500/15 text-amber-700 flex items-center justify-center font-bold text-sm">
-                      {(user?.username || 'U').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-[#19243B] truncate">{user?.username || 'Developer'}</p>
-                    <p className="text-[11px] text-[#526078] truncate">{user?.email || 'GitHub User'}</p>
-                  </div>
-                </div>
-
-                <div className="mt-2.5 pt-2 border-t border-[#F0EEE9] flex items-center justify-between">
-                  <span className="text-[10px] text-[#526078] flex items-center gap-1">
-                    <KeyRound className="w-3 h-3 text-amber-600" />
-                    OpenAI Key:
-                  </span>
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-medium ${
-                    user?.has_openai_key || user?.has_gemini_key
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    {user?.has_openai_key || user?.has_gemini_key ? 'Configured ✓' : 'Required ⚠'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="py-1 space-y-0.5">
-                <Link
-                  to="/profile"
-                  onClick={() => setIsProfileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition font-medium"
-                >
-                  <UserRoundCog className="w-4 h-4 text-[#687184]" />
-                  <span>Profile & Settings</span>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsProfileMenuOpen(false);
-                    setIsLogoutModalOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition font-medium cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Log Out</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
-      </header>
+      </aside>
 
-      <main className="ml-16 pt-6 px-6 pb-10 min-h-[calc(100vh-4rem)] bg-[#F8F7F4]">
+      <main className="ml-16 pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4]">
         <div className="mx-auto flex flex-col gap-6 max-w-[1600px]">
           {children}
         </div>

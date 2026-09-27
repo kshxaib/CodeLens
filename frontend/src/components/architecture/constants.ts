@@ -81,10 +81,10 @@ export const ARCH_TIERS: Record<string, TierConfig> = {
   },
 };
 
-export type ArchifySemanticKind = 'backend' | 'database' | 'cloud' | 'security' | 'messagebus' | 'external';
+export type ArchitectureSemanticKind = 'backend' | 'database' | 'cloud' | 'security' | 'messagebus' | 'external';
 
-export interface ArchifySemanticConfig {
-  kind: ArchifySemanticKind;
+export interface ArchitectureSemanticConfig {
+  kind: ArchitectureSemanticKind;
   label: string;
   fill: string;
   stroke: string;
@@ -97,7 +97,7 @@ export interface ArchifySemanticConfig {
   badgeText: string;
 }
 
-export const ARCHIFY_SEMANTICS: Record<ArchifySemanticKind, ArchifySemanticConfig> = {
+export const ARCHITECTURE_SEMANTICS: Record<ArchitectureSemanticKind, ArchitectureSemanticConfig> = {
   backend: {
     kind: 'backend',
     label: 'Backend',
@@ -178,11 +178,11 @@ export const ARCHIFY_SEMANTICS: Record<ArchifySemanticKind, ArchifySemanticConfi
   },
 };
 
-export const getArchifySemantic = (
+export const getArchitectureSemantic = (
   type?: string,
   layer?: string,
   name?: string
-): ArchifySemanticConfig => {
+): ArchitectureSemanticConfig => {
   const t = (type || '').toLowerCase();
   const l = (layer || '').toLowerCase();
   const n = (name || '').toLowerCase();
@@ -195,7 +195,7 @@ export const getArchifySemantic = (
     n.includes('security') ||
     n.includes('firewall')
   ) {
-    return ARCHIFY_SEMANTICS.security;
+    return ARCHITECTURE_SEMANTICS.security;
   }
 
   if (
@@ -209,7 +209,7 @@ export const getArchifySemantic = (
     n.includes('rabbit') ||
     n.includes('celery')
   ) {
-    return ARCHIFY_SEMANTICS.messagebus;
+    return ARCHITECTURE_SEMANTICS.messagebus;
   }
 
   if (
@@ -224,7 +224,7 @@ export const getArchifySemantic = (
     n.includes('db') ||
     n.includes('table')
   ) {
-    return ARCHIFY_SEMANTICS.database;
+    return ARCHITECTURE_SEMANTICS.database;
   }
 
   if (
@@ -237,7 +237,7 @@ export const getArchifySemantic = (
     n.includes('alb') ||
     n.includes('gateway')
   ) {
-    return ARCHIFY_SEMANTICS.cloud;
+    return ARCHITECTURE_SEMANTICS.cloud;
   }
 
   if (
@@ -249,13 +249,13 @@ export const getArchifySemantic = (
     n.includes('client') ||
     n.includes('page')
   ) {
-    return ARCHIFY_SEMANTICS.external;
+    return ARCHITECTURE_SEMANTICS.external;
   }
 
-  return ARCHIFY_SEMANTICS.backend;
+  return ARCHITECTURE_SEMANTICS.backend;
 };
 
-export const ARCHIFY_ARCHETYPES = [
+export const ARCHITECTURE_ARCHETYPES = [
   {
     code: 'T·01',
     id: 'architecture',

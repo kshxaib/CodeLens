@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { CheckCircle2, Sparkles } from 'lucide-react';
-import { getArchifySemantic, type ArchifySemanticKind } from './constants';
+import { getArchitectureSemantic, type ArchitectureSemanticKind } from './constants';
 import type { ArchKGNode } from '../../types';
 
 interface NodeProps {
@@ -19,8 +19,8 @@ interface NodeProps {
   selected?: boolean;
 }
 
-// Crisp Archify Semantic Sigils (matching archify SVG sigil specs)
-const renderSemanticSigil = (kind: ArchifySemanticKind, color: string) => {
+// Crisp Semantic Sigils (SVG icons)
+const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
   switch (kind) {
     case 'backend':
       // Code brackets <>
@@ -123,7 +123,7 @@ const renderSemanticSigil = (kind: ArchifySemanticKind, color: string) => {
 };
 
 export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) => {
-  const semantic = getArchifySemantic(data.type, data.layer, data.name);
+  const semantic = getArchitectureSemantic(data.type, data.layer, data.name);
 
   let ringClass = '';
   if (data.isPathActiveStep) {
@@ -143,7 +143,7 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
   const opacityClass = data.isDimmed ? 'opacity-20 grayscale pointer-events-none' : 'opacity-100';
   const isDeterministic = data.confidence_level === 'deterministic' || data.confidence >= 0.99;
 
-  // Build context subtitle like Archify (e.g. "FastAPI :8000", "primary :5432", "cache :6379")
+  // Build context subtitle (e.g. "FastAPI :8000", "primary :5432", "cache :6379")
   const primaryName = data.display_name || data.name || 'Component';
   let sublabel = data.type ? data.type.replace(/_/g, ' ') : semantic.label;
   if (data.source_files && data.source_files.length > 0) {

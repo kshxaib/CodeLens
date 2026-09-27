@@ -17,8 +17,8 @@ import { ArchitectureToolbar } from '../components/architecture/ArchitectureTool
 import { CanvasSidebar } from '../components/architecture/CanvasSidebar';
 import { CanvasStatusBar } from '../components/architecture/CanvasStatusBar';
 import { getLayoutedElements } from '../components/architecture/layout';
-import { ARCH_TIERS, getNodeTier, getArchifySemantic } from '../components/architecture/constants';
-import { ArchifyLegend } from '../components/architecture/ArchifyLegend';
+import { ARCH_TIERS, getNodeTier, getArchitectureSemantic } from '../components/architecture/constants';
+import { ArchitectureLegend } from '../components/architecture/ArchitectureLegend';
 import { CodeViewerModal } from '../components/code/CodeViewerModal';
 import { WorkflowView } from '../components/workflow/WorkflowView';
 import { DataFlowView } from '../components/dataflow/DataFlowView';
@@ -211,7 +211,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       if (selectedTier !== 'all' && tierKey !== selectedTier) return false;
 
       if (legendCategory !== 'all') {
-        const semantic = getArchifySemantic(n.type, n.layer, n.name);
+        const semantic = getArchitectureSemantic(n.type, n.layer, n.name);
         if (semantic.kind !== legendCategory) return false;
       }
 
@@ -685,9 +685,9 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                     />
                   </ReactFlow>
 
-                  {/* Archify Interactive Legend Strip */}
+                  {/* Interactive Legend Strip */}
                   <div className="absolute bottom-10 left-4 z-20 pointer-events-auto">
-                    <ArchifyLegend
+                    <ArchitectureLegend
                       nodes={kgData?.nodes || []}
                       activeCategory={legendCategory}
                       onSelectCategory={setLegendCategory}
