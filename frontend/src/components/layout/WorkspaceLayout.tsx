@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FolderGit2, GitBranch, LayoutDashboard, LogOut, MessageCircle, Network, UserRoundCog } from 'lucide-react';
-import { useAuthStore } from '../../store/useAuthStore';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 import { AddRepositoryModal } from '../repositories/AddRepositoryModal';
 import { LogoutConfirmModal } from '../common/LogoutConfirmModal';
@@ -11,7 +10,6 @@ interface WorkspaceLayoutProps {
 }
 
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) => {
-  const { user } = useAuthStore();
   const { repositories, selectedRepo } = useWorkspaceStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);

@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
 import { AddRepositoryModal } from '../components/repositories/AddRepositoryModal';
 import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
+import { ReindexConfirmModal } from '../components/common/ReindexConfirmModal';
 import { EmptyState } from '../components/common/EmptyState';
 import type { RepositoryItem } from '../types';
 
@@ -17,6 +18,7 @@ export const RepositoriesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [reindexTargetRepo, setReindexTargetRepo] = useState<RepositoryItem | null>(null);
   const [indexingId, setIndexingId] = useState<number | null>(null);
   const navigate = useNavigate();
 
@@ -50,16 +52,23 @@ export const RepositoriesPage: React.FC = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleIndexClick = async (e: React.MouseEvent, repoId: number) => {
+  const handleIndexClick = (e: React.MouseEvent, repo: RepositoryItem) => {
     e.stopPropagation();
     e.preventDefault();
     if (!hasKey) {
       setIsKeyModalOpen(true);
       return;
     }
+    setReindexTargetRepo(repo);
+  };
+
+  const handleConfirmReindex = async () => {
+    if (!reindexTargetRepo) return;
+    const repoId = reindexTargetRepo.id;
     try {
       setIndexingId(repoId);
       await triggerIndexing(repoId);
+      setReindexTargetRepo(null);
     } catch (err) {
       console.error('Indexing trigger failed', err);
     } finally {
@@ -70,7 +79,7 @@ export const RepositoriesPage: React.FC = () => {
   const getStatusBadge = (status: RepositoryItem['index_status'], isLocalIndexing: boolean) => {
     if (isLocalIndexing || status === 'indexing') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[#FEF7EC] text-amber-800 border border-amber-200 shrink-0">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[#FEF7EC] text-amber-800 border border-amber-200 shrink-0">
           <Loader2 className="size-3 animate-spin text-amber-600" />
           Indexing...
         </span>
@@ -78,22 +87,22 @@ export const RepositoriesPage: React.FC = () => {
     }
     if (status === 'indexed') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-          <span className="rounded-full bg-emerald-600 size-1.5" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[#FAF9F5] text-[#19243B] border border-[#E2E0D9] shrink-0">
+          <span className="rounded-full bg-emerald-500 size-1.5" />
           Indexed
         </span>
       );
     }
     if (status === 'failed') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-rose-50 text-rose-800 border border-rose-200 shrink-0">
           <span className="rounded-full bg-rose-500 size-1.5" />
           Failed
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-[#F0EEE9] text-[#526078] border border-[#E2E0D9] shrink-0">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[#F0EEE9] text-[#526078] border border-[#E2E0D9] shrink-0">
         <span className="rounded-full bg-[#687184] size-1.5" />
         Not Indexed
       </span>
@@ -245,7 +254,7 @@ export const RepositoriesPage: React.FC = () => {
                       <MessageSquare className="size-3.5" />
                     </Link>
                     <button
-                      onClick={(e) => handleIndexClick(e, repo.id)}
+                      onClick={(e) => handleIndexClick(e, repo)}
                       disabled={isLocalIndexing || repo.index_status === 'indexing'}
                       title="Re-Index Repository"
                       className="p-1.5 rounded-md text-[#687184] hover:text-[#19243B] hover:bg-[#FAF9F5] transition disabled:opacity-40 cursor-pointer"
@@ -284,6 +293,14 @@ export const RepositoriesPage: React.FC = () => {
           }}
         />
       )}
+
+      <ReindexConfirmModal
+        isOpen={Boolean(reindexTargetRepo)}
+        onClose={() => setReindexTargetRepo(null)}
+        onConfirm={handleConfirmReindex}
+        repoName={reindexTargetRepo?.full_name || reindexTargetRepo?.name}
+        isIndexing={indexingId === reindexTargetRepo?.id}
+      />
     </WorkspaceLayout>
   );
 };

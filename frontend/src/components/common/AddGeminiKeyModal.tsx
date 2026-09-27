@@ -119,7 +119,7 @@ export const AddGeminiKeyModal: React.FC<AddGeminiKeyModalProps> = ({
             <button
               type="submit"
               disabled={submitting || !apiKeyInput.trim()}
-              className="inline-flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 bg-[#111419] hover:bg-[#23272f] text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {submitting ? (
                 <>

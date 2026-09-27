@@ -187,15 +187,15 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
         </button>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#FAF9F5] border border-[#E2E0D9] flex items-center justify-center text-[#19243B] shrink-0">
             {stage === 'completed' ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             ) : stage === 'error' ? (
               <AlertCircle className="w-5 h-5 text-rose-600" />
             ) : stage === 'indexing' ? (
-              <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+              <Loader2 className="w-5 h-5 text-[#19243B] animate-spin" />
             ) : (
-              <FolderGit2 className="w-5 h-5 text-amber-700" />
+              <FolderGit2 className="w-5 h-5 text-[#19243B]" />
             )}
           </div>
           <div>
@@ -225,7 +225,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsKeyModalOpen(true)}
-                  className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold rounded-lg transition cursor-pointer shadow-sm"
+                  className="px-2.5 py-1 bg-[#111419] hover:bg-[#23272f] text-white text-[11px] font-semibold rounded-lg transition cursor-pointer shadow-xs"
                 >
                   Add Key
                 </button>
@@ -252,7 +252,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                     onChange={(e) => setRepoUrl(e.target.value)}
                     placeholder="https://github.com/owner/repository"
                     autoFocus
-                    className="w-full bg-[#F8F7F4] border border-[#E2E0D9] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#19243B] placeholder-[#687184] font-mono outline-none transition"
+                    className="w-full bg-[#F8F7F4] border border-[#E2E0D9] focus:border-[#19243B] focus:ring-1 focus:ring-[#19243B] rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#19243B] placeholder-[#687184] font-mono outline-none transition"
                   />
                   <GithubIcon className="w-4 h-4 text-[#687184] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 </div>
@@ -272,9 +272,9 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
                 <button
                   type="submit"
                   disabled={!repoUrl.trim()}
-                  className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-[#111419] hover:bg-[#23272f] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 text-amber-400" />
                   <span>Connect & Index</span>
                 </button>
               </div>
@@ -393,10 +393,10 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenRepository}
-                className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#111419] hover:bg-[#23272f] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer"
               >
                 <span>Explore Repository</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-amber-400" />
               </button>
             </div>
           </div>
@@ -423,9 +423,9 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
               <button
                 type="button"
                 onClick={handleReset}
-                className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#111419] hover:bg-[#23272f] text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4 text-amber-400" />
                 <span>Try Again</span>
               </button>
             </div>
