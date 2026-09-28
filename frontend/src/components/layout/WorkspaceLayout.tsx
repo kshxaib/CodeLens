@@ -21,38 +21,57 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
   const { repositories, selectedRepo } = useWorkspaceStore();
   const { user } = useAuthStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
 
   const activeRepo = selectedRepo || repositories[0] || null;
   const isArchitectureRoute = location.pathname.includes('/architecture');
+  const isChatRoute = location.pathname.startsWith('/chat');
   const searchParams = new URLSearchParams(location.search);
   const currentSubView = searchParams.get('view') || 'architecture';
   const [isViewsExpanded, setIsViewsExpanded] = useState(true);
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#19243B]">
-      <aside className="bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 w-64 flex flex-col shadow-[0_4px_30px_rgba(25,36,59,0.08)]">
+      {/* Auto Hover Sidebar */}
+      <aside
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`bg-white border-r border-[#E2E0D9] fixed z-40 top-0 bottom-0 left-0 flex flex-col transition-all duration-300 ease-in-out ${
+          isHovered
+            ? 'w-72 shadow-[0_8px_38px_rgba(25,36,59,0.18)]'
+            : 'w-16 shadow-[0_2px_10px_rgba(25,36,59,0.04)]'
+        }`}
+      >
         {/* Header Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-[#E2E0D9] shrink-0">
+        <div className="h-16 flex items-center px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/dashboard"
-            className="flex items-center group cursor-pointer"
+            className="flex items-center gap-2.5 group cursor-pointer"
             title="CodeLens Dashboard"
           >
-            <span className="font-bold text-base tracking-tight text-[#19243B] font-mono">
+            <div className="w-8 h-8 rounded-xl bg-[#111419] flex items-center justify-center text-white font-mono font-bold text-xs shadow-xs shrink-0">
+              CL
+            </div>
+            <span
+              className={`font-bold text-base tracking-tight text-[#19243B] font-mono whitespace-nowrap transition-all duration-200 ${
+                isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
               CodeLens
             </span>
           </Link>
         </div>
 
         {/* Primary Navigation */}
-        <nav aria-label="Primary navigation" className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1.5 overflow-y-auto overflow-x-hidden">
           {/* Dashboard Item */}
           <Link
             to="/dashboard"
-            className={`rounded-xl text-xs sm:text-sm flex py-2.5 px-2.5 items-center gap-3 transition-colors font-medium relative group/item ${
+            title={!isHovered ? 'Dashboard' : undefined}
+            className={`rounded-xl text-xs sm:text-sm flex py-2 px-2 items-center gap-2.5 transition-colors font-medium relative group/item ${
               location.pathname === '/dashboard'
                 ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
                 : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
@@ -62,7 +81,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
             )}
 
-            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+            <div className="w-8 h-7 flex items-center justify-center shrink-0">
               <LayoutDashboard
                 className={`size-4.5 transition-colors ${
                   location.pathname === '/dashboard' ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
@@ -70,7 +89,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               />
             </div>
 
-            <span className="whitespace-nowrap">
+            <span
+              className={`whitespace-nowrap transition-all duration-200 ${
+                isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
               Dashboard
             </span>
           </Link>
@@ -78,19 +101,24 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
           {/* Views Collapsible Group */}
           <div>
             <div
-              className={`rounded-xl text-xs sm:text-sm flex py-2 px-2.5 items-center justify-between transition-colors font-medium relative group/item cursor-pointer select-none ${
+              title={!isHovered ? 'Views' : undefined}
+              className={`rounded-xl text-xs sm:text-sm flex py-2 px-2 items-center justify-between transition-colors font-medium relative group/item cursor-pointer select-none ${
                 isArchitectureRoute
                   ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
                   : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
               }`}
-              onClick={() => setIsViewsExpanded((prev) => !prev)}
+              onClick={() => {
+                if (isHovered) {
+                  setIsViewsExpanded((prev) => !prev);
+                }
+              }}
             >
               {isArchitectureRoute && (
                 <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
               )}
 
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-7 h-7 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-7 flex items-center justify-center shrink-0">
                   <Layers
                     className={`size-4.5 transition-colors ${
                       isArchitectureRoute ? 'text-amber-600' : 'text-[#687184] group-hover/item:text-[#19243B]'
@@ -98,31 +126,37 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                   />
                 </div>
 
-                <span className="whitespace-nowrap">
+                <span
+                  className={`whitespace-nowrap transition-all duration-200 ${
+                    isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
+                  }`}
+                >
                   Views
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsViewsExpanded((prev) => !prev);
-                }}
-                className="p-1 rounded-md text-[#687184] hover:text-[#19243B] transition cursor-pointer"
-                title={isViewsExpanded ? 'Collapse views' : 'Expand views'}
-              >
-                {isViewsExpanded ? (
-                  <ChevronUp className="size-3.5" />
-                ) : (
-                  <ChevronDown className="size-3.5" />
-                )}
-              </button>
+              {isHovered && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsViewsExpanded((prev) => !prev);
+                  }}
+                  className="p-1 rounded-md text-[#687184] hover:text-[#19243B] transition cursor-pointer"
+                  title={isViewsExpanded ? 'Collapse views' : 'Expand views'}
+                >
+                  {isViewsExpanded ? (
+                    <ChevronUp className="size-3.5" />
+                  ) : (
+                    <ChevronDown className="size-3.5" />
+                  )}
+                </button>
+              )}
             </div>
 
-            {/* Tree Branch Sub-Items (Image 2 style) */}
-            {isViewsExpanded && (
-              <div className="ml-5 pl-3.5 my-1.5 relative border-l border-[#E2E0D9] space-y-1">
+            {/* Tree Branch Sub-Items */}
+            {isHovered && isViewsExpanded && (
+              <div className="ml-4 pl-3 my-1.5 relative border-l border-[#E2E0D9] space-y-1 transition-all duration-200">
                 {ARCHITECTURE_VIEWS.map((sub) => {
                   const isSubActive = isArchitectureRoute && currentSubView === sub.id;
                   const targetPath = sub.id === 'architecture'
@@ -132,7 +166,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                   return (
                     <div key={sub.id} className="relative group/tree">
                       {/* Branch connector curve from vertical tree line to item */}
-                      <div className="absolute -left-[15px] top-[14px] w-3 h-2.5 border-b border-l border-[#E2E0D9] rounded-bl-md pointer-events-none group-hover/tree:border-[#19243B]/40 transition-colors" />
+                      <div className="absolute -left-[13px] top-[14px] w-2.5 h-2.5 border-b border-l border-[#E2E0D9] rounded-bl-md pointer-events-none group-hover/tree:border-[#19243B]/40 transition-colors" />
 
                       <Link
                         to={targetPath}
@@ -142,9 +176,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
                             : 'text-[#526078] hover:text-[#19243B] hover:bg-[#FAF9F5]'
                         }`}
                       >
-                        <span className="truncate">{sub.label}</span>
+                        <span className="whitespace-nowrap font-medium">{sub.label}</span>
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold shrink-0 ml-2 ${
                             isSubActive
                               ? 'bg-[#111419] text-white'
                               : 'bg-[#F0EEE9] text-[#687184]'
@@ -162,10 +196,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
         </nav>
 
         {/* Bottom Profile & Settings Link */}
-        <div className="p-3 border-t border-[#E2E0D9] shrink-0">
+        <div className="p-2 border-t border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/profile"
-            className={`w-full rounded-xl text-xs sm:text-sm flex py-2 px-2.5 items-center gap-3 transition-colors font-medium cursor-pointer relative group/profile ${
+            title={!isHovered ? (user?.username ? `@${user.username}` : 'Profile') : undefined}
+            className={`w-full rounded-xl text-xs sm:text-sm flex py-2 px-2 items-center gap-2.5 transition-colors font-medium cursor-pointer relative group/profile ${
               location.pathname === '/profile'
                 ? 'bg-[#FEF7EC] text-[#B45309] font-semibold border border-amber-200/80 shadow-xs'
                 : 'text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9]'
@@ -175,7 +210,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               <div className="absolute left-0 top-2 bottom-2 w-1 bg-amber-500 rounded-r" />
             )}
 
-            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+            <div className="w-8 h-7 flex items-center justify-center shrink-0">
               {user?.avatar_url ? (
                 <img
                   src={user.avatar_url}
@@ -189,7 +224,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               )}
             </div>
 
-            <div className="flex flex-col min-w-0">
+            <div
+              className={`flex flex-col min-w-0 transition-all duration-200 ${
+                isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
+              }`}
+            >
               <span className="text-xs font-semibold text-[#19243B] truncate leading-tight">
                 {user?.username ? `@${user.username}` : 'Profile'}
               </span>
@@ -203,14 +242,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
       <main
         className={
-          isArchitectureRoute
-            ? 'p-2.5 h-screen flex flex-col bg-[#F8F7F4] ml-64 overflow-hidden'
-            : 'pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4] ml-64'
+          isArchitectureRoute || isChatRoute
+            ? 'p-2.5 sm:p-3 h-screen flex flex-col bg-[#F8F7F4] ml-16 overflow-hidden'
+            : 'pt-5 px-6 pb-10 min-h-screen bg-[#F8F7F4] ml-16'
         }
       >
         <div
           className={
-            isArchitectureRoute
+            isArchitectureRoute || isChatRoute
               ? 'flex-1 min-h-0 w-full flex flex-col'
               : 'mx-auto flex flex-col gap-6 max-w-[1600px]'
           }

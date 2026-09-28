@@ -102,7 +102,7 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ conten
             <em className="italic text-[#526078]">{children}</em>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-amber-500 pl-3.5 py-1 my-2.5 text-[#526078] italic bg-[#FEF7EC] rounded-r">
+            <blockquote className="border-l-2 border-orange-500 pl-3.5 py-1 my-2.5 text-[#526078] italic bg-orange-50/60 rounded-r">
               {children}
             </blockquote>
           ),
@@ -139,7 +139,7 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ conten
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-700 hover:text-amber-800 underline underline-offset-2 transition font-medium"
+              className="text-orange-600 hover:text-orange-700 underline underline-offset-2 transition font-medium"
             >
               {children}
             </a>
@@ -151,7 +151,7 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({ conten
             if (isInline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded-md bg-[#F0EEE9] text-[#B45309] font-mono text-[12px] border border-[#E2E0D9]"
+                  className="px-1.5 py-0.5 rounded-md bg-[#F0EEE9] text-orange-800 font-mono text-[12px] border border-[#E2E0D9]"
                   {...props}
                 >
                   {children}

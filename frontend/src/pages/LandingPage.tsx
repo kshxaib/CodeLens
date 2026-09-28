@@ -888,6 +888,125 @@ export const LandingPage: React.FC = () => {
 
         </div>
 
+        {/* ══════════ SECTION 5 — PRE-FOOTER CTA ══════════ */}
+        <div
+          style={{
+            marginTop: 72,
+            marginBottom: 20,
+            borderRadius: 20,
+            background: 'linear-gradient(135deg, #111419 0%, #1a1e26 100%)',
+            color: '#fff',
+            padding: '48px 44px',
+            position: 'relative',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,.08)',
+            boxShadow: '0 20px 50px rgba(17,20,25,.18)',
+          }}
+        >
+          {/* Subtle background glow */}
+          <div
+            style={{
+              position: 'absolute',
+              top: -80,
+              right: -80,
+              width: 320,
+              height: 320,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(225,74,14,0.18) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center', position: 'relative', zIndex: 2 }}>
+            <div style={{ maxWidth: 640 }}>
+              <h2
+                style={{
+                  fontFamily: 'Georgia,"Times New Roman",serif',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: 38,
+                  lineHeight: 1.15,
+                  letterSpacing: '-.02em',
+                  margin: '0 0 14px',
+                  color: '#fff',
+                }}
+              >
+                Ready to map and reason about your architecture?
+              </h2>
+              <p style={{ fontSize: 14.5, color: '#9ca3af', lineHeight: 1.65, margin: 0 }}>
+                Connect any GitHub repository or paste a public repo link. CodeLens parses call graphs,
+                detects cross-file state transitions, and creates 5 interactive living views in seconds.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 220 }}>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: '13px 24px',
+                    borderRadius: 10,
+                    background: '#e14a0e',
+                    color: '#fff',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: '0 6px 20px rgba(225,74,14,.35)',
+                    transition: 'all .15s ease',
+                  }}
+                >
+                  Go to Dashboard <ArrowRight style={{ width: 16, height: 16 }} />
+                </Link>
+              ) : (
+                <button
+                  onClick={handleAuthAction}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: '13px 24px',
+                    borderRadius: 10,
+                    background: '#e14a0e',
+                    color: '#fff',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 6px 20px rgba(225,74,14,.35)',
+                    transition: 'all .15s ease',
+                  }}
+                >
+                  <GithubIcon style={{ width: 16, height: 16 }} /> Connect GitHub
+                </button>
+              )}
+              <Link
+                to="/architecture"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '12px 20px',
+                  borderRadius: 10,
+                  background: 'rgba(255,255,255,.08)',
+                  border: '1px solid rgba(255,255,255,.15)',
+                  color: '#fff',
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                <Layers style={{ width: 14, height: 14, color: '#e14a0e' }} /> Explore 5 Views
+              </Link>
+            </div>
+          </div>
+        </div>
+
       </main>
     </div>
   );
