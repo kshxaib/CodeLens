@@ -5,7 +5,7 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 import httpx
 from sqlalchemy import text
-from app.core.config import PROJECT_NAME, ENVIRONMENT, QDRANT_URL
+from app.core.config import PROJECT_NAME, ENVIRONMENT, QDRANT_URL, QDRANT_API_KEY
 from app.db.session import engine
 
 router = APIRouter(prefix="/health", tags=["Health Checks"])
@@ -43,8 +43,9 @@ async def health_check():
 
     try:
         qdrant_start = time.perf_counter()
+        headers = {"api-key": QDRANT_API_KEY} if QDRANT_API_KEY else {}
         async with httpx.AsyncClient(timeout=3.0) as client:
-            resp = await client.get(f"{QDRANT_URL}/healthz")
+            resp = await client.get(f"{QDRANT_URL}/healthz", headers=headers)
             if resp.status_code == 200:
                 qdrant_latency = round((time.perf_counter() - qdrant_start) * 1000, 2)
                 qdrant_status = {"status": "connected", "engine": "Qdrant", "latency_ms": qdrant_latency}

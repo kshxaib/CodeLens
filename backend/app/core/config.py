@@ -21,6 +21,7 @@ API_V1_STR: str = os.getenv("API_V1_STR", "/api")
 
 DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/codelens")
 QDRANT_URL: str = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY", "")
 
 ENCRYPTION_SECRET_KEY: str = os.getenv("ENCRYPTION_SECRET_KEY", "")
 

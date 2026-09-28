@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
-from app.core.config import QDRANT_URL
+from app.core.config import QDRANT_URL, QDRANT_API_KEY
 from app.services.chunker import CodeChunk
 from app.rag.embeddings import EMBEDDING_DIMENSION
 
@@ -14,7 +14,12 @@ _client: Optional[QdrantClient] = None
 def get_qdrant_client() -> QdrantClient:
     global _client
     if _client is None:
-        _client = QdrantClient(url=QDRANT_URL, timeout=10.0, check_compatibility=False)
+        _client = QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY or None,
+            timeout=10.0,
+            check_compatibility=False,
+        )
     return _client
 
 def ensure_collection_exists() -> bool:
