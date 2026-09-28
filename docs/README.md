@@ -63,9 +63,9 @@ FRONTEND SPA (React 19 + Vite 8 + TailwindCSS v4 + Zustand v5)
   │      ├── [View 3: Sequence View]        ──► Participant lifelines & chronological messages
   │      ├── [View 4: Data Flow View]       ──► DTO schemas, data sanitization & DB persistence
   │      └── [View 5: Lifecycle View]       ──► Entity FSM state machines & transition triggers
-  ├── 2. Floating Trace & Refactoring Dock (Dijkstra/A* Pathfinder + Blast Radius Simulator)
+  ├── 2. Slide-over Inspector & Blast Radius Simulator (BFS Traversal + Risk Scoring)
   ├── 3. In-App Source Code Inspector (Syntax highlighted with precise line jump highlighting)
-  └── 4. Grounded RAG Copilot (Real-time SSE token stream + clickable file citations)
+  └── 4. Grounded RAG Copilot (Real-time SSE token stream + ThoughtLine reasoning UI)
   │
   ▼
 BACKEND API (FastAPI + Python 3.11+ ASGI)
@@ -85,6 +85,7 @@ PERSISTENCE LAYER
 
 ## 🔗 Related Resources
 
+- **🌐 Live Production Website:** [https://codelens.kshoeb.in](https://codelens.kshoeb.in)
 - **Main Repository README:** [`../README.md`](../README.md)
 - **Live Local Backend Docs:** `http://127.0.0.1:8000/docs`
 - **Frontend Dev URL:** `http://localhost:5173`

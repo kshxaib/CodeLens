@@ -48,7 +48,8 @@ frontend/src/
 │   ├── auth/
 │   │   └── AuthModal.tsx            # GitHub OAuth login trigger modal
 │   ├── chat/
-│   │   └── ChatMessageMarkdown.tsx  # Markdown renderer with syntax highlighted code blocks & citations
+│   │   ├── ChatMessageMarkdown.tsx  # Markdown renderer with syntax highlighted code blocks & citations
+│   │   └── ThoughtLine.tsx          # Organic breathing reasoning indicator with live timer, step badges & auto-settle
 │   ├── code/
 │   │   └── CodeViewerModal.tsx      # Modal displaying repository source files with line highlighting
 │   ├── common/
@@ -75,12 +76,6 @@ frontend/src/
 │   │   ├── SequenceParticipantHeader.tsx # Top participant header lifeline bar
 │   │   ├── SequenceToolbar.tsx      # Sequence view zoom & message filter controls
 │   │   └── SequenceView.tsx         # Chronological interaction sequence diagram canvas
-│   ├── trace/                       # Trace, Evidence & Impact System
-│   │   ├── ChangeImpactModal.tsx    # Blast radius refactoring simulation modal
-│   │   ├── EvidencePanel.tsx        # Verbatim AST snippet viewer with line ranges
-│   │   ├── ExplainModal.tsx         # AI component explanation dialog
-│   │   ├── TracePanel.tsx           # Floating bottom dock with BFS/A* pathfinder
-│   │   └── WhyModal.tsx             # "Why Relationship" AST proof dialog
 │   ├── ui/                          # Atomic UI Components (Buttons, Badges, Inputs, Dialogs)
 │   └── workflow/                    # Workflow View Engine
 │       ├── WorkflowEdge.tsx         # Step progression edge
@@ -94,11 +89,9 @@ frontend/src/
 │   ├── DashboardPage.tsx            # Repository overview & indexing status dashboard
 │   ├── LandingPage.tsx              # Public hero page with 3D canvas preview
 │   ├── ProfileSettingsPage.tsx      # OpenAI BYOK key management page
-│   ├── RepositoriesPage.tsx         # GitHub repository import & listing page
-│   └── RepositoryOverviewPage.tsx   # Individual repository detail & metrics page
+│   └── RepositoriesPage.tsx         # GitHub repository import & listing page
 ├── store/                           # Zustand Global State Stores
 │   ├── useAuthStore.ts              # Session, JWT token & user profile
-│   ├── useTraceStore.tsx            # Selected nodes, trace path, evidence modal states
 │   └── useWorkspaceStore.ts         # Active repository, indexing status & repo list
 ├── types/                           # TypeScript Interfaces & API Types
 ├── App.tsx                          # App router & global modal provider
@@ -127,7 +120,7 @@ The core visualization engine utilizes ReactFlow v12 ([`@xyflow/react`](https://
 │ │  Filters)    │    - Background Dot Grid             │  component)  │ │
 │ │              │                                      │              │ │
 │ ├──────────────┴──────────────────────────────────────┴──────────────┤ │
-│ │  Floating TracePanel Dock (A* Pathfinder, Blast Radius, Evidence)  │ │
+│ │  ArchitectureLegend & Filter Controls (Layer Badges & Visibility)  │ │
 │ ├────────────────────────────────────────────────────────────────────┤ │
 │ │  CanvasStatusBar (Node / Edge Count, Layout Algorithm, Status)     │ │
 │ └────────────────────────────────────────────────────────────────────┘ │
@@ -162,10 +155,10 @@ CodeLens uses 3 specialized, atomic Zustand stores:
 - Manages the user's accessible repository list (`repositories`).
 - Polls indexing progress when a repository is actively running the 5-step pipeline.
 
-### 4.3 `useTraceStore` ([`frontend/src/store/useTraceStore.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/store/useTraceStore.tsx))
-- Tracks highlighted nodes and edges during pathfinding operations.
-- Stores active blast radius results and calculated upstream/downstream trees.
-- Controls visibility of modal overlays: `WhyModal`, `ExplainModal`, `ChangeImpactModal`, `EvidencePanel`, and `CodeViewerModal`.
+### 4.3 Canvas & Inspector State Management ([`frontend/src/pages/ArchitectureMapPage.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/pages/ArchitectureMapPage.tsx))
+- Coordinates active node and edge selections across all 5 architectural views.
+- Powers the slide-over inspector drawer with real-time AST evidence, symbol definitions, and blast radius impact.
+- Manages [`CodeViewerModal.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/code/CodeViewerModal.tsx) for 1-click line-level source code inspection.
 
 ---
 

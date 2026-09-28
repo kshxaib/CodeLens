@@ -129,21 +129,24 @@ CodeLens extracts 5 views from the repository AST. Each view satisfies a distinc
 
 ### 3.1 View 1: System Architecture View
 
-- **Purpose:** Macro-level overview of the entire repository structure.
+- **Purpose:** Macro-level overview of the entire repository structure and clean-architecture layer hierarchy.
 - **Extractor:** [`backend/app/parser/knowledge_graph.py`](file:///d:/Shoaib/CodeLens/backend/app/parser/knowledge_graph.py)
+- **Frontend Components:** [`ArchitectureNode.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/architecture/ArchitectureNode.tsx), [`ArchitectureEdge.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/architecture/ArchitectureEdge.tsx), [`ArchitectureToolbar.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/architecture/ArchitectureToolbar.tsx), [`ArchitectureInspector.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/architecture/ArchitectureInspector.tsx)
 - **Visual Structure:**
   - Nodes represent components, API routers, database models, and external services.
   - Nodes are styled with layer-specific badge colors (Blue for API Gateway, Emerald for Services, Amber for Domain, Purple for Infrastructure).
   - Graph layout is computed using the **Dagre** hierarchical tree algorithm (`TB` top-to-bottom or `LR` left-to-right).
 - **Key Interactivity:**
-  - Double-click any node to open the in-app code inspector.
+  - Double-click any node to open the in-app code inspector with exact line jumping.
   - Hover on edges to see the relationship type pill and confidence rating.
   - Click any edge to reveal the verbatim AST code snippet backing that link.
+  - 1-Click Canvas Export as Retina PNG (2x), Scalable Vector Graphics (SVG), or Knowledge Graph JSON.
 
 ### 3.2 View 2: Workflow View
 
 - **Purpose:** Visualize transaction execution paths, API request lifecycles, and failure branches.
 - **Extractor:** [`backend/app/parser/workflow_extractor.py`](file:///d:/Shoaib/CodeLens/backend/app/parser/workflow_extractor.py)
+- **Frontend Components:** [`WorkflowView.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/workflow/WorkflowView.tsx), [`WorkflowNode.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/workflow/WorkflowNode.tsx), [`WorkflowEdge.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/workflow/WorkflowEdge.tsx), [`WorkflowInspector.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/workflow/WorkflowInspector.tsx)
 - **Visual Structure:**
   - Identifies top-level execution triggers (e.g., `POST /repositories/{id}/index`, `loginUser`, `checkoutCart`).
   - Follows call chains through services, intermediate helper functions, and database writes.
@@ -154,29 +157,50 @@ CodeLens extracts 5 views from the repository AST. Each view satisfies a distinc
 
 - **Purpose:** Understand chronological message ordering between system actors and subsystems.
 - **Extractor:** [`backend/app/parser/sequence_extractor.py`](file:///d:/Shoaib/CodeLens/backend/app/parser/sequence_extractor.py)
+- **Frontend Components:** [`SequenceView.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/sequence/SequenceView.tsx), [`SequenceParticipantHeader.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/sequence/SequenceParticipantHeader.tsx), [`SequenceMessageRow.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/sequence/SequenceMessageRow.tsx), [`SequenceInspector.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/sequence/SequenceInspector.tsx)
 - **Visual Structure:**
   - Horizontal participant header displaying system actors: `Client / Frontend`, `API Gateway`, `Core Service`, `Database / Cache`, `External Cloud`.
   - Vertical lifelines with dashed drop lines.
   - Chronological message rows with call arrows, parameter names, and return values.
   - Distinguishes synchronous calls (`solid arrow`) from asynchronous events (`dashed arrow`).
+- **Key Interactivity:**
+  - **Interactive Playback Simulation:** Step-by-step playback controls (Play, Pause, Step Next, Step Back) with active animated caller-callee message highlighting.
+  - **Message Deep Inspection:** Click any message row to inspect parameter payloads, return types, and jump directly to source code.
 
 ### 3.4 View 4: Data Flow View
 
 - **Purpose:** Trace the transformation of data from inbound request payloads to storage.
 - **Extractor:** [`backend/app/parser/data_flow_extractor.py`](file:///d:/Shoaib/CodeLens/backend/app/parser/data_flow_extractor.py)
+- **Frontend Components:** [`DataFlowView.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/dataflow/DataFlowView.tsx), [`DataFlowNode.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/dataflow/DataFlowNode.tsx), [`DataFlowEdge.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/dataflow/DataFlowEdge.tsx), [`DataFlowInspector.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/dataflow/DataFlowInspector.tsx)
 - **Visual Structure:**
   - Traces schema input DTOs (e.g., Pydantic models, TypeScript interfaces).
   - Highlights data sanitization, hashing (e.g., bcrypt password hashing), and encryption steps (AES-256).
   - Shows database column persistence and final outbound HTTP JSON response schemas.
+- **Key Interactivity:**
+  - Data Classification Badges (`Confidential`, `PII`, `Financial`, `Public`).
+  - Source-to-Sink lineage tracing with schema validation details.
 
 ### 3.5 View 5: Lifecycle View
 
 - **Purpose:** Model domain entity state transitions, status fields, and event handlers.
 - **Extractor:** [`backend/app/parser/lifecycle_extractor.py`](file:///d:/Shoaib/CodeLens/backend/app/parser/lifecycle_extractor.py)
+- **Frontend Components:** [`LifecycleView.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/lifecycle/LifecycleView.tsx), [`LifecycleStateNode.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/lifecycle/LifecycleStateNode.tsx), [`LifecycleTransitionEdge.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/lifecycle/LifecycleTransitionEdge.tsx), [`LifecycleInspector.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/lifecycle/LifecycleInspector.tsx)
 - **Visual Structure:**
   - Detects state enums or string status columns (e.g., `not_indexed` $\to$ `indexing` $\to$ `indexed` / `failed`).
   - Renders finite-state machine (FSM) diagrams with initial state nodes, intermediate state bubbles, and terminal state rings.
   - Annotates transition edges with the triggering method and guard conditions.
+
+---
+
+### 3.6 The 5 Views Comparison Matrix
+
+| View | Target Persona | Question Answered | Core Visual Element | Layout Algorithm |
+|---|---|---|---|---|
+| **1. System Architecture** | Tech Leads & Architects | *"What are the system tiers and how do modules connect?"* | Layered cards, typed relationship badges | Hierarchical Dagre (TB/LR) |
+| **2. Workflow View** | Full-Stack Engineers | *"What happens step-by-step when an endpoint is invoked?"* | Ordered transaction steps, decision diamonds | Sequential Flow |
+| **3. Sequence View** | Backend & Integration Devs | *"What is the chronological call order across services?"* | Actor lifelines, sync/async message arrows | UML Sequence Grid + Playback |
+| **4. Data Flow View** | Security & Data Engineers | *"How is user data transformed, sanitized, and stored?"* | DTO nodes, cryptographic pipelines, DB sinks | Source-to-Sink Lineage |
+| **5. Lifecycle View** | Product & Domain Engineers | *"What states can a business entity exist in and what triggers changes?"* | FSM state bubbles, transition arrows, terminal states | State Machine Layout |
 
 ---
 

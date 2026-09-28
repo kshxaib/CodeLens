@@ -1,8 +1,10 @@
 # 08. Setup, Installation & Production Deployment
 
-> **Document Type:** DevOps & Deployment Runbook  
+> **Document Type:** DevOps & Production Deployment Runbook  
 > **Target Version:** 1.0.0  
-> **Status:** Active & Implemented  
+> **Status:** Active & Implemented in Production  
+> **Live Production URL:** [https://codelens.kshoeb.in](https://codelens.kshoeb.in)  
+> **Last Audited:** September 2026  
 
 ---
 
@@ -12,12 +14,12 @@ Before installing CodeLens, ensure your workstation or server environment meets 
 
 | Component | Minimum Version | Recommended | Notes |
 |---|---|---|---|
-| **Python** | 3.11 | 3.12+ | Required for backend FastAPI & Tree-Sitter |
+| **Python** | 3.11 | 3.12+ (tested up to 3.14) | Required for backend FastAPI, Tree-Sitter & psycopg |
 | **Node.js** | 18.0.0 | 20.x LTS | Required for frontend Vite build |
-| **PostgreSQL**| 14.0 | 16.x | SQLite supported for local dev |
-| **Qdrant** | 1.8.0 | 1.11+ | Qdrant Cloud or local Docker |
-| **Git** | 2.30+ | Latest | Required for repo cloning |
-| **GitHub App**| N/A | OAuth App | Client ID & Secret for login |
+| **PostgreSQL**| 14.0 | 16.x (Neon / Supabase / Render) | Managed cloud PostgreSQL recommended |
+| **Qdrant** | 1.8.0 | 1.11+ / Qdrant Cloud | Free 1GB forever cluster supported |
+| **Git** | 2.30+ | Latest | Required for repository cloning and AST indexing |
+| **GitHub OAuth App**| N/A | Developer OAuth App | Client ID & Secret for user authentication |
 
 ---
 
@@ -42,7 +44,7 @@ pip install -r requirements.txt
 
 # 4. Create and configure environment variables
 cp .env.example .env
-# Edit .env with your credentials (see section 4 below)
+# Fill in your database URL, Qdrant URL, and GitHub OAuth keys (see Section 4)
 
 # 5. Start the FastAPI development server
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
@@ -76,7 +78,7 @@ The React 19 application will boot at:
 
 ## 3. Docker Compose Orchestration (Alternative)
 
-To spin up the full stack (FastAPI backend + PostgreSQL 16 + Qdrant Vector Store) with a single command:
+To spin up the full local stack (FastAPI backend + PostgreSQL 16 + Qdrant Vector Store) with a single command:
 
 ```bash
 # From workspace root:
@@ -87,79 +89,176 @@ docker-compose up --build
 
 ## 4. Environment Variables Reference
 
-### Backend Configuration (`backend/.env`)
+### Backend Configuration (`backend/.env` & Root `.env`)
 
 ```ini
 # Application
-APP_NAME=CodeLens
-DEBUG=True
-ENVIRONMENT=development
+PROJECT_NAME=CodeLens
+ENVIRONMENT=production
+API_V1_STR=/api
 
 # Database Configuration (PostgreSQL 16 recommended)
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/codelens
-# Or SQLite local fallback:
-# DATABASE_URL=sqlite:///./codelens.db
+# Supports Neon, Supabase, Render, or local PostgreSQL (auto-normalizes postgres:// to postgresql://)
+DATABASE_URL=postgresql://user:password@ep-xyz.neon.tech/codelens?sslmode=require
 
-# Security & Session
-SECRET_KEY=generate_a_secure_random_64_char_key_here
-ALGORITHM=HS256
+# Qdrant Vector Store (Local Docker or Qdrant Cloud)
+QDRANT_URL=https://xyz-your-cluster.qdrant.tech:6333
+QDRANT_API_KEY=your_qdrant_cloud_api_key_here
+
+# Security & BYOK Encryption (Fernet 32-byte Base64 key)
+# Generate via: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ENCRYPTION_SECRET_KEY=your_fernet_secret_key_here
+
+# JWT Authentication
+JWT_SECRET_KEY=generate_a_secure_random_64_char_key_here
+JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 
 # GitHub OAuth2 Application Credentials
 GITHUB_CLIENT_ID=your_github_oauth_client_id
 GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
-FRONTEND_URL=http://localhost:5173
 
-# Qdrant Vector Store
-QDRANT_HOST=http://localhost:6333
-# Or Qdrant Cloud:
-# QDRANT_HOST=https://your-cluster-url.qdrant.tech
-# QDRANT_API_KEY=your_qdrant_api_key
+# Frontend & Cross-Origin Resource Sharing (CORS)
+FRONTEND_URL=https://codelens.kshoeb.in
+BACKEND_CORS_ORIGINS=["https://codelens.kshoeb.in","http://localhost:5173","http://127.0.0.1:5173"]
 
-# OpenAI API Key (Fallback key for public demo queries)
-OPENAI_API_KEY=sk-proj-your_openai_api_key_here
+# Optional Server-Side Fallback AI API Keys
+GEMINI_API_KEY=your_gemini_api_key_optional
+OPENAI_API_KEY=your_openai_api_key_optional
 ```
 
 ### Frontend Configuration (`frontend/.env`)
 
 ```ini
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=https://<your-render-backend-url>.onrender.com/api
 ```
 
 ---
 
-## 5. Production Deployment Guide
+## 5. Complete Production Deployment Architecture
 
-### 5.1 Backend Deployment (Render / Railway / AWS ECS)
-1. **Dockerfile:** Use the included multi-stage [`backend/Dockerfile`](file:///d:/Shoaib/CodeLens/backend/Dockerfile).
-2. **Build Command:** `pip install -r requirements.txt`
-3. **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. **Health Probe:** Configure HTTP health check at `/api/health`.
+```
+[User Browser]
+       │
+       ▼
+ [GoDaddy DNS] (CNAME: codelens.kshoeb.in ──► cname.vercel-dns.com)
+       │
+       ▼
+[Vercel Frontend] (React 19 + Vite 8 SPA with vercel.json rewrite rules)
+       │
+       │ API Requests (VITE_API_URL)
+       ▼
+[Render Backend] (FastAPI ASGI Web Service on Linux / Python 3.14)
+       ├── [PostgreSQL] (Neon Serverless Postgres / Render Postgres)
+       ├── [Qdrant Cloud] (Free 1GB Cluster for dense vector embeddings)
+       └── [UptimeRobot] (Pings /api/health every 5 minutes to prevent sleep)
+```
 
-### 5.2 Frontend Deployment (Vercel / Cloudflare Pages)
-1. **Root Directory:** `frontend`
-2. **Framework Preset:** `Vite`
-3. **Build Command:** `npm run build`
-4. **Output Directory:** `dist`
-5. **Environment Variable:** `VITE_API_URL=https://api.yourdomain.com/api`
+---
 
-### 5.3 Managed Databases
-- **PostgreSQL:** Provision on [Neon](https://neon.tech) or [Supabase](https://supabase.com).
-- **Vector DB:** Provision a free cluster on [Qdrant Cloud](https://cloud.qdrant.io).
+### 5.1 Backend Deployment (Render Free Web Service)
+
+1. Sign up on [Render.com](https://render.com) and click **New +** -> **Web Service**.
+2. Connect your GitHub repository (`CodeLens`).
+3. Configure the service settings:
+   - **Name:** `codelens-backend`
+   - **Region:** Singapore / Frankfurt
+   - **Branch:** `main`
+   - **Root Directory:** `backend`
+   - **Runtime:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type:** `Free`
+4. Add all environment variables from Section 4 into Render's **Environment** tab.
+5. Click **Deploy Web Service**. Render will install dependencies and start the uvicorn ASGI server.
+
+---
+
+### 5.2 UptimeRobot Keep-Alive Setup (24/7 Availability)
+
+Render free tier instances sleep after 15 minutes of inactivity. To keep the instance awake and eliminate cold starts:
+1. Create a free account on [UptimeRobot.com](https://uptimerobot.com).
+2. Click **Add New Monitor**:
+   - **Monitor Type:** `HTTP(s)`
+   - **Friendly Name:** `CodeLens Backend Keep-Alive`
+   - **URL (or IP):** `https://<your-render-backend>.onrender.com/api/health`
+   - **Monitoring Interval:** `Every 5 minutes`
+3. Save monitor. UptimeRobot will ping `/api/health` continuously, keeping the backend always warm and responsive.
+
+---
+
+### 5.3 Frontend Deployment (Vercel)
+
+1. Sign up on [Vercel.com](https://vercel.com) and click **Add New...** -> **Project**.
+2. Import your GitHub repository (`CodeLens`).
+3. Configure project build settings:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install`
+4. Add environment variable:
+   - `VITE_API_URL`: `https://<your-render-backend>.onrender.com/api`
+5. Note: Single Page App (SPA) deep linking is handled by [`frontend/vercel.json`](file:///d:/Shoaib/CodeLens/frontend/vercel.json):
+   ```json
+   {
+     "rewrites": [
+       { "source": "/(.*)", "destination": "/" }
+     ]
+   }
+   ```
+   This ensures deep URLs like `/dashboard` and `/chat` do not throw 404 errors on page reload.
+6. Click **Deploy**.
+
+---
+
+### 5.4 Custom Domain Setup on GoDaddy (`codelens.kshoeb.in`)
+
+#### In Vercel:
+1. Navigate to **Project Settings** -> **Domains**.
+2. Enter `codelens.kshoeb.in` and click **Add**.
+3. Note the provided CNAME target (`cname.vercel-dns.com` or project-specific hash).
+
+#### In GoDaddy:
+1. Log into GoDaddy -> **Domain Portfolio** -> Select `kshoeb.in` -> **Manage DNS**.
+2. Add a new DNS record:
+   - **Type:** `CNAME`
+   - **Name:** `codelens`
+   - **Data (Target):** `cname.vercel-dns.com` (or Vercel-provided target)
+   - **TTL:** `1/2 Hour` (or Default)
+3. Save record. SSL certificate is automatically provisioned by Vercel within minutes.
+
+---
+
+### 5.5 GitHub OAuth App Production Setup
+
+1. In GitHub, go to **Settings** -> **Developer Settings** -> **OAuth Apps** -> Open your `CodeLens` app.
+2. Update the URLs:
+   - **Homepage URL:** `https://codelens.kshoeb.in`
+   - **Authorization callback URL:** `https://codelens.kshoeb.in/`
+3. Add `http://localhost:5173/` as an additional redirect URI for local development if supported.
+4. Save Changes.
 
 ---
 
 ## 6. Verification & Health Probes
 
-Verify the deployed environment using the built-in microsecond health endpoints:
+CodeLens includes microsecond-latency instrumentation for database, vector store, and server metrics:
 
 ```bash
 # 1. Full Stack Health Probe
-curl -i http://localhost:8000/api/health
+curl -i https://<your-backend>.onrender.com/api/health
 
-# 2. Database Connection Probe
-curl -i http://localhost:8000/api/health/db
+# Response sample:
+# {
+#   "status": "healthy",
+#   "service": "CodeLens",
+#   "database": { "status": "connected", "engine": "PostgreSQL", "latency_ms": 145.41 },
+#   "vector_db": { "status": "connected", "engine": "Qdrant", "latency_ms": 871.97 },
+#   "hit_count": 42,
+#   "last_hit_at": "2026-09-29 01:34:13 AM"
+# }
 
-# 3. Qdrant Vector DB Probe
-curl -i http://localhost:8000/api/health/qdrant
+# 2. Interactive OpenAPI Documentation
+# https://<your-backend>.onrender.com/docs
 ```

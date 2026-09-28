@@ -2,7 +2,9 @@
 
 > **Document Type:** AI Copilot & Grounded RAG Specification  
 > **Target Version:** 1.0.0  
-> **Status:** Active & Implemented  
+> **Status:** Active & Implemented in Production  
+> **Live Production URL:** [https://codelens.kshoeb.in/chat](https://codelens.kshoeb.in/chat)  
+> **Last Audited:** September 2026  
 
 ---
 
@@ -12,9 +14,9 @@ Standard LLM chat assistants frequently hallucinate when asked about proprietary
 
 **CodeLens eliminates hallucinations using a 4-Stage Grounded Retrieval-Augmented Generation (RAG) pipeline:**
 1. **AST-Aware Symbol Chunking:** Code is partitioned along semantic AST boundaries (functions, classes, schemas) rather than arbitrary character splits.
-2. **Dense Semantic Retrieval:** Retrieves the top matching code chunks from Qdrant vector database filtered strictly to the active repository.
+2. **Dense Semantic Retrieval:** Retrieves the top matching code chunks from Qdrant vector database filtered strictly to the active repository tenant (`repository_id`).
 3. **Architectural System Prompt:** Enforces strict line-level file citations (`[filename#L10-L25]`).
-4. **Real-Time SSE Streaming:** Streams tokens back to the developer with immediate source citation payload events.
+4. **Real-Time SSE Streaming with ThoughtLine UI:** Streams tokens back to the developer with immediate source citation payload events and interactive live reasoning visualization.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -23,8 +25,8 @@ Standard LLM chat assistants frequently hallucinate when asked about proprietary
 │ 1. Developer Prompt ──────► "How does OAuth token exchange work?"     │
 │ 2. Dense Vector Search ───► OpenAI text-embedding-3-small in Qdrant    │
 │ 3. Context Grounding ─────► Top 5 AST-aware Code Chunks + AKG Context  │
-│ 4. GPT-4o Inference ──────► System Prompt enforcing verbatim citations│
-│ 5. SSE Event Stream ──────► Emits 'sources' event then token stream    │
+│ 4. ThoughtLine Stream ────► Emits SSE reasoning stages & status tokens │
+│ 5. GPT-4o Inference ──────► System Prompt enforcing verbatim citations│
 │ 6. Interactive Citations ─► Clicking citation opens in-app code modal  │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -58,36 +60,41 @@ Rules for Grounded Codebase Answers:
    cite the exact file path and line numbers using the format: `[filepath#Lstart-Lend]`.
 3. ARCHITECTURAL PERSPECTIVE: Explain which architectural layer the component belongs to
    (e.g., Presentation, API Gateway, Application Service, Domain Model, Infrastructure).
-4. VERBATIM ACCURACY: When suggesting code changes, preserve existing types and imports.
+4. VERIFIABLE EVIDENCE: Provide verbatim code evidence snippets where appropriate.
 ```
 
 ---
 
-## 4. Real-Time Server-Sent Events (SSE) Streaming
+## 4. Real-Time SSE Token Streaming & ThoughtLine UI
 
-CodeLens streams answers token-by-token to provide sub-second time-to-first-token (TTFT):
+CodeLens streams completions using standard Server-Sent Events (SSE) from `POST /api/chats/stream`.
 
-```
-Client                                  FastAPI (api/chats.py)                     OpenAI / Qdrant
-  │                                                │                                       │
-  ├─── POST /api/repositories/{id}/chats/stream ──►│                                       │
-  │    (with user question)                        ├─── Query Embedding & Vector Search ──►│
-  │                                                │◄── Top K Code Chunks + Metadata ──────┘
-  │                                                │
-  │◄── SSE: {"event": "sources", "sources": [...]} │ (Emitted immediately so UI shows citations)
-  │                                                │
-  │◄── SSE: {"event": "chunk", "text": "In "} ─────┤ (Streaming tokens from GPT-4o)
-  │◄── SSE: {"event": "chunk", "text": "CodeLens"}─┤
-  │◄── SSE: {"event": "chunk", "text": ", ..."} ───┤
-  │                                                │
-  │◄── SSE: {"event": "done", "message_id": 42} ───┤ (Stream completed and persisted in DB)
-```
+### 4.1 SSE Protocol Message Types
+
+During code reasoning, the backend emits structured JSON event objects:
+
+| Event Type | Payload Format | Description |
+|---|---|---|
+| `status` | `{"type": "status", "message": "Searching repository vectors..."}` | Progress update displayed in ThoughtLine |
+| `sources` | `{"type": "sources", "sources": [...]}` | Verifiable code chunks retrieved from Qdrant |
+| `token` | `{"type": "token", "token": "The"}` | Next generated text token from the LLM |
+| `error` | `{"type": "error", "message": "Error details"}` | Graceful streaming error handler |
+| `[DONE]` | Plain string `[DONE]` | Signals stream completion |
+
+### 4.2 ThoughtLine Live Reasoning Component (`ThoughtLine.tsx`)
+
+The chat interface features an interactive reasoning indicator:
+- **Breathing Glyph Animation:** Smooth organic oscillation while the agent is searching vector indices and AST symbol tables.
+- **Live Elapsed Timer:** Measures exact thought duration in seconds.
+- **Dynamic Step Badges:** Shows cumulative steps taken (`"Searching vectors"`, `"Grounding AST context"`, `"Synthesizing architecture answer"`).
+- **Auto-Settle & Collapse:** Automatically collapses on stream completion with a clean summary badge (`"Thought for 2.4s"`).
+- **Interactive Inspection:** Users can click the settled badge to expand and inspect the thought history and source context anytime.
 
 ---
 
-## 5. Frontend Interactive Citation Jumping
+## 5. Conversational Workspace UX
 
-When a developer reads an answer in the chat interface ([`frontend/src/pages/CodeLensChatPage.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/pages/CodeLensChatPage.tsx)):
-- File citations rendered as badges (e.g. `backend/app/api/auth.py:45-60`).
-- Clicking the citation triggers [`CodeViewerModal.tsx`](file:///d:/Shoaib/CodeLens/frontend/src/components/code/CodeViewerModal.tsx).
-- The modal downloads the file content from `/api/repositories/{id}/files/{file_id}`, renders syntax-highlighted code, and scrolls to highlight the referenced line range.
+- **Collapsible Sidebar:** Auto-collapsing sidebar with hover expansion to maximize screen space for reading complex code snippets.
+- **Zero-Border Floating Prompt Bar:** Minimalist input console with multi-line auto-expand, keyboard shortcuts (`Enter` to send, `Shift+Enter` for newline).
+- **User Profile Integration:** Displays authentic GitHub avatar for user prompts and custom branded neon glyph for AI responses.
+- **Markdown & Code Highlighting:** Syntax highlighted code blocks with 1-click copy and clickable file line links.
