@@ -261,11 +261,11 @@ class SequenceExtractor:
         participants_dict: Dict[str, SequenceParticipant] = {}
 
         actor_id = "user_actor"
-        actor_name = "User / Client"
+        actor_name = "User"
         if any(w in fn_name.lower() for w in ("admin", "withdrawal", "approve", "reject")):
             actor_name = "Admin Operator"
         elif any(w in fn_name.lower() for w in ("ride", "passenger", "driver")):
-            actor_name = "Passenger / Mobile App"
+            actor_name = "Passenger"
         elif any(w in fn_name.lower() for w in ("checkout", "order", "buy", "pay")):
             actor_name = "Customer"
 
@@ -281,7 +281,7 @@ class SequenceExtractor:
         gateway_node = next((n for n in self.kg.nodes if n.type == EntityType.API_ENDPOINT), None)
         participants_dict[gateway_id] = SequenceParticipant(
             id=gateway_id,
-            name="API Gateway / Router",
+            name="API Gateway",
             participant_type=ParticipantType.API_GATEWAY,
             associated_node_id=gateway_node.id if gateway_node else None,
             description=f"Route entrypoint {http_method} {route_path}",
@@ -759,7 +759,7 @@ class SequenceExtractor:
         participants_dict: Dict[str, SequenceParticipant] = {}
 
         actor_id = "user_actor"
-        actor_name = "User / Client"
+        actor_name = "User"
         if any(w in fn_name.lower() for w in ("checkout", "order", "payment", "cart")):
             actor_name = "Customer"
         elif any(w in fn_name.lower() for w in ("ride", "passenger")):
@@ -779,7 +779,7 @@ class SequenceExtractor:
         gateway_node = next((n for n in self.kg.nodes if n.type == EntityType.API_ENDPOINT), None)
         participants_dict[gateway_id] = SequenceParticipant(
             id=gateway_id,
-            name="API Gateway / Router",
+            name="API Gateway",
             participant_type=ParticipantType.API_GATEWAY,
             associated_node_id=gateway_node.id if gateway_node else None,
             description=f"Route {http_method} {route_path}",

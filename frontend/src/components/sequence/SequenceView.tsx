@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Minus, Compass, Move } from 'lucide-react';
 import { api } from '../../api/client';
 import type { SequenceDiagram } from '../../types';
 import { SequenceToolbar } from './SequenceToolbar';
@@ -42,6 +42,12 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   const [simulationIndex, setSimulationIndex] = useState(-1);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
 
+  const [zoom, setZoom] = useState(1);
+  const isMouseDownRef = useRef(false);
+  const isUserPanningRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+  const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+
   const fetchSequences = useCallback(async () => {
     try {
       setLoading(true);
@@ -66,7 +72,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   const activeSequence = useMemo(() => {
     return sequences.find((s) => s.id === selectedSequenceId) || sequences[0] || null;
   }, [sequences, selectedSequenceId]);
-
 
   const filteredMessages = useMemo(() => {
     if (!activeSequence) return [];
@@ -124,6 +129,99 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return set;
   }, [activeExecutingMessage, selectedMessageId, filteredMessages]);
 
+  // Auto-focus and shift view to the executing step during playback or manual stepping
+  useEffect(() => {
+    if (simulationIndex < 0 || !activeExecutingMessage || !scrollAreaRef.current) return;
+    if (isUserPanningRef.current) return;
+
+    const timer = setTimeout(() => {
+      const rowEl = document.getElementById(`seq-msg-${activeExecutingMessage.id}`);
+      const container = scrollAreaRef.current;
+      if (!rowEl || !container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const rowRect = rowEl.getBoundingClientRect();
+
+      // Vertical offset: center executing message row in container
+      const currentScrollTop = container.scrollTop;
+      const rowRelativeTop = rowRect.top - containerRect.top + currentScrollTop;
+      const targetTop = rowRelativeTop - containerRect.height / 2 + rowRect.height / 2;
+
+      // Horizontal offset: center on interaction midpoint between caller and callee
+      const callerIdx = participantIndexMap.get(activeExecutingMessage.caller_id) ?? 0;
+      const calleeIdx = participantIndexMap.get(activeExecutingMessage.callee_id) ?? 0;
+      const callerX = callerIdx * COLUMN_WIDTH + COLUMN_WIDTH / 2;
+      const calleeX = calleeIdx * COLUMN_WIDTH + COLUMN_WIDTH / 2;
+      const midX = (callerX + calleeX) / 2;
+      const targetLeft = midX - containerRect.width / 2;
+
+      container.scrollTo({
+        top: Math.max(0, targetTop),
+        left: Math.max(0, targetLeft),
+        behavior: 'smooth',
+      });
+    }, 60);
+
+    return () => clearTimeout(timer);
+  }, [simulationIndex, activeExecutingMessage, participantIndexMap]);
+
+  // Canvas mouse drag-to-pan handlers
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, select, textarea, a, .message-pill, .seq-right')) {
+      return;
+    }
+
+    isMouseDownRef.current = true;
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: scrollAreaRef.current?.scrollLeft || 0,
+      scrollTop: scrollAreaRef.current?.scrollTop || 0,
+    };
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isMouseDownRef.current || !scrollAreaRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+
+    if (!isUserPanningRef.current && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+      isUserPanningRef.current = true;
+      setIsDraggingCanvas(true);
+    }
+
+    if (isUserPanningRef.current) {
+      scrollAreaRef.current.scrollLeft = dragStartRef.current.scrollLeft - dx;
+      scrollAreaRef.current.scrollTop = dragStartRef.current.scrollTop - dy;
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    isMouseDownRef.current = false;
+    if (isUserPanningRef.current) {
+      setTimeout(() => {
+        isUserPanningRef.current = false;
+        setIsDraggingCanvas(false);
+      }, 60);
+    }
+  };
+
+  useEffect(() => {
+    const onGlobalMouseUp = () => {
+      isMouseDownRef.current = false;
+      if (isUserPanningRef.current) {
+        setTimeout(() => {
+          isUserPanningRef.current = false;
+          setIsDraggingCanvas(false);
+        }, 60);
+      }
+    };
+    window.addEventListener('mouseup', onGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', onGlobalMouseUp);
+  }, []);
+
   useEffect(() => {
     if (!isPlaying || !filteredMessages.length) return;
 
@@ -169,6 +267,7 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
   const handleResetSimulator = useCallback(() => {
     setIsPlaying(false);
     setSimulationIndex(-1);
+    scrollAreaRef.current?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, []);
 
   const handleChangeSpeed = useCallback(() => {
@@ -178,6 +277,28 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
       return 0.5;
     });
   }, []);
+
+  const handleZoomIn = useCallback(() => {
+    setZoom((z) => Math.min(1.4, Number((z + 0.15).toFixed(2))));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((z) => Math.max(0.65, Number((z - 0.15).toFixed(2))));
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoom(1);
+  }, []);
+
+  const handleFitView = useCallback(() => {
+    setZoom(1);
+    const container = scrollAreaRef.current;
+    if (container) {
+      const diagramWidth = Math.max((activeSequence?.participants?.length || 0) * COLUMN_WIDTH, 800);
+      const targetLeft = Math.max(0, (diagramWidth - container.clientWidth) / 2);
+      container.scrollTo({ top: 0, left: targetLeft, behavior: 'smooth' });
+    }
+  }, [activeSequence]);
 
   const handleToggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -274,11 +395,17 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
         onExport={handleExportJSON}
+        onFitView={handleFitView}
       />
 
       <div
         ref={scrollAreaRef}
-        className="flex-1 h-full w-full overflow-auto pt-32 pb-16 px-8 relative"
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={handleCanvasMouseUp}
+        className={`flex-1 h-full w-full overflow-auto pt-32 pb-16 px-8 relative ${
+          isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
+        }`}
         style={{
           backgroundImage: 'radial-gradient(circle at 1px 1px, #D5D2CA 1.2px, transparent 0)',
           backgroundSize: '24px 24px',
@@ -288,10 +415,11 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
           style={{
             width: `${diagramTotalWidth}px`,
             minHeight: `${diagramTotalHeight}px`,
+            zoom: zoom !== 1 ? zoom : undefined,
           }}
-          className="relative mx-auto flex flex-col"
+          className="relative mx-auto flex flex-col transition-[zoom] duration-200"
         >
-          <div className="sticky top-0 z-30 pt-2 pb-4 bg-[#F8F7F4]/95 backdrop-blur-md">
+          <div className="sticky top-[108px] z-30 pt-2 pb-3 bg-[#F8F7F4]/95 backdrop-blur-md rounded-2xl">
             <SequenceParticipantHeader
               participants={activeSequence.participants}
               columnWidth={COLUMN_WIDTH}
@@ -332,6 +460,44 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Floating Canvas Navigation & Zoom Controls */}
+      <div className="absolute bottom-5 left-5 z-20 flex items-center gap-1 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-lg pointer-events-auto font-mono text-xs text-[#19243B]">
+        <button
+          onClick={handleZoomIn}
+          className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+          title="Zoom In (+)"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={handleResetZoom}
+          className="px-2 py-0.5 rounded text-[11px] font-bold text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+          title="Reset Zoom (100%)"
+        >
+          {Math.round(zoom * 100)}%
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+          title="Zoom Out (-)"
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+        <div className="w-[1px] h-4 bg-[#E2E0D9] mx-0.5" />
+        <button
+          onClick={handleFitView}
+          className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] hover:bg-[#F0EEE9] transition cursor-pointer"
+          title="Fit / Center Sequence"
+        >
+          <Compass className="w-3.5 h-3.5" />
+        </button>
+        <div className="w-[1px] h-4 bg-[#E2E0D9] mx-0.5 hidden sm:block" />
+        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[#8A94A6] px-1.5 py-0.5">
+          <Move className="w-3 h-3" />
+          <span>Drag to pan</span>
+        </span>
       </div>
 
       <div

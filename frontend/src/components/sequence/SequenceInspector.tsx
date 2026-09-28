@@ -1,13 +1,13 @@
 import React from 'react';
-import { X, ExternalLink, FileCode2, ArrowRight, Zap, AlertTriangle, ShieldCheck, Code2 } from 'lucide-react';
+import { X, FileCode2, ArrowRight, Zap, AlertTriangle, ShieldCheck, Code2 } from 'lucide-react';
 import type { SequenceMessage, SequenceParticipant } from '../../types';
-import { getInteractionConfig, getParticipantConfig } from './constants';
+import { getInteractionConfig, getParticipantConfig, cleanParticipantName } from './constants';
 
 interface SequenceInspectorProps {
   message: SequenceMessage;
   participants: SequenceParticipant[];
   onClose: () => void;
-  onOpenSource: (filePath: string, lineRange?: { start: number; end: number }) => void;
+  onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;
 }
 
 export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
@@ -71,26 +71,17 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
 
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
         {message.evidence && (
-          <button
-            onClick={() =>
-              onOpenSource(message.evidence!.file_path, {
-                start: message.evidence!.start_line,
-                end: message.evidence!.end_line,
-              })
-            }
-            className="w-full py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm group"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <FileCode2 className="w-4 h-4 text-amber-700 shrink-0" />
-              <span className="truncate text-xs">
+          <div className="w-full py-2.5 px-3.5 rounded-xl bg-[#F0EEE9] border border-[#E2E0D9] text-[#19243B] flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileCode2 className="w-4 h-4 text-[#687184] shrink-0" />
+              <span className="truncate text-xs font-mono font-semibold" title={message.evidence.file_path}>
                 {message.evidence.file_path.split(/[/\\]/).pop()}:{message.evidence.start_line}-{message.evidence.end_line}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-amber-700 group-hover:text-amber-900 shrink-0">
-              <span>Open Source</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </div>
-          </button>
+            <span className="text-[10px] font-mono text-[#526078] shrink-0 bg-white px-2 py-0.5 rounded-md border border-[#E2E0D9]">
+              Citation
+            </span>
+          </div>
         )}
 
         <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-3">
@@ -105,7 +96,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
               </div>
               <div className="flex items-center justify-center gap-1.5 text-[#19243B] font-semibold truncate">
                 {CallerIcon && <CallerIcon className="w-3 h-3 text-sky-600 shrink-0" />}
-                <span className="truncate text-xs">{caller?.name || message.caller_id}</span>
+                <span className="truncate text-xs">{cleanParticipantName(caller?.name || message.caller_id)}</span>
               </div>
             </div>
 
@@ -117,7 +108,7 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
               </div>
               <div className="flex items-center justify-center gap-1.5 text-[#19243B] font-semibold truncate">
                 {CalleeIcon && <CalleeIcon className="w-3 h-3 text-emerald-600 shrink-0" />}
-                <span className="truncate text-xs">{callee?.name || message.callee_id}</span>
+                <span className="truncate text-xs">{cleanParticipantName(callee?.name || message.callee_id)}</span>
               </div>
             </div>
           </div>
@@ -175,24 +166,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
                 </span>
               )}
             </div>
-          </div>
-        )}
-
-        {message.evidence && (
-          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold">
-                Traceable Evidence
-              </span>
-              <span className="text-[10px] text-amber-700 font-bold">
-                Lines {message.evidence.start_line}-{message.evidence.end_line}
-              </span>
-            </div>
-            {message.evidence.snippet && (
-              <div className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] overflow-x-auto text-[10px] text-[#19243B] font-mono shadow-inner">
-                <pre className="whitespace-pre-wrap">{message.evidence.snippet}</pre>
-              </div>
-            )}
           </div>
         )}
       </div>

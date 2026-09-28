@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Database, ArrowDownRight, ArrowUpRight, Sparkles, Lock, Layers, HardDrive, Paperclip, FileCode2, Box } from 'lucide-react';
-import { getDataClassificationCfg } from './constants';
+import { getDataClassificationCfg, cleanDataNodeName } from './constants';
 import type { DataClassificationType } from '../../types';
 
 interface DataFlowNodeProps {
@@ -62,22 +62,36 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
   const isCurrentExecutionStep = !!data.isCurrentExecutionStep;
   const isDimmed = !!data.isDimmed;
   const isTrans = !!data.is_transformation;
+  const displayName = cleanDataNodeName(data.name);
 
   const sourceLabel = data.evidence?.file_path
     ? `${data.evidence.file_path.split(/[/\\]/).pop()}:${data.evidence.start_line}`
     : null;
 
+  // Dynamic execution highlight matching node's classification color
+  const executionRingStyle: React.CSSProperties | undefined = isCurrentExecutionStep
+    ? {
+        boxShadow: `0 0 0 4px ${cfg.dot}60, 0 0 28px ${cfg.dot}40`,
+        borderColor: cfg.dot,
+        transform: 'scale(1.04)',
+      }
+    : undefined;
+
+  let ringClass = isTrans ? 'border-purple-300' : 'border-[#E2E0D9]';
+  if (isCurrentExecutionStep) {
+    ringClass = 'animate-pulse';
+  } else if (isSelected || isLineageActive) {
+    ringClass = 'ring-2 ring-amber-500 shadow-[0_4px_20px_rgba(217,119,6,0.2)] scale-[1.02] z-20';
+  } else {
+    ringClass += ' hover:scale-[1.01] hover:border-zinc-400 hover:shadow-lg';
+  }
+
   return (
     <div
-      className={`relative group rounded-2xl transition-all duration-300 w-[280px] select-none cursor-pointer bg-white shadow-md border ${
-        isTrans ? 'border-purple-300' : 'border-[#E2E0D9]'
-      } ${
-        isCurrentExecutionStep
-          ? 'ring-4 ring-amber-500/80 shadow-[0_0_30px_rgba(217,119,6,0.35)] scale-[1.03] z-30'
-          : isSelected || isLineageActive
-          ? 'ring-2 ring-amber-500 shadow-[0_4px_20px_rgba(217,119,6,0.2)] scale-[1.02] z-20'
-          : 'hover:scale-[1.01] hover:border-zinc-400 hover:shadow-lg'
-      } ${isDimmed ? 'opacity-25 blur-[0.4px] scale-[0.98]' : 'opacity-100'}`}
+      style={executionRingStyle}
+      className={`relative group rounded-2xl transition-all duration-300 w-[280px] select-none cursor-pointer bg-white shadow-md border ${ringClass} ${
+        isDimmed ? 'opacity-25 blur-[0.4px] scale-[0.98]' : 'opacity-100'
+      }`}
     >
       <div
         className={`relative z-10 p-3.5 rounded-2xl flex flex-col justify-between h-full ${
@@ -120,8 +134,8 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-xs font-bold font-mono text-[#19243B] truncate leading-snug group-hover:text-amber-700 transition-colors">
-              {data.name}
+            <h3 className="text-xs font-bold font-mono text-[#19243B] truncate leading-snug group-hover:text-amber-700 transition-colors" title={displayName}>
+              {displayName}
             </h3>
             <p className="text-[10px] font-mono text-[#526078] truncate mt-0.5">
               {data.description || cfg.sub}
@@ -145,12 +159,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
               </span>
             )}
           </div>
-
-          {data.fields && data.fields.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-bold">
-              {data.fields.length} {data.fields.length === 1 ? 'field' : 'fields'}
-            </span>
-          )}
         </div>
       </div>
 

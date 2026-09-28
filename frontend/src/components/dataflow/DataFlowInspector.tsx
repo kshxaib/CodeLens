@@ -1,6 +1,6 @@
 import React from 'react';
-import { X, ExternalLink, ChevronRight, FileCode2, Database, ArrowDownRight, ArrowUpRight, Tag } from 'lucide-react';
-import { getDataClassificationCfg } from './constants';
+import { X, ChevronRight, FileCode2, Database, ArrowDownRight, ArrowUpRight, Tag } from 'lucide-react';
+import { getDataClassificationCfg, cleanDataNodeName } from './constants';
 import type { DataNode, DataFlowEdge } from '../../types';
 
 interface DataFlowInspectorProps {
@@ -9,7 +9,7 @@ interface DataFlowInspectorProps {
   edges: DataFlowEdge[];
   onClose: () => void;
   onSelectNode: (nodeId: string) => void;
-  onOpenSource: (filePath: string, lineRange?: { start: number; end: number }) => void;
+  onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;
 }
 
 export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
@@ -45,7 +45,7 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
           </div>
 
           <h2 className="text-base font-bold text-[#19243B] font-mono break-all leading-tight">
-            {node.name}
+            {cleanDataNodeName(node.name)}
           </h2>
           <p className="text-[11px] font-mono text-[#526078] mt-0.5">
             Role: <span className="text-[#19243B] font-semibold">{cfg.sub}</span>
@@ -63,26 +63,17 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
 
       <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs font-mono">
         {node.evidence && (
-          <button
-            onClick={() =>
-              onOpenSource(node.evidence!.file_path, {
-                start: node.evidence!.start_line,
-                end: node.evidence!.end_line,
-              })
-            }
-            className="w-full py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm group"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <FileCode2 className="w-4 h-4 text-amber-700 shrink-0" />
-              <span className="truncate text-xs">
+          <div className="w-full py-2.5 px-3.5 rounded-xl bg-[#F0EEE9] border border-[#E2E0D9] text-[#19243B] flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileCode2 className="w-4 h-4 text-[#687184] shrink-0" />
+              <span className="truncate text-xs font-mono font-semibold" title={node.evidence.file_path}>
                 {node.evidence.file_path.split(/[/\\]/).pop()}:{node.evidence.start_line}-{node.evidence.end_line}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-amber-700 group-hover:text-amber-900 shrink-0">
-              <span>Open Source</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </div>
-          </button>
+            <span className="text-[10px] font-mono text-[#526078] shrink-0 bg-white px-2 py-0.5 rounded-md border border-[#E2E0D9]">
+              Citation
+            </span>
+          </div>
         )}
 
         {node.storage && (
@@ -107,27 +98,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
             {node.description || 'Data entity or transformation unit within this data pipeline.'}
           </p>
         </div>
-
-        {node.fields && node.fields.length > 0 && (
-          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold flex items-center gap-1">
-                <Tag className="w-3 h-3 text-amber-600" />
-                Detected Fields ({node.fields.length})
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {node.fields.map((f, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 rounded bg-white border border-[#E2E0D9] text-[#19243B] text-[10px]"
-                >
-                  {f}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="space-y-2 border-t border-[#E2E0D9] pt-4">
           <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold flex items-center gap-1.5">
@@ -196,24 +166,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
             <span className="text-[#687184] text-[10px]">Outbound terminal response</span>
           )}
         </div>
-
-        {node.evidence && (
-          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold">
-                Traceable Evidence
-              </span>
-              <span className="text-[10px] text-amber-700 font-bold">
-                Lines {node.evidence.start_line}-{node.evidence.end_line}
-              </span>
-            </div>
-            {node.evidence.snippet && (
-              <div className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] overflow-x-auto text-[10px] text-[#19243B] font-mono shadow-inner">
-                <pre className="whitespace-pre-wrap">{node.evidence.snippet}</pre>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -42,33 +42,67 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
     ? `${message.evidence.file_path.split(/[/\\]/).pop()}:${message.evidence.start_line}`
     : null;
 
+  const activeColor = message.is_error ? '#e11d48' : cfg.color;
+
   return (
     <div
+      id={`seq-msg-${message.id}`}
       onClick={() => onSelectMessage(message)}
-      style={{ height: `${rowHeight}px` }}
-      className={`relative w-full transition-all duration-200 cursor-pointer group select-none ${
+      style={{
+        height: `${rowHeight}px`,
+        backgroundColor: isActiveSimulationStep ? `${activeColor}12` : undefined,
+      }}
+      className={`relative w-full transition-all duration-300 cursor-pointer group select-none ${
         isActiveSimulationStep
-          ? 'bg-amber-500/[0.08] z-20 ring-1 ring-amber-500/40'
+          ? 'z-20'
           : isSelected
           ? 'bg-amber-500/[0.04] z-10 ring-1 ring-amber-500/30'
-          : 'hover:bg-amber-500/[0.02]'
+          : 'hover:bg-black/[0.015]'
       }`}
     >
       <div
-        style={{ left: `${callerX - 5}px`, top: '10px', height: `${rowHeight - 20}px` }}
+        style={{
+          left: `${callerX - 5}px`,
+          top: '10px',
+          height: `${rowHeight - 20}px`,
+          ...(isActiveSimulationStep
+            ? {
+                backgroundColor: activeColor,
+                borderColor: activeColor,
+                boxShadow: `0 0 10px ${activeColor}80`,
+              }
+            : isSelected
+            ? {
+                backgroundColor: '#D97706',
+                borderColor: '#B45309',
+              }
+            : {}),
+        }}
         className={`absolute w-2.5 rounded-sm transition-all z-10 ${
-          isActiveSimulationStep || isSelected
-            ? 'bg-amber-500 border border-amber-600 shadow-sm'
-            : 'bg-[#E2E0D9] border border-[#D5D2CA]'
+          !isActiveSimulationStep && !isSelected ? 'bg-[#E2E0D9] border border-[#D5D2CA]' : ''
         }`}
       />
       {!isSelf && (
         <div
-          style={{ left: `${calleeX - 5}px`, top: '10px', height: `${rowHeight - 20}px` }}
+          style={{
+            left: `${calleeX - 5}px`,
+            top: '10px',
+            height: `${rowHeight - 20}px`,
+            ...(isActiveSimulationStep
+              ? {
+                  backgroundColor: activeColor,
+                  borderColor: activeColor,
+                  boxShadow: `0 0 10px ${activeColor}80`,
+                }
+              : isSelected
+              ? {
+                  backgroundColor: '#D97706',
+                  borderColor: '#B45309',
+                }
+              : {}),
+          }}
           className={`absolute w-2.5 rounded-sm transition-all z-10 ${
-            isActiveSimulationStep || isSelected
-              ? 'bg-amber-500 border border-amber-600 shadow-sm'
-              : 'bg-[#E2E0D9] border border-[#D5D2CA]'
+            !isActiveSimulationStep && !isSelected ? 'bg-[#E2E0D9] border border-[#D5D2CA]' : ''
           }`}
         />
       )}
@@ -130,21 +164,33 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
         className="absolute z-20 flex items-center gap-1.5 pointer-events-auto"
       >
         <div
-          className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border backdrop-blur-md transition-all shadow-md ${
+          style={
             isActiveSimulationStep
-              ? 'bg-amber-50 border-amber-300 text-amber-900 ring-2 ring-amber-400/40 shadow-[0_2px_12px_rgba(217,119,6,0.2)]'
+              ? {
+                  borderColor: activeColor,
+                  boxShadow: `0 0 0 3px ${activeColor}35, 0 4px 18px ${activeColor}30`,
+                  transform: 'scale(1.04)',
+                }
+              : undefined
+          }
+          className={`message-pill flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border backdrop-blur-md transition-all shadow-md ${
+            isActiveSimulationStep
+              ? 'bg-white font-bold animate-pulse'
               : isSelected
               ? 'bg-white border-amber-500 text-[#19243B] ring-1 ring-amber-400/40 shadow-md'
               : 'bg-white/95 border-[#E2E0D9] text-[#19243B] hover:border-zinc-400 shadow-sm'
           }`}
         >
           <span
-            className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
+            style={
               isActiveSimulationStep
-                ? 'bg-amber-600 text-white'
+                ? { backgroundColor: activeColor, color: '#ffffff' }
                 : isSelected
-                ? 'bg-amber-600 text-white'
-                : 'bg-[#F0EEE9] text-[#526078]'
+                ? { backgroundColor: '#D97706', color: '#ffffff' }
+                : undefined
+            }
+            className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
+              !isActiveSimulationStep && !isSelected ? 'bg-[#F0EEE9] text-[#526078]' : ''
             }`}
           >
             {message.step_number}
@@ -193,20 +239,13 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
           )}
 
           {sourceLabel && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenSource(message.evidence!.file_path, {
-                  start: message.evidence!.start_line,
-                  end: message.evidence!.end_line,
-                });
-              }}
-              className="ml-1 inline-flex items-center gap-1 text-[9px] text-[#687184] hover:text-amber-700 transition cursor-pointer"
-              title={`View ${message.evidence?.file_path}:${message.evidence?.start_line}`}
+            <span
+              className="ml-1 inline-flex items-center gap-1 text-[9px] text-[#687184] bg-[#F0EEE9] px-1.5 py-0.5 rounded border border-[#E2E0D9]"
+              title={`Source Citation: ${message.evidence?.file_path}:${message.evidence?.start_line}`}
             >
-              <FileCode2 className="w-3 h-3" />
+              <FileCode2 className="w-3 h-3 text-[#687184]" />
               <span>{sourceLabel}</span>
-            </button>
+            </span>
           )}
         </div>
       </div>

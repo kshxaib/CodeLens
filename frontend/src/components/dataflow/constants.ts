@@ -118,3 +118,14 @@ export function getDataClassificationCfg(type: string): DataClassificationConfig
   const normalized = (type || 'request_payload').toLowerCase() as DataClassificationType;
   return DATA_CLASSIFICATION_CONFIG[normalized] || DATA_CLASSIFICATION_CONFIG.request_payload;
 }
+
+export const cleanDataNodeName = (name?: string | null): string => {
+  if (!name) return '';
+  if (name.includes(' / ')) {
+    return name.split(' / ')[0].trim();
+  }
+  if (name.includes('/')) {
+    return name.split('/')[0].trim();
+  }
+  return name;
+};

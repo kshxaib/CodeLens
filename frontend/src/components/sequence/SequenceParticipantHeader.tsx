@@ -1,6 +1,6 @@
 import React from 'react';
 import type { SequenceParticipant } from '../../types';
-import { getParticipantConfig } from './constants';
+import { getParticipantConfig, cleanParticipantName } from './constants';
 
 interface SequenceParticipantHeaderProps {
   participants: SequenceParticipant[];
@@ -21,6 +21,7 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
         const cfg = getParticipantConfig(p.participant_type);
         const Icon = cfg.icon;
         const isActive = activeParticipantIds?.has(p.id);
+        const displayName = cleanParticipantName(p.name);
 
         return (
           <div
@@ -29,10 +30,17 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
             className="flex-shrink-0 flex flex-col items-center relative"
           >
             <div
-              className={`pointer-events-auto z-20 w-[190px] p-3 rounded-2xl bg-white/95 backdrop-blur-xl border transition-all duration-300 shadow-md flex flex-col items-center text-center ${
+              style={
                 isActive
-                  ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-[0_4px_20px_rgba(217,119,6,0.15)] scale-105'
-                  : 'border-[#E2E0D9] hover:border-zinc-400'
+                  ? {
+                      borderColor: cfg.dot,
+                      boxShadow: `0 0 0 3px ${cfg.dot}35, 0 8px 24px ${cfg.dot}20`,
+                      transform: 'scale(1.04)',
+                    }
+                  : undefined
+              }
+              className={`pointer-events-auto z-20 w-[190px] p-3 rounded-2xl bg-white/95 backdrop-blur-xl border transition-all duration-300 shadow-md flex flex-col items-center text-center ${
+                !isActive ? 'border-[#E2E0D9] hover:border-zinc-400' : ''
               }`}
             >
               <div
@@ -49,8 +57,8 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
                 >
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="text-xs font-bold text-[#19243B] font-mono truncate" title={p.name}>
-                  {p.name}
+                <h3 className="text-xs font-bold text-[#19243B] font-mono truncate" title={displayName}>
+                  {displayName}
                 </h3>
               </div>
 
@@ -62,11 +70,11 @@ export const SequenceParticipantHeader: React.FC<SequenceParticipantHeaderProps>
             <div
               style={{
                 height: `${diagramHeight}px`,
-                borderColor: isActive ? '#D97706' : '#D5D2CA',
+                borderColor: isActive ? cfg.dot : '#D5D2CA',
+                opacity: isActive ? 1 : 0.8,
+                borderWidth: isActive ? '1.5px' : '1px',
               }}
-              className={`absolute top-[88px] w-0 border-l border-dashed transition-colors duration-200 z-0 ${
-                isActive ? 'border-amber-600 opacity-90' : 'border-[#D5D2CA] opacity-80'
-              }`}
+              className="absolute top-[88px] w-0 border-l border-dashed transition-all duration-200 z-0"
             />
           </div>
         );

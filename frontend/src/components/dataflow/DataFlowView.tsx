@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
+import { ReactFlow, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { DataFlowNode } from './DataFlowNode';
 import { DataFlowEdge } from './DataFlowEdge';
 import { DataFlowInspector } from './DataFlowInspector';
@@ -45,6 +45,26 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   const [classificationFilter, setClassificationFilter] = useState('all');
   const [layoutDirection, setLayoutDirection] = useState<'TB' | 'LR'>('LR');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      reactFlowInstance.fitView({
+        padding: isFullscreen ? 0.15 : 0.2,
+        minZoom: isFullscreen ? 1.15 : 0.85,
+        maxZoom: isFullscreen ? 1.4 : 1.15,
+        duration: 300,
+      });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [isFullscreen, reactFlowInstance]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [simulationIndex, setSimulationIndex] = useState(-1);
@@ -95,6 +115,34 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     return () => clearInterval(interval);
   }, [isPlaying, activePipeline]);
 
+  // Auto-focus and shift view to the executing node during playback
+  useEffect(() => {
+    if (!isPlaying || simulationIndex < 0 || !activePipeline?.nodes?.length) return;
+
+    const activeNode = activePipeline.nodes[simulationIndex];
+    if (!activeNode) return;
+
+    const timer = setTimeout(() => {
+      const targetNode = nodes.find((n) => n.id === activeNode.id);
+      if (targetNode) {
+        const nodeWidth = targetNode.measured?.width || (targetNode as any).width || 280;
+        const nodeHeight = targetNode.measured?.height || (targetNode as any).height || 110;
+        const centerX = targetNode.position.x + nodeWidth / 2;
+        const centerY = targetNode.position.y + nodeHeight / 2;
+
+        const currentZoom = reactFlowInstance.getZoom();
+        const targetZoom = Math.max(currentZoom, isFullscreen ? 1.15 : 0.95);
+
+        reactFlowInstance.setCenter(centerX, centerY, {
+          zoom: targetZoom,
+          duration: 500,
+        });
+      }
+    }, 60);
+
+    return () => clearTimeout(timer);
+  }, [isPlaying, simulationIndex, activePipeline, nodes, isFullscreen, reactFlowInstance]);
+
   const handleTogglePlay = useCallback(() => {
     if (!activePipeline || !activePipeline.nodes.length) return;
     if (isPlaying) {
@@ -110,7 +158,13 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   const handleResetSimulator = useCallback(() => {
     setIsPlaying(false);
     setSimulationIndex(-1);
-  }, []);
+    reactFlowInstance.fitView({
+      padding: isFullscreen ? 0.15 : 0.2,
+      minZoom: isFullscreen ? 1.15 : 0.85,
+      maxZoom: isFullscreen ? 1.4 : 1.15,
+      duration: 400,
+    });
+  }, [isFullscreen, reactFlowInstance]);
 
   const { upstreamIds, downstreamIds } = useMemo(() => {
     if (!selectedNodeId || !activePipeline) {
@@ -258,13 +312,20 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   ]);
 
   useEffect(() => {
+    // Don't re-fitView during simulation playback — let the auto-center effect handle camera
+    if (isPlaying || simulationIndex >= 0) return;
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
-        reactFlowInstance.fitView({ padding: 0.15, duration: 400 });
+        reactFlowInstance.fitView({
+          padding: isFullscreen ? 0.15 : 0.2,
+          minZoom: isFullscreen ? 1.15 : 0.85,
+          maxZoom: isFullscreen ? 1.4 : 1.15,
+          duration: 400,
+        });
       }, 80);
       return () => clearTimeout(timer);
     }
-  }, [activePipeline?.id, layoutDirection, reactFlowInstance]);
+  }, [nodes.length, activePipeline?.id, layoutDirection, isFullscreen, reactFlowInstance, isPlaying, simulationIndex]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -291,8 +352,13 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   }, []);
 
   const handleFitView = useCallback(() => {
-    reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
-  }, [reactFlowInstance]);
+    reactFlowInstance.fitView({
+      padding: isFullscreen ? 0.15 : 0.2,
+      minZoom: isFullscreen ? 1.15 : 0.85,
+      maxZoom: isFullscreen ? 1.4 : 1.15,
+      duration: 300,
+    });
+  }, [isFullscreen, reactFlowInstance]);
 
   const handleToggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -422,17 +488,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
             position="bottom-left"
             showInteractive={false}
             className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
-          />
-          <MiniMap
-            position="bottom-right"
-            zoomable
-            pannable
-            nodeColor={(n) => {
-              const data = n.data as any;
-              return data?.is_transformation ? '#9333ea' : '#D97706';
-            }}
-            maskColor="rgba(248, 247, 244, 0.7)"
-            className="!bg-white !border-[#E2E0D9] !rounded-xl !overflow-hidden shadow-md !m-4"
           />
         </ReactFlow>
       </div>

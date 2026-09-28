@@ -176,3 +176,14 @@ export const INTERACTION_CONFIG: Record<InteractionType, InteractionConfig> = {
 export const getInteractionConfig = (type: InteractionType): InteractionConfig => {
   return INTERACTION_CONFIG[type] || INTERACTION_CONFIG.call;
 };
+
+export const cleanParticipantName = (name?: string | null): string => {
+  if (!name) return '';
+  if (name.includes(' / ')) {
+    return name.split(' / ')[0].trim();
+  }
+  if (name.includes('/')) {
+    return name.split('/')[0].trim();
+  }
+  return name;
+};

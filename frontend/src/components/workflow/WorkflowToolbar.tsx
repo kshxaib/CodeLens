@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { WorkflowItem } from '../../types';
 
 interface WorkflowToolbarProps {
@@ -8,8 +8,8 @@ interface WorkflowToolbarProps {
   workflows: WorkflowItem[];
   selectedWorkflowId: string;
   onSelectWorkflow: (id: string) => void;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
   pathFilter: 'all' | 'happy' | 'failure';
   onPathFilterChange: (f: 'all' | 'happy' | 'failure') => void;
   isPlaying: boolean;
@@ -31,8 +31,8 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
   workflows,
   selectedWorkflowId,
   onSelectWorkflow,
-  searchQuery,
-  onSearchChange,
+  searchQuery: _searchQuery,
+  onSearchChange: _onSearchChange,
   pathFilter,
   onPathFilterChange,
   isPlaying,
@@ -68,17 +68,6 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
             ))}
           </select>
         )}
-
-        <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-[#687184] absolute left-2.5 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search steps..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-white text-xs text-[#19243B] placeholder-[#687184] rounded-xl pl-8 pr-2.5 py-1.5 border border-[#E2E0D9] focus:outline-none focus:border-amber-500 w-28 sm:w-36 md:w-44 transition font-mono shadow-sm"
-          />
-        </div>
 
         <div className="flex items-center bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[10px] font-mono hidden md:flex">
           <button
