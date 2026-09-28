@@ -67,6 +67,7 @@ export interface MessageItem {
   role: 'user' | 'assistant' | 'system';
   content: string;
   sources?: Citation[];
+  thought_time?: number;
   created_at: string;
 }
 

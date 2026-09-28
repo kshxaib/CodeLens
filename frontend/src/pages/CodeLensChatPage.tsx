@@ -11,6 +11,7 @@ import { AddGeminiKeyModal } from '../components/common/AddGeminiKeyModal';
 import { DeleteChatConfirmModal } from '../components/common/DeleteChatConfirmModal';
 import { CreateChatModal } from '../components/common/CreateChatModal';
 import { ChatMessageMarkdown } from '../components/chat/ChatMessageMarkdown';
+import ThoughtLine from '../components/chat/ThoughtLine';
 import { Button } from '@/components/ui/button';
 
 export const CodeLensChatPage: React.FC = () => {
@@ -28,8 +29,15 @@ export const CodeLensChatPage: React.FC = () => {
 
   const [inputQuery, setInputQuery] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const [streamingTokens, setStreamingTokens] = useState<string>('');
+  const [thoughtSteps, setThoughtSteps] = useState<string[]>([
+    'Reading the question',
+    'Searching repository symbols',
+    'Drafting an answer',
+  ]);
+  const settledDurationRef = useRef<number | null>(null);
 
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerTarget, setViewerTarget] = useState<{ filePath: string; lines?: { start: number; end: number } } | null>(null);
@@ -175,8 +183,15 @@ export const CodeLensChatPage: React.FC = () => {
 
     setInputQuery('');
     setIsStreaming(true);
+    setIsThinking(true);
     setStreamingTokens('');
-    setStreamStatus('Connecting...');
+    setStreamStatus('Thinking…');
+    setThoughtSteps([
+      'Reading the question',
+      'Searching repository symbols',
+      'Drafting an answer',
+    ]);
+    settledDurationRef.current = null;
 
     try {
       const token = localStorage.getItem('codelens_token');
@@ -201,6 +216,7 @@ export const CodeLensChatPage: React.FC = () => {
       const decoder = new TextDecoder();
       let accumulatedText = '';
       let sseBuffer = '';
+      let completedCitations: Citation[] = [];
 
       if (reader) {
         while (true) {
@@ -234,30 +250,32 @@ export const CodeLensChatPage: React.FC = () => {
             try {
               const data = JSON.parse(dataStr);
               if (eventType === 'status') {
-                setStreamStatus(data.message || data.status);
+                const msg = data.message || data.status;
+                setStreamStatus(msg);
+                if (msg) {
+                  setThoughtSteps((prev) => {
+                    if (prev.includes(msg)) return prev;
+                    const next = [...prev];
+                    next.splice(Math.max(0, next.length - 1), 0, msg);
+                    return next;
+                  });
+                }
               } else if (eventType === 'token') {
                 accumulatedText += data.token;
                 setStreamingTokens(accumulatedText);
+                setIsThinking(false);
               } else if (eventType === 'done') {
                 setStreamStatus(null);
-                const assistantMsg: MessageItem = {
-                  id: Date.now(),
-                  conversation_id: targetChatId!,
-                  role: 'assistant',
-                  content: data.full_response || accumulatedText,
-                  sources: data.citations || [],
-                  created_at: new Date().toISOString(),
-                };
-                setCurrentConversation((prev) =>
-                  prev
-                    ? {
-                      ...prev,
-                      messages: [...prev.messages, assistantMsg],
-                    }
-                    : null
-                );
+                setIsThinking(false);
+                if (data.full_response) {
+                  accumulatedText = data.full_response;
+                }
+                if (data.citations) {
+                  completedCitations = data.citations;
+                }
               } else if (eventType === 'error') {
                 setStreamStatus(null);
+                setIsThinking(false);
                 const errorMsg: MessageItem = {
                   id: Date.now(),
                   conversation_id: targetChatId!,
@@ -274,6 +292,8 @@ export const CodeLensChatPage: React.FC = () => {
                     }
                     : null
                 );
+                setIsStreaming(false);
+                setStreamingTokens('');
               }
             } catch {
             }
@@ -281,10 +301,47 @@ export const CodeLensChatPage: React.FC = () => {
         }
       }
 
-      await fetchConversations(activeRepoId);
+      // Stream finished: reload authoritative conversation from DB or fallback
+      let loadedDetail: ConversationDetail | null = null;
       if (targetChatId) {
-        await loadChatDetail(activeRepoId, targetChatId);
+        try {
+          loadedDetail = await api.getConversation(activeRepoId, targetChatId);
+        } catch (err) {
+          console.error('Failed to reload conversation after stream:', err);
+        }
       }
+
+      if (loadedDetail && loadedDetail.messages.length > 0) {
+        if (settledDurationRef.current != null) {
+          const lastIdx = loadedDetail.messages.length - 1;
+          if (loadedDetail.messages[lastIdx].role === 'assistant') {
+            loadedDetail.messages[lastIdx].thought_time = settledDurationRef.current;
+          }
+        }
+        setCurrentConversation(loadedDetail);
+      } else if (accumulatedText) {
+        const assistantMsg: MessageItem = {
+          id: Date.now(),
+          conversation_id: targetChatId!,
+          role: 'assistant',
+          content: accumulatedText,
+          sources: completedCitations,
+          thought_time: settledDurationRef.current ?? undefined,
+          created_at: new Date().toISOString(),
+        };
+        setCurrentConversation((prev) =>
+          prev
+            ? {
+              ...prev,
+              messages: [...prev.messages, assistantMsg],
+            }
+            : null
+        );
+      }
+
+      setIsStreaming(false);
+      setStreamingTokens('');
+      await fetchConversations(activeRepoId);
     } catch (err: any) {
       console.error('Chat error:', err);
       const errMsg = err?.message || 'Error occurred during streaming.';
@@ -438,7 +495,16 @@ export const CodeLensChatPage: React.FC = () => {
               </div>
             ) : (
               <>
-                {currentConversation?.messages.map((msg) => (
+                {(currentConversation?.messages || [])
+                  .filter((msg, idx, arr) => {
+                    if (idx === 0) return true;
+                    const prev = arr[idx - 1];
+                    if (msg.role === 'assistant' && prev.role === 'assistant' && msg.content.trim() === prev.content.trim()) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex gap-3 max-w-3xl ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
@@ -462,6 +528,24 @@ export const CodeLensChatPage: React.FC = () => {
                     )}
 
                     <div className="space-y-3 min-w-0 flex-1">
+                      {msg.role === 'assistant' && msg.thought_time != null && (
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-white border border-[#E2E0D9] shadow-2xs inline-block max-w-full">
+                          <ThoughtLine
+                            working={false}
+                            elapsed={msg.thought_time}
+                            label="Thinking…"
+                            doneLabel="Thought for"
+                            glyph="sparkle"
+                            fontSize={12}
+                            color="#526078"
+                            glyphColor="#EA580C"
+                            collapsible={false}
+                            collapseOnSettle={true}
+                            showTimer={true}
+                          />
+                        </div>
+                      )}
+
                       <div
                         className={`p-4 sm:p-5 rounded-2xl text-xs sm:text-sm leading-relaxed ${msg.role === 'user'
                             ? 'bg-[#19243B] text-white font-normal rounded-tr-none ml-auto max-w-2xl shadow-xs'
@@ -503,12 +587,28 @@ export const CodeLensChatPage: React.FC = () => {
                       <Sparkles className="size-3.5 text-orange-600 animate-pulse" />
                     </div>
                     <div className="space-y-3 min-w-0 flex-1">
-                      {streamStatus && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFFFFF] border border-[#E2E0D9] text-[#526078] text-xs font-mono shadow-2xs">
-                          <Loader2 className="w-3 h-3 animate-spin text-orange-500" />
-                          <span>{streamStatus}</span>
-                        </div>
-                      )}
+                      <div className="p-3 sm:p-3.5 rounded-2xl bg-white border border-[#E2E0D9] shadow-2xs inline-block max-w-full">
+                        <ThoughtLine
+                          working={isThinking}
+                          steps={thoughtSteps}
+                          label={streamStatus || 'Thinking…'}
+                          doneLabel="Thought for"
+                          glyph="sparkle"
+                          fontSize={13}
+                          breathPeriod={1.6}
+                          breathDepth={0.45}
+                          settleDuration={350}
+                          settleBlur={2}
+                          collapsible={true}
+                          collapseOnSettle={true}
+                          showTimer={true}
+                          color="#19243B"
+                          glyphColor="#EA580C"
+                          onSettle={(sec) => {
+                            settledDurationRef.current = sec;
+                          }}
+                        />
+                      </div>
 
                       {streamingTokens && (
                         <div className="p-4 sm:p-5 rounded-2xl bg-[#FFFFFF] border border-[#E2E0D9] text-xs sm:text-sm text-[#19243B] rounded-tl-none leading-relaxed shadow-xs">
