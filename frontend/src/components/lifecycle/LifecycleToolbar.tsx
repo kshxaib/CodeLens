@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download } from 'lucide-react';
+import { Play, Pause, RotateCcw, Compass, ArrowUpDown, ArrowLeftRight, Maximize2, Minimize2, Download } from 'lucide-react';
 import { LIFECYCLE_FILTERS, type LifecycleFilterType } from './constants';
 import type { EntityLifecycle } from '../../types';
 
@@ -9,8 +9,8 @@ interface LifecycleToolbarProps {
   lifecycles: EntityLifecycle[];
   selectedLifecycleId: string;
   onSelectLifecycle: (id: string) => void;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
   activeFilter: LifecycleFilterType;
   onFilterChange: (f: LifecycleFilterType) => void;
   isPlaying: boolean;
@@ -32,8 +32,8 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
   lifecycles,
   selectedLifecycleId,
   onSelectLifecycle,
-  searchQuery,
-  onSearchChange,
+  searchQuery: _searchQuery,
+  onSearchChange: _onSearchChange,
   activeFilter,
   onFilterChange,
   isPlaying,
@@ -70,23 +70,12 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           </select>
         )}
 
-        <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-[#687184] absolute left-2.5 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search states, events..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-white text-[#19243B] text-xs pl-8 pr-3 py-1.5 rounded-xl border border-[#E2E0D9] focus:outline-none focus:border-amber-500 w-36 sm:w-48 font-mono placeholder:text-[#687184] shadow-sm"
-          />
-        </div>
-
-        <div className="flex items-center gap-1 bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[10px] font-mono">
+        <div className="flex items-center gap-1 bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9] text-[10px] font-mono hidden md:flex">
           {LIFECYCLE_FILTERS.map((f) => (
             <button
               key={f.id}
               onClick={() => onFilterChange(f.id)}
-              className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                 activeFilter === f.id
                   ? 'bg-white text-[#19243B] font-bold shadow-sm'
                   : 'text-[#526078] hover:text-[#19243B]'
@@ -103,17 +92,24 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
           <button
             onClick={onTogglePlay}
             disabled={totalSimSteps <= 1}
-            className={`p-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
               isPlaying
-                ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                ? 'bg-rose-50 text-rose-800 border border-rose-200 shadow-sm'
                 : 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
             } disabled:opacity-40 disabled:cursor-not-allowed`}
             title={isPlaying ? 'Pause Simulation' : 'Play Lifecycle Simulation'}
           >
-            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-            <span className="text-[10px] font-mono font-bold pr-0.5">
-              {isPlaying ? 'Pause' : 'Simulate'}
-            </span>
+            {isPlaying ? (
+              <>
+                <Pause className="w-3.5 h-3.5 fill-current" />
+                <span>Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Simulate</span>
+              </>
+            )}
           </button>
 
           {totalSimSteps > 1 && (
@@ -126,7 +122,7 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
 
           <button
             onClick={onResetSimulator}
-            className="p-1.5 rounded-lg text-[#526078] hover:text-[#19243B] transition cursor-pointer"
+            className="p-1 rounded-lg text-[#526078] hover:text-[#19243B] transition cursor-pointer"
             title="Reset Simulation"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -135,38 +131,38 @@ export const LifecycleToolbar: React.FC<LifecycleToolbarProps> = ({
 
         <button
           onClick={onToggleLayoutDirection}
-          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
+          className="p-1.5 rounded-xl bg-white border border-[#E2E0D9] text-[#526078] hover:text-[#19243B] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title={`Switch to ${layoutDirection === 'LR' ? 'Top-to-Bottom' : 'Left-to-Right'} layout`}
         >
           {layoutDirection === 'LR' ? (
-            <ArrowUpDown className="w-4 h-4 text-amber-700" />
+            <ArrowUpDown className="w-3.5 h-3.5 text-amber-700" />
           ) : (
-            <ArrowLeftRight className="w-4 h-4 text-indigo-700" />
+            <ArrowLeftRight className="w-3.5 h-3.5 text-indigo-700" />
           )}
         </button>
 
         <button
           onClick={onFitView}
-          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
+          className="p-1.5 rounded-xl bg-white border border-[#E2E0D9] text-[#526078] hover:text-[#19243B] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title="Fit to view"
         >
-          <Compass className="w-4 h-4 text-amber-700" />
-        </button>
-
-        <button
-          onClick={onExport}
-          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
-          title="Export Lifecycle State Machine (JSON)"
-        >
-          <Download className="w-4 h-4 text-amber-700" />
+          <Compass className="w-3.5 h-3.5" />
         </button>
 
         <button
           onClick={onToggleFullscreen}
-          className="p-2 rounded-xl text-[#526078] hover:text-[#19243B] bg-white border border-[#E2E0D9] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
+          className="p-1.5 rounded-xl bg-white border border-[#E2E0D9] text-[#526078] hover:text-[#19243B] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
           title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
         >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        </button>
+
+        <button
+          onClick={onExport}
+          className="p-1.5 rounded-xl bg-white border border-[#E2E0D9] text-[#526078] hover:text-[#19243B] hover:border-[#D5D2CA] transition cursor-pointer shadow-sm"
+          title="Export Lifecycle State Machine (JSON)"
+        >
+          <Download className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

@@ -30,15 +30,26 @@ const getStateIcon = (stateType: string, isFailure: boolean) => {
   }
 };
 
+const cleanStateName = (name: string) => (name.includes('/') ? name.split('/')[0].trim() : name);
+
 export const LifecycleStateNode: React.FC<LifecycleStateNodeProps> = memo(({ data, selected }) => {
   const cfg = getStateTypeCfg(data.state_type);
+  const isCurrentActive = !!data.isCurrentActiveState;
+  const isSelected = !!selected || !!data.isSelected;
+  const isHovered = !!data.isHovered;
 
   let ringClass = 'border-[#E2E0D9] hover:border-zinc-400 shadow-sm';
-  if (data.isCurrentActiveState) {
-    ringClass = 'ring-4 ring-amber-500 border-amber-500 shadow-[0_0_30px_rgba(217,119,6,0.35)] scale-105 animate-pulse';
-  } else if (selected || data.isSelected) {
+  let activeStyle: React.CSSProperties | undefined = undefined;
+
+  if (isCurrentActive) {
+    activeStyle = {
+      boxShadow: `0 0 0 4px ${cfg.dot}60, 0 0 28px ${cfg.dot}40`,
+      borderColor: cfg.dot,
+      transform: 'scale(1.04)',
+    };
+  } else if (isSelected) {
     ringClass = 'ring-2 ring-indigo-500 border-indigo-400 shadow-[0_4px_16px_rgba(79,70,229,0.2)]';
-  } else if (data.isHovered) {
+  } else if (isHovered) {
     ringClass = 'ring-1 ring-zinc-400 border-zinc-400 shadow-md';
   }
 
@@ -46,6 +57,7 @@ export const LifecycleStateNode: React.FC<LifecycleStateNodeProps> = memo(({ dat
 
   return (
     <div
+      style={activeStyle}
       className={`relative w-[250px] rounded-xl bg-white/95 backdrop-blur-md border p-3.5 shadow-sm transition-all duration-200 cursor-pointer select-none group ${ringClass} ${opacityClass}`}
     >
       <Handle
@@ -88,7 +100,7 @@ export const LifecycleStateNode: React.FC<LifecycleStateNodeProps> = memo(({ dat
 
       <div className="flex items-baseline gap-2 mb-1.5">
         <h3 className="text-sm font-bold font-mono text-[#19243B] tracking-wide truncate group-hover:text-indigo-800 transition-colors">
-          {data.name}
+          {cleanStateName(data.name)}
         </h3>
       </div>
 

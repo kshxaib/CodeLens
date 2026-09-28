@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
+import { ReactFlow, Controls, Background, useNodesState, useEdgesState, MarkerType, useReactFlow, type Node, type Edge } from '@xyflow/react';
 import { LifecycleStateNode } from './LifecycleStateNode';
 import { LifecycleTransitionEdge } from './LifecycleTransitionEdge';
 import { LifecycleInspector } from './LifecycleInspector';
@@ -107,6 +107,35 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   const activeSimTransition = simulationIndex >= 0 && simulationIndex < simulationTransitions.length
     ? simulationTransitions[simulationIndex]
     : null;
+
+  // Auto-focus and shift view to the executing state node during simulation
+  useEffect(() => {
+    if (!isPlaying || !activeSimTransition || !nodes.length) return;
+
+    const targetStateId = activeSimTransition.to_state || activeSimTransition.from_state;
+    const targetNode = nodes.find(
+      (n) => n.id === targetStateId || (n.data as any)?.name === targetStateId
+    );
+
+    if (targetNode) {
+      const timer = setTimeout(() => {
+        const nodeWidth = targetNode.measured?.width || (targetNode as any).width || 250;
+        const nodeHeight = targetNode.measured?.height || (targetNode as any).height || 100;
+        const centerX = targetNode.position.x + nodeWidth / 2;
+        const centerY = targetNode.position.y + nodeHeight / 2;
+
+        const currentZoom = reactFlowInstance.getZoom();
+        const targetZoom = Math.max(currentZoom, isFullscreen ? 1.15 : 0.95);
+
+        reactFlowInstance.setCenter(centerX, centerY, {
+          zoom: targetZoom,
+          duration: 500,
+        });
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isPlaying, activeSimTransition, nodes, isFullscreen, reactFlowInstance]);
 
   useEffect(() => {
     if (!activeLifecycle) {
@@ -300,7 +329,8 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
   const handleResetSimulator = useCallback(() => {
     setIsPlaying(false);
     setSimulationIndex(-1);
-  }, []);
+    reactFlowInstance.fitView({ padding: 0.18, duration: 400 });
+  }, [reactFlowInstance]);
 
   const handleExport = useCallback(() => {
     if (!activeLifecycle) return;
@@ -444,13 +474,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
           <Controls
             showInteractive={false}
             className="!bg-white !border-[#E2E0D9] !rounded-xl !text-[#19243B] shadow-md"
-          />
-          <MiniMap
-            nodeColor="#D97706"
-            maskColor="rgba(248, 247, 244, 0.7)"
-            zoomable
-            pannable
-            className="!bg-white !border-[#E2E0D9] !rounded-xl overflow-hidden shadow-md"
           />
         </ReactFlow>
       </div>

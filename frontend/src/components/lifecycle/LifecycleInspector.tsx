@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ExternalLink, ChevronRight, FileCode2, Sparkles, ArrowRight, RotateCcw, AlertTriangle, Zap } from 'lucide-react';
+import { X, ChevronRight, FileCode2, Sparkles, ArrowRight, RotateCcw, AlertTriangle, Zap } from 'lucide-react';
 import { getStateTypeCfg } from './constants';
 import type { LifecycleState, LifecycleTransition } from '../../types';
 
@@ -11,8 +11,10 @@ interface LifecycleInspectorProps {
   onClose: () => void;
   onSelectState: (stateName: string) => void;
   onSelectTransition: (transition: LifecycleTransition) => void;
-  onOpenSource: (filePath: string, lineRange?: { start: number; end: number }) => void;
+  onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;
 }
+
+const cleanName = (name: string) => (name.includes('/') ? name.split('/')[0].trim() : name);
 
 export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
   selectedState,
@@ -22,11 +24,14 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
   onClose,
   onSelectState: _onSelectState,
   onSelectTransition,
-  onOpenSource,
+  onOpenSource: _onOpenSource,
 }) => {
   if (!selectedState && !selectedTransition) return null;
 
   if (selectedTransition) {
+    const fromName = allStates.find((s) => s.id === selectedTransition.from_state || s.name === selectedTransition.from_state)?.name || selectedTransition.from_state;
+    const toName = allStates.find((s) => s.id === selectedTransition.to_state || s.name === selectedTransition.to_state)?.name || selectedTransition.to_state;
+
     return (
       <div className="flex flex-col h-full bg-white border-l border-[#E2E0D9] shadow-2xl overflow-hidden min-w-[360px] max-w-[400px] z-30 select-text">
         <div className="px-5 py-4 border-b border-[#E2E0D9] bg-[#F8F7F4]/90 backdrop-blur-md flex items-start justify-between gap-3">
@@ -51,15 +56,15 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
             </div>
 
             <h2 className="text-base font-bold text-[#19243B] font-mono break-all leading-tight">
-              {selectedTransition.event}
+              {cleanName(selectedTransition.event)}
             </h2>
             <p className="text-[11px] font-mono text-[#526078] mt-1 flex items-center gap-1.5">
               <span className="text-sky-800 font-semibold">
-                {allStates.find((s) => s.id === selectedTransition.from_state || s.name === selectedTransition.from_state)?.name || selectedTransition.from_state}
+                {cleanName(fromName)}
               </span>
               <ArrowRight className="w-3 h-3 text-[#687184] shrink-0" />
               <span className="text-emerald-800 font-semibold">
-                {allStates.find((s) => s.id === selectedTransition.to_state || s.name === selectedTransition.to_state)?.name || selectedTransition.to_state}
+                {cleanName(toName)}
               </span>
             </p>
           </div>
@@ -75,27 +80,18 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs font-mono">
           {selectedTransition.evidence && (
-            <button
-              onClick={() =>
-                onOpenSource(selectedTransition.evidence!.file_path, {
-                  start: selectedTransition.evidence!.start_line,
-                  end: selectedTransition.evidence!.end_line,
-                })
-              }
-              className="w-full py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm group"
-            >
+            <div className="w-full py-2 px-3 rounded-xl bg-amber-50/60 border border-amber-200/60 text-amber-900 font-mono text-xs flex items-center justify-between">
               <div className="flex items-center gap-2 truncate">
-                <FileCode2 className="w-4 h-4 text-amber-700 shrink-0" />
-                <span className="truncate text-xs">
+                <FileCode2 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                <span className="truncate text-xs font-semibold">
                   {selectedTransition.evidence.file_path.split(/[/\\]/).pop()}:
                   {selectedTransition.evidence.start_line}-{selectedTransition.evidence.end_line}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-amber-700 group-hover:text-amber-900 shrink-0">
-                <span>Open Source</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </div>
-            </button>
+              <span className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider shrink-0 bg-amber-100/60 px-1.5 py-0.5 rounded">
+                Citation
+              </span>
+            </div>
           )}
 
           <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-3">
@@ -179,10 +175,10 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
           </div>
 
           <h2 className="text-base font-bold text-[#19243B] font-mono break-all leading-tight">
-            {selectedState!.name}
+            {cleanName(selectedState!.name)}
           </h2>
           <p className="text-[11px] font-mono text-[#526078] mt-0.5">
-            Entity: <span className="text-[#19243B] font-semibold">{selectedState!.entity_name}</span>
+            Entity: <span className="text-[#19243B] font-semibold">{cleanName(selectedState!.entity_name)}</span>
           </p>
         </div>
 
@@ -197,28 +193,18 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs font-mono">
         {selectedState?.evidence && (
-          <button
-            onClick={() =>
-              selectedState.evidence &&
-              onOpenSource(selectedState.evidence.file_path, {
-                start: selectedState.evidence.start_line,
-                end: selectedState.evidence.end_line,
-              })
-            }
-            className="w-full py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-800 font-bold flex items-center justify-between transition cursor-pointer shadow-sm group"
-          >
+          <div className="w-full py-2 px-3 rounded-xl bg-amber-50/60 border border-amber-200/60 text-amber-900 font-mono text-xs flex items-center justify-between">
             <div className="flex items-center gap-2 truncate">
-              <FileCode2 className="w-4 h-4 text-amber-700 shrink-0" />
-              <span className="truncate text-xs">
+              <FileCode2 className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+              <span className="truncate text-xs font-semibold">
                 {selectedState.evidence.file_path.split(/[/\\]/).pop()}:{selectedState.evidence.start_line}-
                 {selectedState.evidence.end_line}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-amber-700 group-hover:text-amber-900 shrink-0">
-              <span>Open Source</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </div>
-          </button>
+            <span className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider shrink-0 bg-amber-100/60 px-1.5 py-0.5 rounded">
+              Citation
+            </span>
+          </div>
         )}
 
         <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-1.5">
@@ -260,7 +246,7 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[#19243B] font-bold truncate group-hover:text-amber-800">{t.event}</span>
+                      <span className="text-[#19243B] font-bold truncate group-hover:text-amber-800">{cleanName(t.event)}</span>
                       {t.is_retry && (
                         <span className="px-1 py-0.2 rounded text-[8px] bg-orange-50 text-orange-800 font-bold border border-orange-200">
                           RETRY
@@ -275,7 +261,7 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
                     <div className="text-[10px] text-[#526078] flex items-center gap-1 mt-0.5">
                       <span>to</span>
                       <span className="text-[#19243B] font-semibold">
-                        {allStates.find((s) => s.id === t.to_state || s.name === t.to_state)?.name || t.to_state}
+                        {cleanName(allStates.find((s) => s.id === t.to_state || s.name === t.to_state)?.name || t.to_state)}
                       </span>
                       {t.condition && <span className="text-[#687184]">[{t.condition}]</span>}
                     </div>
@@ -305,12 +291,12 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[#19243B] font-bold truncate group-hover:text-amber-800">{t.event}</span>
+                      <span className="text-[#19243B] font-bold truncate group-hover:text-amber-800">{cleanName(t.event)}</span>
                     </div>
                     <div className="text-[10px] text-[#526078] flex items-center gap-1 mt-0.5">
                       <span>from</span>
                       <span className="text-[#19243B] font-semibold">
-                        {allStates.find((s) => s.id === t.from_state || s.name === t.from_state)?.name || t.from_state}
+                        {cleanName(allStates.find((s) => s.id === t.from_state || s.name === t.from_state)?.name || t.from_state)}
                       </span>
                     </div>
                   </div>
@@ -320,17 +306,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
             </div>
           )}
         </div>
-
-        {(selectedState!.evidence?.code_snippet || selectedState!.evidence?.snippet) && (
-          <div className="p-3.5 rounded-xl border border-[#E2E0D9] bg-[#F8F7F4] space-y-2">
-            <span className="text-[10px] text-[#526078] uppercase tracking-wider font-bold block">
-              Source Code
-            </span>
-            <pre className="p-2.5 rounded-lg bg-white border border-[#E2E0D9] text-[10px] text-[#19243B] font-mono overflow-x-auto whitespace-pre leading-relaxed shadow-inner">
-              {selectedState!.evidence.code_snippet || selectedState!.evidence.snippet}
-            </pre>
-          </div>
-        )}
       </div>
     </div>
   );
