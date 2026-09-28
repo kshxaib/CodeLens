@@ -151,7 +151,7 @@ export const CodeLensChatPage: React.FC = () => {
       return;
     }
 
-    let targetChatId = overrideChatId || activeChatId;
+    const targetChatId = overrideChatId || activeChatId;
 
     if (!targetChatId) {
       setPendingMessage(question);
@@ -296,6 +296,7 @@ export const CodeLensChatPage: React.FC = () => {
                 setStreamingTokens('');
               }
             } catch {
+              // Ignore partial or non-JSON SSE chunks
             }
           }
         }

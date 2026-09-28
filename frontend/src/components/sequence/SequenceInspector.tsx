@@ -14,7 +14,6 @@ export const SequenceInspector: React.FC<SequenceInspectorProps> = ({
   message,
   participants,
   onClose,
-  onOpenSource,
 }) => {
   const cfg = getInteractionConfig(message.interaction_type);
 

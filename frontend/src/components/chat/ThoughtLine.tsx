@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { animate, useReducedMotion } from 'motion/react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowDown01Icon, SparklesIcon, Tick02Icon } from '@hugeicons/core-free-icons';

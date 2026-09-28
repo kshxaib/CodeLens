@@ -11,7 +11,7 @@ interface SequenceMessageRowProps {
   isSelected?: boolean;
   isActiveSimulationStep?: boolean;
   onSelectMessage: (msg: SequenceMessage) => void;
-  onOpenSource: (filePath: string, lineRange?: { start: number; end: number }) => void;
+  onOpenSource?: (filePath: string, lineRange?: { start: number; end: number }) => void;
 }
 
 export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
@@ -23,7 +23,6 @@ export const SequenceMessageRow: React.FC<SequenceMessageRowProps> = ({
   isSelected,
   isActiveSimulationStep,
   onSelectMessage,
-  onOpenSource,
 }) => {
   const cfg = getInteractionConfig(message.interaction_type);
   const isSelf = callerIndex === calleeIndex;

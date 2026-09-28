@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ChevronRight, FileCode2, Database, ArrowDownRight, ArrowUpRight, Tag } from 'lucide-react';
+import { X, ChevronRight, FileCode2, Database, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { getDataClassificationCfg, cleanDataNodeName } from './constants';
 import type { DataNode, DataFlowEdge } from '../../types';
 
@@ -18,7 +18,6 @@ export const DataFlowInspector: React.FC<DataFlowInspectorProps> = ({
   edges,
   onClose,
   onSelectNode,
-  onOpenSource,
 }) => {
   const cfg = getDataClassificationCfg(node.data_classification);
 
