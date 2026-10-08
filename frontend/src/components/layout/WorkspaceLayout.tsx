@@ -35,7 +35,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] text-[#19243B]">
-      {/* Auto Hover Sidebar */}
+
       <aside
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -45,7 +45,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
             : 'w-16 shadow-[0_2px_10px_rgba(25,36,59,0.04)]'
         }`}
       >
-        {/* Header Logo */}
+
         <div className="h-16 flex items-center px-4 border-b border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/dashboard"
@@ -65,9 +65,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
           </Link>
         </div>
 
-        {/* Primary Navigation */}
         <nav aria-label="Primary navigation" className="flex-1 py-4 px-2 space-y-1.5 overflow-y-auto overflow-x-hidden">
-          {/* Dashboard Item */}
+
           <Link
             to="/dashboard"
             title={!isHovered ? 'Dashboard' : undefined}
@@ -98,7 +97,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
             </span>
           </Link>
 
-          {/* Views Collapsible Group */}
           <div>
             <div
               title={!isHovered ? 'Views' : undefined}
@@ -154,7 +152,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
               )}
             </div>
 
-            {/* Tree Branch Sub-Items */}
             {isHovered && isViewsExpanded && (
               <div className="ml-4 pl-3 my-1.5 relative border-l border-[#E2E0D9] space-y-1 transition-all duration-200">
                 {ARCHITECTURE_VIEWS.map((sub) => {
@@ -165,7 +162,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
 
                   return (
                     <div key={sub.id} className="relative group/tree">
-                      {/* Branch connector curve from vertical tree line to item */}
+
                       <div className="absolute -left-[13px] top-[14px] w-2.5 h-2.5 border-b border-l border-[#E2E0D9] rounded-bl-md pointer-events-none group-hover/tree:border-[#19243B]/40 transition-colors" />
 
                       <Link
@@ -195,7 +192,6 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({ children }) =>
           </div>
         </nav>
 
-        {/* Bottom Profile & Settings Link */}
         <div className="p-2 border-t border-[#E2E0D9] shrink-0 overflow-hidden">
           <Link
             to="/profile"

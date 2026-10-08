@@ -4,7 +4,7 @@ import type { ArchKGNode } from '../../types';
 
 export interface ArchitectureLegendProps {
   nodes: ArchKGNode[];
-  activeCategory: string; // 'all' or semantic kind
+  activeCategory: string;
   onSelectCategory: (category: string) => void;
 }
 
@@ -13,7 +13,7 @@ export const ArchitectureLegend: React.FC<ArchitectureLegendProps> = ({
   activeCategory,
   onSelectCategory,
 }) => {
-  // Count nodes per semantic kind
+
   const counts: Record<ArchitectureSemanticKind, number> = {
     backend: 0,
     database: 0,

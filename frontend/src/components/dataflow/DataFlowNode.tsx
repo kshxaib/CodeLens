@@ -68,7 +68,6 @@ export const DataFlowNode: React.FC<DataFlowNodeProps> = memo(({ data, selected 
     ? `${data.evidence.file_path.split(/[/\\]/).pop()}:${data.evidence.start_line}`
     : null;
 
-  // Dynamic execution highlight matching node's classification color
   const executionRingStyle: React.CSSProperties | undefined = isCurrentExecutionStep
     ? {
         boxShadow: `0 0 0 4px ${cfg.dot}60, 0 0 28px ${cfg.dot}40`,

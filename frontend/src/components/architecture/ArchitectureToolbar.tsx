@@ -82,7 +82,7 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
     <div className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none flex-wrap">
 
       <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-sm">
-        {/* Current Active Archetype Badge */}
+
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E0D9] text-xs font-mono font-bold shadow-2xs">
           <span className="px-1.5 py-0.5 rounded text-[9px] bg-[#FAF9F5] border border-[#E2E0D9] text-[#19243B] font-bold">
             {currentViewCfg.code}
@@ -93,7 +93,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
 
         <span className="w-px h-4 bg-[#E2E0D9]" />
 
-        {/* Search */}
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-[#687184] absolute left-2.5 pointer-events-none" />
           <input
@@ -113,7 +112,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           )}
         </div>
 
-        {/* System / Full Mode Toggle */}
         <div className="flex items-center bg-[#F0EEE9] p-0.5 rounded-xl border border-[#E2E0D9]">
           {(['system', 'full'] as const).map((mode) => (
             <button
@@ -130,7 +128,6 @@ export const ArchitectureToolbar: React.FC<ArchitectureToolbarProps> = ({
           ))}
         </div>
 
-        {/* Dedicated Filters Drawer Toggle */}
         {onOpenSidebar && (
           <button
             onClick={onOpenSidebar}

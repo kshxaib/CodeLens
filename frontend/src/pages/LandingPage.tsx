@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  ArrowRight, Layers, Activity, GitBranch,
-  Database, Shield, Server, Cpu, HardDrive, Terminal, Zap,
-} from 'lucide-react';
+import { ArrowRight, Layers, Activity, GitBranch, Database, Shield, Server, Cpu, HardDrive, Terminal, Zap } from 'lucide-react';
 import { GithubIcon } from '../components/common/Icons';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -126,7 +123,6 @@ export const LandingPage: React.FC = () => {
       <style>{css}</style>
       <div className="lp-grid-bg" aria-hidden="true" />
 
-      {/* ──────────────── NAV ──────────────── */}
       <header style={{ position: 'relative', zIndex: 30, borderBottom: '1px solid rgba(17,20,25,.08)', background: 'rgba(245,246,247,.92)', backdropFilter: 'blur(8px)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link to="/" style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-.02em', color: '#111419', textDecoration: 'none' }}>
@@ -144,13 +140,10 @@ export const LandingPage: React.FC = () => {
         </div>
       </header>
 
-      {/* ──────────────── MAIN ──────────────── */}
       <main style={{ position: 'relative', zIndex: 10, maxWidth: 1200, margin: '0 auto', padding: '48px 24px 80px' }}>
 
-        {/* ══════════ SECTION 1 — HERO ══════════ */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 476px', gap: 40, alignItems: 'start' }}>
 
-          {/* LEFT */}
           <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 4 }}>
 
             <h1 style={{ fontFamily: 'Georgia,"Times New Roman",serif', fontStyle: 'italic', fontWeight: 400, fontSize: 52, color: '#111419', lineHeight: 1.08, letterSpacing: '-.025em', margin: '0 0 20px' }}>
@@ -202,7 +195,6 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT — Diagram Viewport */}
           <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 14, border: '1px solid rgba(17,20,25,.1)', background: '#fff', boxShadow: '0 8px 40px rgba(17,20,25,.09)', overflow: 'hidden' }}>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(17,20,25,.08)', background: '#f8f9fa', display: 'flex', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: 5 }}>
@@ -214,7 +206,6 @@ export const LandingPage: React.FC = () => {
 
             <div className="dcanvas" style={{ position: 'relative', height: 400, overflow: 'hidden', userSelect: 'none' }}>
 
-              {/* S01 */}
               {activeSpecimen === 's01' && (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -303,7 +294,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               )}
 
-              {/* S02 */}
               {activeSpecimen === 's02' && (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 8, padding: 14, overflowY: 'auto', boxSizing: 'border-box' }}>
                   {([
@@ -348,7 +338,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               )}
 
-              {/* S03 */}
               {activeSpecimen === 's03' && (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 14, boxSizing: 'border-box' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
@@ -394,7 +383,6 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats strip */}
         <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', border: '1px solid rgba(20,23,26,.18)', borderRadius: 14, background: '#f8faf9', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
           {[
             { value: '05', sup: null,  label: 'DIAGRAM VIEWS' },
@@ -413,10 +401,8 @@ export const LandingPage: React.FC = () => {
           ))}
         </div>
 
-        {/* ══════════ SECTION 2 — FIVE WAYS ══════════ */}
         <div style={{ marginTop: 48 }}>
 
-          {/* Section headline */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.18em', color: '#9ca3af', textTransform: 'uppercase' }}>01 · VIEWS</span>
             <span style={{ flex: 1, height: 1, background: 'rgba(17,20,25,.1)' }} />
@@ -431,10 +417,8 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Bento Row 1 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 12, marginBottom: 12 }}>
 
-            {/* T-01 Architecture — big card */}
             <div className="bento-card">
               <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(17,20,25,.08)', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -485,7 +469,7 @@ export const LandingPage: React.FC = () => {
                     <div className="nd-sub" style={{ color: n.lc }}>{n.sub}</div>
                   </div>
                 ))}
-                {/* FastAPI core special */}
+
                 <div onClick={() => setSelectedBentoNode('api2')} className="nd"
                   style={{ top: 112, left: 280, width: 114, border: '2px solid', borderColor: '#16a34a', background: selectedBentoNode === 'api2' ? '#f0fdf4' : '#fff', boxShadow: selectedBentoNode === 'api2' ? '0 0 0 3px rgba(22,163,74,.18)' : '0 2px 8px rgba(0,0,0,.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -514,9 +498,8 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right column — Workflow + Sequence */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Workflow */}
+
               <div className="bento-card" style={{ flex: 1 }}>
                 <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(17,20,25,.07)' }}>
                   <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, fontWeight: 700, background: 'rgba(17,20,25,.07)', padding: '2px 6px', borderRadius: 4, color: '#5c6370', letterSpacing: '.1em' }}>T · 02</span>
@@ -535,7 +518,6 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sequence */}
               <div className="bento-card" style={{ flex: 1 }}>
                 <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(17,20,25,.07)' }}>
                   <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, fontWeight: 700, background: 'rgba(17,20,25,.07)', padding: '2px 6px', borderRadius: 4, color: '#5c6370', letterSpacing: '.1em' }}>T · 03</span>
@@ -562,10 +544,8 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Bento Row 2 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 280px', gap: 12 }}>
 
-            {/* Data Flow */}
             <div className="bento-card">
               <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(17,20,25,.07)' }}>
                 <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, fontWeight: 700, background: 'rgba(17,20,25,.07)', padding: '2px 6px', borderRadius: 4, color: '#5c6370', letterSpacing: '.1em' }}>T · 04</span>
@@ -596,7 +576,6 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Lifecycle */}
             <div className="bento-card">
               <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(17,20,25,.07)' }}>
                 <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, fontWeight: 700, background: 'rgba(17,20,25,.07)', padding: '2px 6px', borderRadius: 4, color: '#5c6370', letterSpacing: '.1em' }}>T · 05</span>
@@ -641,7 +620,6 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Dark CTA */}
             <div style={{ borderRadius: 14, background: '#111419', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px 20px', position: 'relative' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px)', backgroundSize: '20px 20px', borderRadius: 14 }} />
               <div style={{ position: 'relative', zIndex: 1 }}>
@@ -660,10 +638,8 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ══════════ SECTION 3 — FEATURES ══════════ */}
         <div style={{ marginTop: 48 }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.18em', color: '#9ca3af', textTransform: 'uppercase' }}>02 · FEATURES</span>
             <span style={{ flex: 1, height: 1, background: 'rgba(17,20,25,.1)' }} />
@@ -673,7 +649,6 @@ export const LandingPage: React.FC = () => {
             Grounded intelligence,<br />zero hallucinations.
           </h2>
 
-          {/* Feature cards — row 1: 2-col */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, border: '1px solid rgba(17,20,25,.12)', borderRadius: 14, overflow: 'hidden', marginBottom: 1 }}>
             {[
               {
@@ -700,7 +675,6 @@ export const LandingPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Feature cards — row 2: 3-col */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, border: '1px solid rgba(17,20,25,.12)', borderRadius: 14, overflow: 'hidden', marginBottom: 1 }}>
             {[
               {
@@ -733,7 +707,6 @@ export const LandingPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Feature cards — row 3: 3-col */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, border: '1px solid rgba(17,20,25,.12)', borderRadius: 14, overflow: 'hidden', marginBottom: 28 }}>
             {[
               {
@@ -766,7 +739,6 @@ export const LandingPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Export formats strip */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.18em', color: '#9ca3af', textTransform: 'uppercase' }}>EXPORT FORMATS</span>
@@ -790,10 +762,8 @@ export const LandingPage: React.FC = () => {
 
         </div>
 
-        {/* ══════════ SECTION 4 — DESIGN SYSTEM ══════════ */}
         <div style={{ marginTop: 48 }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 700, letterSpacing: '.18em', color: '#9ca3af', textTransform: 'uppercase' }}>03 · DESIGN SYSTEM</span>
             <span style={{ flex: 1, height: 1, background: 'rgba(17,20,25,.1)' }} />
@@ -808,7 +778,6 @@ export const LandingPage: React.FC = () => {
             data flow, and lifecycle.
           </p>
 
-          {/* Color swatches grid */}
           <div style={{ border: '1px solid rgba(17,20,25,.12)', borderRadius: 14, background: '#f8f9fa', padding: 20, overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10 }}>
               {[
@@ -870,13 +839,13 @@ export const LandingPage: React.FC = () => {
                 },
               ].map(({ role, example, sub, bg, bdr, lbl, txt, desc, roleColor }) => (
                 <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {/* Light mode node card */}
+
                   <div style={{ borderRadius: 9, border: `1.5px solid ${bdr}`, background: bg, padding: '9px 11px' }}>
                     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 7, fontWeight: 700, color: lbl, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 3 }}>{role.split(' ')[0]}</div>
                     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10.5, fontWeight: 700, color: txt, lineHeight: 1.2 }}>{example}</div>
                     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 7.5, color: lbl, marginTop: 2, opacity: .8 }}>{sub}</div>
                   </div>
-                  {/* Label + desc */}
+
                   <div>
                     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8.5, fontWeight: 700, color: roleColor, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 4 }}>{role}</div>
                     <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: '#6b7280', lineHeight: 1.6, whiteSpace: 'pre-line' as const }}>{desc}</div>
@@ -888,7 +857,6 @@ export const LandingPage: React.FC = () => {
 
         </div>
 
-        {/* ══════════ SECTION 5 — PRE-FOOTER CTA ══════════ */}
         <div
           style={{
             marginTop: 72,
@@ -903,7 +871,7 @@ export const LandingPage: React.FC = () => {
             boxShadow: '0 20px 50px rgba(17,20,25,.18)',
           }}
         >
-          {/* Subtle background glow */}
+
           <div
             style={{
               position: 'absolute',
@@ -1011,4 +979,3 @@ export const LandingPage: React.FC = () => {
     </div>
   );
 };
-

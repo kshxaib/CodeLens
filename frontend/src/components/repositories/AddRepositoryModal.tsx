@@ -149,7 +149,7 @@ export const AddRepositoryModal: React.FC<AddRepositoryModalProps> = ({
             setStage('error');
           }
         } catch {
-          // Keep polling
+
         }
       }, 2000);
     } catch (err: any) {

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  X,
-  FileCode2,
-  ArrowUpRight,
-  ArrowDownLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { X, FileCode2, ArrowUpRight, ArrowDownLeft, ChevronRight } from 'lucide-react';
 import { ARCH_TIERS, getNodeTier, getRelationshipCfg } from './constants';
 import type { ArchKGNode, ArchKGEdge } from '../../types';
 
@@ -28,17 +22,15 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
   const tierKey = getNodeTier(node.type, node.layer);
   const tierCfg = ARCH_TIERS[tierKey] || ARCH_TIERS.application;
 
-  // Filter incoming edges (who imports / calls this node)
   const incomingEdges = edges.filter((e) => e.target === node.id);
 
-  // Filter outgoing edges (what this node imports / calls)
   const outgoingEdges = edges.filter((e) => e.source === node.id);
 
   const primarySourceFile = node.source_files?.[0] || '';
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-[#E2E0D9] shadow-xl overflow-hidden min-w-[360px] max-w-[420px] z-30 select-text">
-      {/* Header */}
+
       <div className="px-5 py-4 border-b border-[#E2E0D9] bg-[#FAF9F5] flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -75,7 +67,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
         </button>
       </div>
 
-      {/* Summary KPI Strip */}
       <div className="grid grid-cols-2 gap-2 p-4 bg-[#F8F7F4] border-b border-[#E2E0D9]">
         <div className="p-3 rounded-xl border border-[#E2E0D9] bg-white shadow-2xs">
           <div className="flex items-center gap-1.5 text-[#526078] mb-1">
@@ -96,9 +87,8 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
         </div>
       </div>
 
-      {/* Main Body: Incoming & Outgoing Dependencies */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-white">
-        {/* SECTION 1: Who imports / calls this node */}
+
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-amber-900 font-mono font-bold text-[11px] uppercase tracking-wider">
@@ -158,7 +148,6 @@ export const ArchitectureInspector: React.FC<ArchitectureInspectorProps> = ({
           )}
         </div>
 
-        {/* SECTION 2: What this node calls / imports */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-sky-900 font-mono font-bold text-[11px] uppercase tracking-wider">

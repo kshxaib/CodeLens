@@ -42,7 +42,6 @@ const getStepIcon = (type: string) => {
 export const WorkflowNode: React.FC<WorkflowNodeProps> = memo(({ data, selected }) => {
   const cfg = getStepTypeCfg(data.step_type);
 
-  // Build dynamic execution highlight using the step type's own color
   const executionRingStyle: React.CSSProperties | undefined = data.isCurrentExecutionStep
     ? {
         boxShadow: `0 0 0 4px ${cfg.dot}50, 0 0 28px ${cfg.dot}40`,

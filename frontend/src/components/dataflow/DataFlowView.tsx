@@ -97,7 +97,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     return pipelines.find((p) => p.id === selectedPipelineId) || pipelines[0] || null;
   }, [pipelines, selectedPipelineId]);
 
-
   useEffect(() => {
     if (!isPlaying || !activePipeline || !activePipeline.nodes.length) return;
 
@@ -115,7 +114,6 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
     return () => clearInterval(interval);
   }, [isPlaying, activePipeline]);
 
-  // Auto-focus and shift view to the executing node during playback
   useEffect(() => {
     if (!isPlaying || simulationIndex < 0 || !activePipeline?.nodes?.length) return;
 
@@ -312,7 +310,7 @@ export const DataFlowView: React.FC<DataFlowViewProps> = ({
   ]);
 
   useEffect(() => {
-    // Don't re-fitView during simulation playback — let the auto-center effect handle camera
+
     if (isPlaying || simulationIndex >= 0) return;
     if (nodes.length > 0) {
       const timer = setTimeout(() => {

@@ -296,13 +296,12 @@ export const CodeLensChatPage: React.FC = () => {
                 setStreamingTokens('');
               }
             } catch {
-              // Ignore partial or non-JSON SSE chunks
+
             }
           }
         }
       }
 
-      // Stream finished: reload authoritative conversation from DB or fallback
       let loadedDetail: ConversationDetail | null = null;
       if (targetChatId) {
         try {

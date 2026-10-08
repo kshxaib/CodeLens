@@ -185,7 +185,7 @@ export default function ThoughtLine({
     }
     setAnnounce(showTimer ? `${doneText} ${spoken(dsRef.current)}` : doneText);
     latest.current.onSettle?.(dsRef.current / 10);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isWorking]);
 
   const toggle = hasTrace && collapsible;
@@ -238,7 +238,6 @@ export default function ThoughtLine({
       data-working={isWorking ? '' : undefined}
       data-open={open && hasTrace ? '' : undefined}
       style={{
-        // @ts-expect-error custom css properties
         '--tl-font': `${fontSize}px`,
         '--tl-color': color,
         '--tl-glyph': glyphColor || color,
@@ -246,7 +245,7 @@ export default function ThoughtLine({
         '--tl-blur': `${settleBlur}px`,
         '--tl-shimmer': `${shimmerDuration}s`,
         ...style
-      }}
+      } as React.CSSProperties}
     >
       {collapsible ? (
         <button

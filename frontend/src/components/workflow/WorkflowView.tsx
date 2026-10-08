@@ -96,7 +96,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     return workflows.find((w) => w.id === selectedWorkflowId) || workflows[0] || null;
   }, [workflows, selectedWorkflowId]);
 
-
   useEffect(() => {
     if (!isPlaying || !activeWorkflow || !activeWorkflow.steps.length) return;
 
@@ -114,7 +113,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     return () => clearInterval(timer);
   }, [isPlaying, activeWorkflow]);
 
-  // Auto-focus and shift view to the executing node ONLY during playback
   useEffect(() => {
     if (!isPlaying || simulationIndex < 0 || !activeWorkflow?.steps?.length) return;
 
@@ -148,16 +146,14 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     const rawSteps = activeWorkflow.steps || [];
     const rawTransitions = activeWorkflow.transitions || [];
 
-    // Build adjacency for failure-path reachability
     const failureReachableIds = new Set<string>();
     if (pathFilter === 'failure') {
-      // Seed: all failure/retry step nodes
+
       const seeds = rawSteps
         .filter((s) => s.step_type === 'failure' || s.step_type === 'retry')
         .map((s) => s.id);
       seeds.forEach((id) => failureReachableIds.add(id));
 
-      // Also seed targets of failure/retry transitions
       rawTransitions
         .filter((t) => t.transition_type === 'failure' || t.transition_type === 'retry')
         .forEach((t) => {
@@ -165,7 +161,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
           failureReachableIds.add(t.target);
         });
 
-      // Walk backwards: find all ancestors that can reach a failure node
       let changed = true;
       while (changed) {
         changed = false;
@@ -277,7 +272,7 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
   ]);
 
   useEffect(() => {
-    // Don't re-fitView during simulation playback — let the auto-center effect handle it
+
     if (isPlaying || simulationIndex >= 0) return;
     if (nodes.length > 0) {
       const timer = setTimeout(() => {
@@ -335,8 +330,6 @@ export const WorkflowView: React.FC<WorkflowViewProps> = ({
     a.click();
     URL.revokeObjectURL(url);
   };
-
-
 
   if (loading) {
     return (

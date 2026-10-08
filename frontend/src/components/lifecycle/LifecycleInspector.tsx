@@ -142,7 +142,6 @@ export const LifecycleInspector: React.FC<LifecycleInspectorProps> = ({
     );
   }
 
-  // Selected State view
   const incoming = transitions.filter(
     (t) => t.to_state === selectedState?.id || t.to_state === selectedState?.name
   );

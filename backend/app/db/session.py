@@ -3,7 +3,6 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from app.core.config import DATABASE_URL
 
-# Normalize postgres:// URLs commonly provided by Render and cloud providers
 db_url = DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)

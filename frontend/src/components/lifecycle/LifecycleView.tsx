@@ -86,7 +86,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     setSimulationIndex(-1);
   }, [selectedLifecycleId]);
 
-
   const simulationTransitions = useMemo(() => {
     if (!activeLifecycle) return [];
     const transitions = activeLifecycle.transitions || [];
@@ -108,7 +107,6 @@ export const LifecycleView: React.FC<LifecycleViewProps> = ({
     ? simulationTransitions[simulationIndex]
     : null;
 
-  // Auto-focus and shift view to the executing state node during simulation
   useEffect(() => {
     if (!isPlaying || !activeSimTransition || !nodes.length) return;
 

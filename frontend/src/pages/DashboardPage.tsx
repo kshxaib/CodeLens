@@ -110,7 +110,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Header Row */}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <h1 className="text-2xl font-bold text-[#19243B] tracking-tight">Dashboard</h1>
@@ -138,7 +138,6 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* API Key Banner if required */}
       {!hasKey && (
         <div className="rounded-2xl bg-[#FEF7EC] border border-amber-200/90 flex flex-col sm:flex-row p-4 sm:p-4.5 justify-between items-start sm:items-center gap-4 shadow-xs">
           <div className="flex items-center gap-3">
@@ -161,9 +160,8 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* 2 Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Card 1: Repositories */}
+
         <div className="rounded-2xl bg-white border border-[#E2E0D9] p-5 shadow-2xs hover:border-[#CDC9BF] transition-all">
           <div className="flex items-start justify-between">
             <div>
@@ -203,7 +201,6 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 2: Knowledge Graph */}
         <div className="rounded-2xl bg-white border border-[#E2E0D9] p-5 shadow-2xs hover:border-[#CDC9BF] transition-all">
           <div className="flex items-start justify-between">
             <div>
@@ -234,7 +231,6 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick 5-Views Launcher for Active Repo */}
       {activeRepo && (
         <div className="rounded-2xl bg-white border border-[#E2E0D9] p-5 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
@@ -283,7 +279,6 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Connected Repositories Section */}
       <div className="rounded-2xl bg-white border border-[#E2E0D9] overflow-hidden shadow-2xs">
         <div className="px-5 py-4 border-b border-[#E2E0D9]">
           <h3 className="font-bold text-base text-[#19243B]">Connected Repositories</h3>
@@ -318,7 +313,7 @@ export const DashboardPage: React.FC = () => {
                   key={repo.id}
                   className="p-5 hover:bg-[#FAF9F5]/70 transition flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                 >
-                  {/* Left: Info */}
+
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div className="size-10 rounded-xl bg-[#FAF9F5] border border-[#E2E0D9] flex items-center justify-center shrink-0 text-[#19243B] mt-0.5">
                       <FolderGit2 className="size-5 text-[#526078]" />
@@ -360,9 +355,8 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Right: Status & Actions */}
                   <div className="flex items-center gap-2 flex-wrap lg:shrink-0 justify-end">
-                    {/* Status Indicator (Clean, no green gradient / tint) */}
+
                     <div className="mr-1">
                       {isIndexed && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[#FAF9F5] text-[#19243B] border border-[#E2E0D9]">
@@ -390,7 +384,6 @@ export const DashboardPage: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Architecture Map Button (Primary) */}
                     <button
                       onClick={() => {
                         setSelectedRepo(repo);
@@ -402,7 +395,6 @@ export const DashboardPage: React.FC = () => {
                       <span>Architecture</span>
                     </button>
 
-                    {/* Copilot Chat Button */}
                     <button
                       onClick={() => {
                         setSelectedRepo(repo);
@@ -414,7 +406,6 @@ export const DashboardPage: React.FC = () => {
                       <span>AI Copilot</span>
                     </button>
 
-                    {/* Re-index Button */}
                     <button
                       onClick={() => handleReindexClick(repo)}
                       disabled={isIndexing}

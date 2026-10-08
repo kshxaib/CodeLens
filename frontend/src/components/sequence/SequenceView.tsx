@@ -129,7 +129,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return set;
   }, [activeExecutingMessage, selectedMessageId, filteredMessages]);
 
-  // Auto-focus and shift view to the executing step during playback or manual stepping
   useEffect(() => {
     if (simulationIndex < 0 || !activeExecutingMessage || !scrollAreaRef.current) return;
     if (isUserPanningRef.current) return;
@@ -142,12 +141,10 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
       const containerRect = container.getBoundingClientRect();
       const rowRect = rowEl.getBoundingClientRect();
 
-      // Vertical offset: center executing message row in container
       const currentScrollTop = container.scrollTop;
       const rowRelativeTop = rowRect.top - containerRect.top + currentScrollTop;
       const targetTop = rowRelativeTop - containerRect.height / 2 + rowRect.height / 2;
 
-      // Horizontal offset: center on interaction midpoint between caller and callee
       const callerIdx = participantIndexMap.get(activeExecutingMessage.caller_id) ?? 0;
       const calleeIdx = participantIndexMap.get(activeExecutingMessage.callee_id) ?? 0;
       const callerX = callerIdx * COLUMN_WIDTH + COLUMN_WIDTH / 2;
@@ -165,7 +162,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
     return () => clearTimeout(timer);
   }, [simulationIndex, activeExecutingMessage, participantIndexMap]);
 
-  // Canvas mouse drag-to-pan handlers
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
@@ -462,7 +458,6 @@ export const SequenceView: React.FC<SequenceViewProps> = ({
         </div>
       </div>
 
-      {/* Floating Canvas Navigation & Zoom Controls */}
       <div className="absolute bottom-5 left-5 z-20 flex items-center gap-1 p-1 rounded-xl bg-white/95 backdrop-blur-xl border border-[#E2E0D9] shadow-lg pointer-events-auto font-mono text-xs text-[#19243B]">
         <button
           onClick={handleZoomIn}

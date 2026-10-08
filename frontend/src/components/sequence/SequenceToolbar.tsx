@@ -53,7 +53,7 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
 }) => {
   return (
     <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none select-none">
-      {/* Left Card: Badge, Sequence Selector & Filters */}
+
       <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-xl flex-wrap">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#E2E0D9] bg-white text-xs font-mono font-bold text-[#19243B] shadow-xs">
           <span className="text-[10px] tracking-wider text-[#8A94A6] bg-[#F0EEE9] px-1.5 py-0.5 rounded">T·03</span>
@@ -99,7 +99,6 @@ export const SequenceToolbar: React.FC<SequenceToolbarProps> = ({
         </div>
       </div>
 
-      {/* Right Card: Simulator Controls, Fit, Fullscreen, Export */}
       <div className="flex items-center gap-2 pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#E2E0D9] p-1.5 rounded-2xl shadow-xl">
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#F0EEE9] border border-[#E2E0D9]">
           <button

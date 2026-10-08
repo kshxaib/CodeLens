@@ -83,7 +83,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
   return (
     <WorkspaceLayout>
-      {/* Page Header */}
+
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#19243B] tracking-tight">Account & Settings</h1>
         <p className="text-xs sm:text-sm text-[#526078] mt-1">
@@ -92,7 +92,7 @@ export const ProfileSettingsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: GitHub Identity Card */}
+
         <div className="rounded-2xl p-6 bg-white border border-[#E2E0D9] flex flex-col justify-between shadow-2xs">
           <div>
             <div className="flex items-center gap-4 mb-6">
@@ -132,7 +132,6 @@ export const ProfileSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: OpenAI API Key (BYOK) Card */}
         <div className="rounded-2xl p-6 sm:p-7 lg:col-span-2 bg-white border border-[#E2E0D9] shadow-2xs">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">

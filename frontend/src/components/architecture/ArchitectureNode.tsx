@@ -19,11 +19,10 @@ interface NodeProps {
   selected?: boolean;
 }
 
-// Crisp Semantic Sigils (SVG icons)
 const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
   switch (kind) {
     case 'backend':
-      // Code brackets <>
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -38,7 +37,7 @@ const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
         </svg>
       );
     case 'database':
-      // Cylinder with layered disks
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -55,7 +54,7 @@ const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
         </svg>
       );
     case 'cloud':
-      // Cloud outline
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -70,7 +69,7 @@ const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
         </svg>
       );
     case 'security':
-      // Shield with lock notch
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -85,7 +84,7 @@ const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
         </svg>
       );
     case 'messagebus':
-      // 3 horizontal bars with 3 offset circles
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -104,7 +103,7 @@ const renderSemanticSigil = (kind: ArchitectureSemanticKind, color: string) => {
       );
     case 'external':
     default:
-      // Client display / browser window
+
       return (
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -143,7 +142,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
   const opacityClass = data.isDimmed ? 'opacity-20 grayscale pointer-events-none' : 'opacity-100';
   const isDeterministic = data.confidence_level === 'deterministic' || data.confidence >= 0.99;
 
-  // Build context subtitle (e.g. "FastAPI :8000", "primary :5432", "cache :6379")
   const primaryName = data.display_name || data.name || 'Component';
   let sublabel = data.type ? data.type.replace(/_/g, ' ') : semantic.label;
   if (data.source_files && data.source_files.length > 0) {
@@ -161,7 +159,7 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         borderColor: data.isHovered || selected ? semantic.strokeFocus : semantic.stroke,
       }}
     >
-      {/* 4 Handles for orthogonal and smooth step connections */}
+
       <Handle
         type="target"
         position={Position.Top}
@@ -185,7 +183,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         className="!w-2 !h-2 !bg-white !border !border-[#B8B5AB] hover:!bg-amber-500 transition"
       />
 
-      {/* Top Header: Semantic Sigil + Tag Pill */}
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-1.5" style={{ color: semantic.sigilColor }}>
           {renderSemanticSigil(semantic.kind, semantic.sigilColor)}
@@ -215,7 +212,6 @@ export const ArchitectureNode: React.FC<NodeProps> = memo(({ data, selected }) =
         </div>
       </div>
 
-      {/* Center & Bottom: Title + Subtitle context */}
       <div className="flex flex-col min-w-0 pr-0.5">
         <div
           className="text-[12px] font-bold font-mono tracking-tight truncate leading-tight transition-colors group-hover:text-amber-800"

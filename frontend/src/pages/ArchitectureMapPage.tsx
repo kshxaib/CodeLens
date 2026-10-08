@@ -82,7 +82,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
   const [showFullscreenTip, setShowFullscreenTip] = useState(true);
   const zoom = useZoomLevel();
 
-  // 10-second auto-dismiss for fullscreen tip popup
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowFullscreenTip(false);
@@ -90,7 +89,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Listen for native fullscreen changes for this canvas
   useEffect(() => {
     const handleFullscreenChange = () => {
       const active = document.fullscreenElement === containerRef.current;
@@ -103,7 +101,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // In fullscreen mode, default zoom to 10% (0.10) ONLY for architecture view
   useEffect(() => {
     if (isFullscreen && currentView === 'architecture') {
       const timer = setTimeout(() => {
@@ -286,7 +283,7 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
       return {
         id: n.id,
         type: 'architectureNode',
-        position: { x: 0, y: 0 }, 
+        position: { x: 0, y: 0 },
         data: {
           ...n,
           isSelected,
@@ -579,7 +576,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                   repoName={kgData?.metadata?.repository_name}
                 />
 
-                {/* 3-second fullscreen hint toast (Zero gradients, minimalist paper-and-ink dark slate) */}
                 {showFullscreenTip && !isFullscreen && (
                   <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top-2 duration-200 pointer-events-auto">
                     <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#19243B] text-white shadow-lg border border-[#2B3854]">
@@ -642,7 +638,6 @@ const ArchitectureMapCanvas: React.FC<ArchitectureMapCanvasProps> = ({
                     />
                   </ReactFlow>
 
-                  {/* Interactive Legend Strip */}
                   <div className="absolute bottom-10 left-4 z-20 pointer-events-auto">
                     <ArchitectureLegend
                       nodes={kgData?.nodes || []}
